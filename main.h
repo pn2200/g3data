@@ -10,7 +10,7 @@
 #define MARKERLENGTH 6					/* Axis marker length */
 #define MARKERTHICKNESS 2				/* Axis marker thickness */
 #define MAXPOINTS 256					/* Maximum number of points that can be put out */
-#define VERSION "1.4.0.1"				/* Version number */
+#define VERSION "1.4.0.2"				/* Version number */
 
 #if GTK_MAJOR_VERSION == 2
   #if GTK_MINOR_VERSION >= 2

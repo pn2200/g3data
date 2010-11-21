@@ -568,8 +568,8 @@ void read_xy_entry(GtkWidget *entry, gpointer func_data)
     xy_text = (gchar *) gtk_entry_get_text(GTK_ENTRY (entry));
     sscanf(xy_text,"%lf",&realcoords[index]);				/* Convert string to double value and */
 									/* store in realcoords[0]. */
-    if (logxy[0] && realcoords[index] > 0) valueset[index]=TRUE;
-    else if (logxy[0]) valueset[index]=FALSE;
+    if (logxy[index/2] && realcoords[index] > 0) valueset[index]=TRUE;
+    else if (logxy[index/2]) valueset[index]=FALSE;
     else valueset[index]= TRUE; 
 
     if (bpressed[0] && bpressed[1] && bpressed[2] && 			/* Are all buttons pressed and all values set ? */

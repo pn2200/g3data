@@ -1,0 +1,12 @@
+ Source files
+ ------------
+ g3data.c : This is the  main source. By running make, the source file
+            will be compiled and ready to run.
+
+ tooltips.h : This file contains the toolstips texts that are shown
+              when the mousepointer is being held on a certain widget.
+
+ Program files
+ -------------
+ g3data : This is the programfile, it requires GTK+, and gdk-pixbuf to 
+          be installed to run.

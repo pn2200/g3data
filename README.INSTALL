@@ -1,0 +1,18 @@
+ Compiling
+ ---------
+ To compile the program just run 'make', it will compile it with 
+ the proper parameters.
+ GTK+ and gdk-pixbuf MUST be install on the system for g3data to compile
+ and run.
+
+
+ Installation
+ ------------
+ To install the program on your system, gain root priviliges and run 'make
+ install'. This procedure will copy the program to /usr/local/bin.
+
+
+ Uninstallation
+ --------------
+ To uninstall the program, gain root priviliges and run 'make uninstall'.
+ This procedure will remove the program from /usr/local/bin.

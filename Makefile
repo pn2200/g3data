@@ -11,7 +11,7 @@ g3data: main.o sort.o points.o drawing.o g3data.1.gz
 	$(CC) $(CFLAGS) -o g3data main.o sort.o points.o drawing.o $(LIBS)
 	strip g3data
 
-main.o: main.c main.h strings.h
+main.o: main.c main.h strings.h vardefs.h
 
 sort.o: sort.c main.h
 

@@ -29,7 +29,7 @@ Authors email : jonas.frantz@welho.com
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk/gdkkeysyms.h>
 #include <stdlib.h>									/* Include stdlib library */
-#include <string.h>
+#include <string.h>									/* Include string library */
 #include <math.h>									/* Include math library */
 #include <libgen.h>
 #include <unistd.h>
@@ -60,6 +60,7 @@ GtkWidget	*remallbutton[MAXNUMTABS];						/* Even more various buttons */
 GtkWidget	*xc_entry[MAXNUMTABS],*yc_entry[MAXNUMTABS];
 GtkWidget	*file_entry[MAXNUMTABS], *nump_entry[MAXNUMTABS];
 GtkWidget	*xerr_entry[MAXNUMTABS],*yerr_entry[MAXNUMTABS];			/* Coordinate and filename entries */
+GtkWidget       *logbox[MAXNUMTABS] = {NULL}, *zoomareabox[MAXNUMTABS] = {NULL}, *oppropbox[MAXNUMTABS] = {NULL};
 GtkWidget	*pm_label, *pm_label2, *file_label;
 GtkWidget	*ViewPort;
 GdkColor        *colors;								/* Pointer to colors */
@@ -87,6 +88,8 @@ gboolean	setxypressed[MAXNUMTABS][4];
 gboolean	bpressed[MAXNUMTABS][4];						/* What axispoints have been set out ? */
 gboolean	valueset[MAXNUMTABS][4];
 gboolean	logxy[MAXNUMTABS][2] = {{FALSE,FALSE}};
+gboolean	MovePointMode = FALSE;
+gboolean        HideLog = FALSE, HideZoomArea = FALSE, HideOpProp = FALSE;
 gchar 		*file_name[MAXNUMTABS];							/* Pointer to filename */
 gchar		FileNames[MAXNUMTABS][256];
 FILE		*FP;									/* File pointer */
@@ -110,7 +113,7 @@ void SetAction(GtkWidget *widget, gpointer func_data);
 void UseErrCB(GtkWidget *widget, gpointer func_data);
 void read_file_entry(GtkWidget *entry, gpointer func_data);
 
-GCallback full_screen_action_callback(void);
+// GCallback full_screen_action_callback(GtkWidget *widget, gpointer func_dat);
 
 /****************************************************************/
 /* This function closes the window when the application is 	*/
@@ -179,7 +182,14 @@ gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
     gdk_window_get_pointer (event->window, &x, &y, &state); 				/* Get pointer state */
 
     if (event->button == 1) {								/* If button 1 (leftmost) is pressed */
-
+	if (MovePointMode) {
+	    for (i=0;i<numpoints[TabNum];i++) {
+		if (abs(points[TabNum][i][0]-x) < MOVETRESHOLD &&
+		    abs(points[TabNum][i][1]-y) < MOVETRESHOLD) {
+		    printf("Moving point %d\n",i);
+		}
+	    }
+	} else {
 /* If none of the set axispoint buttons been pressed */
 	if (!setxypressed[TabNum][0] && !setxypressed[TabNum][1] && !setxypressed[TabNum][2] && !setxypressed[TabNum][3]) {
 	    if (numpoints[TabNum] > MaxPoints[TabNum]-1) {
@@ -229,6 +239,7 @@ gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
 	    }
 	}
 	SetButtonSensitivity(ViewedTabNum);
+	}
     } else if (event->button == 2) {							/* Is the middle button pressed ? */
 	for (i=0;i<2;i++) if (!bpressed[TabNum][i]) {
 	    axiscoords[TabNum][i][0]=x;
@@ -606,6 +617,7 @@ gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer)
 {
   GtkAdjustment *adjustment;
   gdouble adj_val;
+  GdkCursor	*cursor;
 
     if (event->keyval==GDK_Left) {
 	adjustment = gtk_viewport_get_hadjustment((GtkViewport *) ViewPort);
@@ -635,6 +647,30 @@ gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer)
 	if (adj_val > (adjustment->upper-adjustment->page_size)) adj_val = (adjustment->upper-adjustment->page_size);
 	gtk_adjustment_set_value(adjustment, adj_val);
 	gtk_viewport_set_vadjustment((GtkViewport *) ViewPort, adjustment);
+    } else if (event->keyval==GDK_Control_L) {
+	if (ViewedTabNum != -1) {
+	    cursor = gdk_cursor_new (GDK_CIRCLE);
+	    gdk_window_set_cursor (drawing_area[ViewedTabNum]->window, cursor);
+	    MovePointMode = TRUE;
+	}
+    }
+
+  return 0;
+}
+
+
+/****************************************************************/
+/****************************************************************/
+gint key_release_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer)
+{
+  GdkCursor	*cursor;
+
+    if (event->keyval==GDK_Control_L) {
+	if (ViewedTabNum != -1) {
+	    cursor = gdk_cursor_new (GDK_CROSSHAIR);
+	    gdk_window_set_cursor (drawing_area[ViewedTabNum]->window, cursor);
+	    MovePointMode = FALSE;
+	}
     }
 
   return 0;
@@ -1002,6 +1038,12 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
 
     subvbox = gtk_vbox_new (FALSE, ELEM_SEP);
     gtk_box_pack_start (GTK_BOX (blvbox), subvbox, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (subvbox), remlastbutton[TabNum], FALSE, FALSE, 0);	/* Pack button in vert. box */
+    gtk_box_pack_start (GTK_BOX (subvbox), remallbutton[TabNum], FALSE, FALSE, 0);		/* Pack button in vert. box */
+
+    subvbox = gtk_vbox_new (FALSE, ELEM_SEP);
+    zoomareabox[TabNum] = subvbox;
+    gtk_box_pack_start (GTK_BOX (blvbox), subvbox, FALSE, FALSE, 0);
     ZAlabel = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (ZAlabel), ZAheader);
     alignment = gtk_alignment_new (0, 1, 0, 0);
@@ -1012,6 +1054,7 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     gtk_box_pack_start (GTK_BOX (subvbox), fixed, FALSE, FALSE, 0);
 
     subvbox = gtk_vbox_new (FALSE, ELEM_SEP);
+    logbox[TabNum] = subvbox;
     gtk_box_pack_start (GTK_BOX (blvbox), subvbox, FALSE, FALSE, 0);
     Llabel = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (Llabel), Lheader);
@@ -1024,11 +1067,6 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
 	gtk_box_pack_start (GTK_BOX (subvbox), fixed, FALSE, FALSE, 0);			/* Pack checkbutton in vert. box */
     }
 
-    subvbox = gtk_vbox_new (FALSE, ELEM_SEP);
-    gtk_box_pack_start (GTK_BOX (blvbox), subvbox, FALSE, FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (subvbox), remlastbutton[TabNum], FALSE, FALSE, 0);	/* Pack button in vert. box */
-    gtk_box_pack_start (GTK_BOX (subvbox), remallbutton[TabNum], FALSE, FALSE, 0);		/* Pack button in vert. box */
-
     group = NULL;
     for (i=0;i<ORDERBNUM;i++) {
 	ordercheckb[i] = gtk_radio_button_new_with_label (group, orderlabel[i]);	/* Create radio button */
@@ -1038,6 +1076,9 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     }
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ordercheckb[0]), TRUE);		/* Set no ordering button active */
 
+    subvbox = gtk_vbox_new (FALSE, ELEM_SEP);
+    oppropbox[TabNum] = subvbox;
+    gtk_box_pack_start (GTK_BOX (blvbox), subvbox, FALSE, FALSE, 0);
     Olabel = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (Olabel), Oheader);
     alignment = gtk_alignment_new (0, 1, 0, 0);
@@ -1064,6 +1105,8 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     gtk_fixed_put((GtkFixed *) fixed, UseErrCheckB, FRAME_INDENT, 0);
     gtk_box_pack_start (GTK_BOX (subvbox), fixed, FALSE, FALSE, 0);
 
+    subvbox = gtk_vbox_new (FALSE, ELEM_SEP);
+    gtk_box_pack_start (GTK_BOX (blvbox), subvbox, FALSE, FALSE, 0);
     group = NULL;
     for (i=0;i<ACTIONBNUM;i++) {
 	actioncheckb[i] = gtk_radio_button_new_with_label (group, actionlabel[i]);	/* Create radio button */
@@ -1131,6 +1174,7 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
 
     gtk_widget_show_all(window);
 
+
     gtk_notebook_set_current_page((GtkNotebook *) mainnotebook, TabNum);
 
     if (InsertImage(filename, Scale, maxX, maxY, TabNum) == -1) {
@@ -1164,8 +1208,81 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     gtk_action_group_set_sensitive(tab_action_group, TRUE);
     NoteBookNumPages++;
 
+    if (HideZoomArea) for (i=0;i<MAXNUMTABS;i++) if (zoomareabox[i] != NULL) gtk_widget_hide(zoomareabox[i]);
+    if (HideLog) for (i=0;i<MAXNUMTABS;i++) if (logbox[i] != NULL) gtk_widget_hide(logbox[i]);
+    if (HideOpProp) for (i=0;i<MAXNUMTABS;i++) if (oppropbox[i] != NULL) gtk_widget_hide(oppropbox[i]);
+
   return 0;
 }
+
+
+/****************************************************************/
+/****************************************************************/
+void drag_data_received(GtkWidget *widget,
+                              GdkDragContext *drag_context,
+                              gint x, gint y,
+                              GtkSelectionData *data,
+                              guint info,
+                              guint event_time,
+                              gpointer user_data)
+{
+  gchar 	filename[256], *c;
+  gint		i;
+  GtkWidget	*dialog;
+
+//printf("DnD received\n");
+
+    switch (info) {
+	case URI_LIST: {
+//	    printf("Received uri : %s\n", (gchar *) data->data);
+	    if ((c = strstr((gchar *) data->data, URI_IDENTIFIER)) == NULL) {
+		dialog = gtk_message_dialog_new (GTK_WINDOW(window),			/* Notify user of the error */
+                	                  	 GTK_DIALOG_DESTROY_WITH_PARENT,	/* with a dialog */
+	                                  	 GTK_MESSAGE_ERROR,
+	                                  	 GTK_BUTTONS_CLOSE,
+	                                  	 "Cannot extract filename from uri '%s'",
+       		                          	 filename);
+ 		gtk_dialog_run (GTK_DIALOG (dialog));
+		gtk_widget_destroy (dialog);
+		break;
+	    }
+	    strncpy(filename,&(c[strlen(URI_IDENTIFIER)]),256);
+	    for (i=0;i<strlen(filename);i++) if (filename[i] == '\n') filename[i] = '\0';
+//printf("Opening file >%s<\n",filename);
+	    SetupNewTab(filename, 1.0, -1, -1, FALSE);
+	    break;
+	}
+	case JPEG_DATA:
+	case PNG_DATA: {
+	    printf("Received drag-and-drop jpeg_data or png_data\n");
+            GError *error = NULL;
+            GdkPixbufLoader *loader = gdk_pixbuf_loader_new_with_mime_type(gdk_atom_name(data->type), &error);
+            if (loader) {
+            	error = NULL;
+            	if (gdk_pixbuf_loader_write( loader, data->data, data->length, &error)) {
+                    GdkPixbuf *pbuf = gdk_pixbuf_loader_get_pixbuf(loader);
+                    if ( pbuf ) {
+                        int width = gdk_pixbuf_get_width(pbuf);
+                        int height = gdk_pixbuf_get_height(pbuf);
+                        printf("Received image of size %d x %d\n", width, height);  // Print debugging information
+/*                        snprintf(tmp, sizeof(tmp), "%d", width);
+                        newImage->setAttribute("width", tmp);
+ 
+                        snprintf(tmp, sizeof(tmp), "%d", height);
+                        newImage->setAttribute("height", tmp); */
+                    }
+                }
+            }
+	    break;
+	}
+	case APP_X_COLOR: {
+	    printf("Received drag-and-drop app-x-color\n");
+	    break;
+	}
+    }
+    gtk_drag_finish (drag_context, TRUE, FALSE, event_time);
+}
+
 
 /****************************************************************/
 /* This callback handles the file - open dialog.		*/
@@ -1278,6 +1395,10 @@ GCallback menu_tab_close(void)
     logxy[ViewedTabNum][0] = FALSE;
     logxy[ViewedTabNum][1] = FALSE;
 
+    zoomareabox[ViewedTabNum] = NULL;
+    logbox[ViewedTabNum] = NULL;
+    oppropbox[ViewedTabNum] = NULL;
+
     NoteBookNumPages--;
 
     if (NoteBookNumPages == 0) gtk_action_group_set_sensitive(tab_action_group, FALSE);
@@ -1288,14 +1409,65 @@ GCallback menu_tab_close(void)
 /****************************************************************/
 /* This callback handles the fullscreen toggling.		*/
 /****************************************************************/
-GCallback full_screen_action_callback(void)
+GCallback full_screen_action_callback(GtkWidget *widget, gpointer func_data)
 {
-    if (!WinFullScreen) {
+    if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(widget))) {
 	gtk_window_fullscreen(GTK_WINDOW (window));
 	WinFullScreen = TRUE;
     } else {
 	gtk_window_unfullscreen(GTK_WINDOW (window));
 	WinFullScreen = FALSE;
+    }
+  return NULL;
+}
+
+/****************************************************************/
+/* This callback handles the hide zoom area toggling.		*/
+/****************************************************************/
+GCallback hide_zoom_area_callback(GtkWidget *widget, gpointer func_data)
+{
+  int i;
+
+    if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(widget))) {
+        for (i=0;i<MAXNUMTABS;i++) if (zoomareabox[i] != NULL) gtk_widget_hide(zoomareabox[i]);
+	HideZoomArea = TRUE;
+    } else {
+        for (i=0;i<MAXNUMTABS;i++) if (zoomareabox[i] != NULL) gtk_widget_show(zoomareabox[i]);
+	HideZoomArea = FALSE;
+    }
+  return NULL;
+}
+
+/****************************************************************/
+/* This callback handles the hide axis settings toggling.	*/
+/****************************************************************/
+GCallback hide_axis_settings_callback(GtkWidget *widget, gpointer func_data)
+{
+  int i;
+
+    if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(widget))) {
+        for (i=0;i<MAXNUMTABS;i++) if (logbox[i] != NULL) gtk_widget_hide(logbox[i]);
+	HideLog = TRUE;
+    } else {
+        for (i=0;i<MAXNUMTABS;i++) if (logbox[i] != NULL) gtk_widget_show(logbox[i]);
+	HideLog = FALSE;
+    }
+  return NULL;
+}
+
+/****************************************************************/
+/* This callback handles the hide output properties toggling.	*/
+/****************************************************************/
+GCallback hide_output_prop_callback(GtkWidget *widget, gpointer func_data)
+{
+  int i;
+
+    if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(widget))) {
+        for (i=0;i<MAXNUMTABS;i++) if (oppropbox[i] != NULL) gtk_widget_hide(oppropbox[i]);
+	HideOpProp = TRUE;
+    } else {
+        for (i=0;i<MAXNUMTABS;i++) if (oppropbox[i] != NULL) gtk_widget_show(oppropbox[i]);
+	HideOpProp = FALSE;
     }
   return NULL;
 }
@@ -1337,41 +1509,8 @@ int main (int argc, char **argv)
   GtkUIManager *ui_manager;
   GtkAccelGroup *accel_group;
   GError *error;
- 
-  GtkActionEntry entries[] = {
-        { "FileMenu", NULL, "_File" },
-        { "ViewMenu", NULL, "_View" },
-        { "HelpMenu", NULL, "_Help" },
-        { "Open", GTK_STOCK_OPEN, "_Open", "<control>O", "Open an image in a new tab", (GCallback) menu_file_open },
-        { "Quit", GTK_STOCK_QUIT, "_Quit", "<control>Q", "Quit program", (GCallback) menu_file_exit },
-        { "About", GTK_STOCK_HELP, "_About", "<control>H", "About g3data", (GCallback) menu_help_about }
-  };
 
-  GtkActionEntry closeaction[] = {
-        { "Close", GTK_STOCK_CLOSE, "_Close", "<control>C", "Close current tab", (GCallback) menu_tab_close }
-  };
-
-  GtkToggleActionEntry toggle_entries[] = {
-	{ "FullScreen", NULL, "_Full Screen", "F11", "Switch between full screen and windowed mode", (GCallback) full_screen_action_callback, FALSE }
-  };
-
-  char *ui_description =
-        "<ui>"
-        "  <menubar name='MainMenu'>"
-        "    <menu action='FileMenu'>"
-        "      <menuitem action='Open'/>"
-        "      <menuitem action='Close'/>"
-	"      <separator />"
-        "      <menuitem action='Quit'/>"
-        "    </menu>"
-        "    <menu action='ViewMenu'>"
-        "      <menuitem action='FullScreen'/>"
-        "    </menu>"
-        "    <menu action='HelpMenu'>"
-        "      <menuitem action='About'/>"
-        "    </menu>"
-        "  </menubar>"
-        "</ui>";
+#include "vardefs.h"
 
     gtk_init (&argc, &argv);								/* Init GTK */
 
@@ -1401,17 +1540,13 @@ int main (int argc, char **argv)
 		}
 		i++;
 		if (i >= argc) break;
-	    }
-	    else if (strcmp(argv[i],"-errors")==0) {
+	    } else if (strcmp(argv[i],"-errors")==0) {
 		UseError = TRUE;
-	    }
-	    else if (strcmp(argv[i],"-lnx")==0) {
+	    } else if (strcmp(argv[i],"-lnx")==0) {
 		Uselogxy[0] = TRUE;
-	    }
-	    else if (strcmp(argv[i],"-lny")==0) {
+	    } else if (strcmp(argv[i],"-lny")==0) {
 		Uselogxy[1] = TRUE;
-	    }
-	    else if (strcmp(argv[i],"-max")==0) {
+	    } else if (strcmp(argv[i],"-max")==0) {
 		if (argc-i < 3) {
 		    printf("Too few parameters for -max\n");
 		    exit(0);
@@ -1426,8 +1561,7 @@ int main (int argc, char **argv)
 		}
 		i+=2;
 		if (i >= argc) break;
-	    }
-	    else if (strcmp(argv[i],"-coords")==0) {
+	    } else if (strcmp(argv[i],"-coords")==0) {
 		UsePreSetCoords = TRUE;
 		if (argc-i < 5) {
 		    printf("Too few parameters for -coords\n");
@@ -1451,14 +1585,18 @@ int main (int argc, char **argv)
 		}
 		i+=4;
 		if (i >= argc) break;
-	    }
-	    else {
+/*	    } else if (strcmp(argv[i],"-hidelog")==0) {
+		HideLog = TRUE;
+	    } else if (strcmp(argv[i],"-hideza")==0) {
+		HideZoomArea = TRUE;
+	    } else if (strcmp(argv[i],"-hideop")==0) {
+		HideOpProp = TRUE; */
+	    } else {
 		printf("Unknown parameter : %s\n", argv[i]);
 		exit(0);
 	    }
 	    continue;
-	}
-	else {
+	} else {
 	    FileIndex[NumFiles] = i;
 	    NumFiles++;
 	}
@@ -1476,6 +1614,10 @@ int main (int argc, char **argv)
 
     g_signal_connect(G_OBJECT (window), "delete_event",					/* Init delete event of window */
                         G_CALLBACK (close_application), NULL);
+
+    gtk_drag_dest_set(window, GTK_DEST_DEFAULT_ALL, ui_drop_target_entries, NUM_IMAGE_DATA, (GDK_ACTION_COPY | GDK_ACTION_MOVE));
+    g_signal_connect(G_OBJECT (window), "drag-data-received",				/* Drag and drop catch */
+                        G_CALLBACK (drag_data_received), NULL);
 
 /* Create menues */
     action_group = gtk_action_group_new("MenuActions");
@@ -1523,6 +1665,8 @@ int main (int argc, char **argv)
 
     g_signal_connect_swapped (G_OBJECT (window), "key_press_event",
 			          G_CALLBACK (key_press_event), NULL);
+    g_signal_connect_swapped (G_OBJECT (window), "key_release_event",
+			          G_CALLBACK (key_release_event), NULL);
 
     gtk_widget_show_all(window);							/* Show all widgets */
 

@@ -1,4 +1,4 @@
-%define base_version		1.5.0
+%define base_version		1.5.1
 %define rel			1
 
 Summary: Program for extracting the data from scanned graphs
@@ -46,6 +46,12 @@ rm -rf $RPM_BUILD_ROOT
 %doc README.TEST README.SOURCE README.INSTALL test1.png test1.values test2.png test2.values gpl.txt
 
 %changelog
+* Fri Mar 16 2007 Jonas Frantz <jonas.frantz@welho.com>
+- 1.5.1 released :
+   * Added basic drag-n-drop support, current version only supports uri drops
+   * Added preliminary basis for datapoint movement
+   * Minor GUI changes
+   * Some of the graph properties are now hideable, to resolv issues on lower resolution screens
 * Sat Oct 8 2005 Jonas Frantz <jonas.frantz@welho.com>
 - 1.5.0 released
 * Sun Sep 11 2005 Jonas Frantz <jonas.frantz@welho.com>

@@ -1,14 +1,14 @@
 <!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook V4.1//EN">
 <refentry>
 <refentryinfo>
-	<date>2005-10-08</date>
+	<date>2007-03-16</date>
 </refentryinfo>
 <refmeta>
 	<refentrytitle>
 		<application>g3data</application>
 	</refentrytitle>
 	<manvolnum>1</manvolnum>
-	<refmiscinfo>g3data 1.5.0</refmiscinfo>
+	<refmiscinfo>g3data 1.5.1</refmiscinfo>
 </refmeta>
 <refnamediv>
 	<refname>
@@ -19,9 +19,6 @@
 	</refpurpose>
 </refnamediv>
 <refsynopsisdiv>
-<!--	<refsynopsisdivinfo>
-		<date>2001-01-01</date>
-	</refsynopsisdivinfo> -->
 	<cmdsynopsis>
 	<command>g3data</command>
       <arg><option>-max<replaceable> x y</replaceable></option></arg>

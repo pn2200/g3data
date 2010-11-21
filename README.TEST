@@ -1,12 +1,12 @@
  Testing the software
  --------------------
 
- With the program there are two testdata files included, test1.gif and
- test2.gif. Their corresponding data can be found in test1.values and
+ With the program there are two testdata files included, test1.png and
+ test2.png. Their corresponding data can be found in test1.values and
  test2.values.
 
- To test the program start it with the command 'g3data test1.gif' or with
- 'g3data test2.gif'. When the program has started click on the button
+ To test the program start it with the command 'g3data test1.png' or with
+ 'g3data test2.png'. When the program has started click on the button
  labelled 'Set point 1 on X axis' and set out the corresponding point on
  the image by pressing on it. Do the same for point 2 on the X axis, point
  1 on the Y axis and point 2 on the Y axis. The axispoints can also be put
@@ -19,10 +19,11 @@
  put out points press the 'Remove all points' button. The axis points
  can be reset by pressing the corresponding button.
 
- After all the points been put out, press the 'Print data' button and
- the coordinates of the data will be printed out through stdout.
- If you'd like to write the data to a file, fill out the filename entry
- box and press the 'Print to file' button.
+ After all the points been put out, press the 'Export point data' button 
+ and the coordinates of the data will be printed out through stdout.
+ If you'd like to write the data to a file, choose the 'Export data to file' 
+ radio button, fill out the filename entry box and press the 'Export point 
+ data' button.
  
- Remember to apply the logarithmic scale on x axis for test2.gif.
+ Remember to apply the logarithmic scale on x axis for test2.png.
 

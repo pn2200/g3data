@@ -7,7 +7,7 @@ mandir ?= /usr/share/man
 .c.o:
 	$(CC) -c $(CFLAGS) $(CPPFLAGS) $<
 
-g3data: main.o sort.o points.o drawing.o
+g3data: main.o sort.o points.o drawing.o g3data.1.gz
 	$(CC) $(CFLAGS) -o g3data main.o sort.o points.o drawing.o $(LIBS)
 	strip g3data
 
@@ -19,8 +19,14 @@ points.o: points.c main.h
 
 drawing.o: drawing.c main.h
 
+g3data.1.gz: g3data.sgml
+	rm -f *.1
+	onsgmls g3data.sgml | sgmlspl /usr/share/sgml/docbook/utils-0.6.14/helpers/docbook2man-spec.pl
+	mv *.1 g3data.1
+	gzip g3data.1
+
 clean:
-	rm *.o g3data
+	rm -f *.o g3data g3data.1.gz *~ manpage.*
 
 install:
 	install g3data $(bindir)

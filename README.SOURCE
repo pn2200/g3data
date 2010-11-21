@@ -1,11 +1,23 @@
  Source files
  ------------
- g3data.c : This is the  main source. By running make, the source file
-            will be compiled and ready to run.
+ main.c :	This is the  main source. By running make, the source file
+		will be compiled and ready to run.
 
- tooltips.h : This file contains the toolstips texts that are shown
-              when the mousepointer is being held on a certain widget.
+ main.h :	Main source headers, contains predefined parameters.
+
+ sort.c :	This file contains sorting routines for the point data.
+
+ points.c :	This file contains the routines used for calculating the
+		true vaues of the points.
+
+ drawing.c :	This file contains the routines used for drawing the markers
+		on the image.
+
+ strings.h :	The predefined strings of labels, buttons and other widgets.
+
+ tooltips.h : 	This file contains the toolstips texts that are shown
+              	when the mousepointer is being held on a certain widget.
 
  Program files
  -------------
- g3data : This is the programfile, it requires GTK+ 2.2.x to run.
+ g3data : This is the programfile, it requires GTK+ 2.6.x to run.

@@ -1,14 +1,13 @@
  Compiling
  ---------
- To compile the program, gtk and imlib must be installed. To compile the
+ To compile the program, gtk 2.6 or greater must be installed. To compile the
  program just run 'make', it will compile it with the proper parameters.
- GTK+ and imlib MUST be install on the system for g3data to compile.
 
 
  Installation
  ------------
  To install the program on your system, gain root priviliges and run 'make
- install'. This procedure will copy the program to /usr/local/bin.
+ install'. This procedure will install the program to /usr/local/bin.
 
 
  Uninstallation

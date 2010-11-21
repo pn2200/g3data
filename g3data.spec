@@ -1,4 +1,4 @@
-%define base_version		1.4.0.2
+%define base_version		1.5.0
 %define rel			1
 
 Summary: Program for extracting the data from scanned graphs
@@ -43,11 +43,15 @@ rm -rf $RPM_BUILD_ROOT
 /usr/bin/g3data
 /usr/share/man/man1/g3data.1.gz
 
-%doc README.TEST README.SOURCE README.INSTALL test1.gif test1.values test2.gif test2.values gpl.txt
+%doc README.TEST README.SOURCE README.INSTALL test1.png test1.values test2.png test2.values gpl.txt
 
 %changelog
-* Sun May 1 2005 Jonas Frantz <jonas.frantz@welho.com>
-- Fixed bug with logarithmic y-scale
+* Sat Oct 8 2005 Jonas Frantz <jonas.frantz@welho.com>
+- 1.5.0 released
+* Sun Sep 11 2005 Jonas Frantz <jonas.frantz@welho.com>
+- 1.5.0rc2 released
+* Sun Apr 24 2005 Jonas Frantz <jonas.frantz@welho.com>
+- 1.4.0.99 released
 * Sat Aug 10 2003 Jonas Frantz <jonas.frantz@helsinki.fi>
 - Initial build
 

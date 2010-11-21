@@ -20,7 +20,7 @@ Copyright (C) 2000 Jonas Frantz
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
                                                                                                                                                                     
                                                                                                                                                                     
-Authors email : jonas.frantz@helsinki.fi
+Authors email : jonas.frantz@welho.com
                                                                                                                                                                     
 */
 

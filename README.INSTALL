@@ -1,9 +1,8 @@
  Compiling
  ---------
- To compile the program just run 'make', it will compile it with 
- the proper parameters.
- GTK+ and gdk-pixbuf MUST be install on the system for g3data to compile
- and run.
+ To compile the program, gtk and imlib must be installed. To compile the
+ program just run 'make', it will compile it with the proper parameters.
+ GTK+ and imlib MUST be install on the system for g3data to compile.
 
 
  Installation

@@ -1,0 +1,224 @@
+<!doctype refentry PUBLIC "-//OASIS//DTD DocBook V4.1//EN" [
+
+<!-- Process this file with docbook-to-man to generate an nroff manual
+     page: `docbook-to-man manpage.sgml > manpage.1'.  You may view
+     the manual page with: `docbook-to-man manpage.sgml | nroff -man |
+     less'.  A typical entry in a Makefile or Makefile.am is:
+
+manpage.1: manpage.sgml
+	docbook-to-man $< > $@
+  -->
+
+  <!-- Fill in your name for FIRSTNAME and SURNAME. -->
+  <!ENTITY dhfirstname "<firstname>Peter</firstname>">
+  <!ENTITY dhsurname   "<surname>Galbraith</surname>">
+  <!-- Please adjust the date whenever revising the manpage. -->
+  <!ENTITY dhdate      "<date>September 25, 2001</date>">
+  <!-- SECTION should be 1-8, maybe w/ subsection other parameters are
+       allowed: see man(7), man(1). -->
+  <!ENTITY dhsection   "<manvolnum>1</manvolnum>">
+  <!ENTITY dhemail     "<email>psg@debian.org</email>">
+  <!ENTITY dhusername  "Peter S Galbraith">
+  <!ENTITY dhucpackage "<refentrytitle>g3data</refentrytitle>">
+  <!ENTITY dhpackage   "g3data">
+
+  <!ENTITY debian      "<productname>Debian GNU/Linux</productname>">
+  <!ENTITY gnu         "<acronym>GNU</acronym>">
+]>
+
+<refentry>
+  <refentryinfo>
+    <address>
+      &dhemail;
+    </address>
+    <author>
+      &dhfirstname;
+      &dhsurname;
+    </author>
+    <copyright>
+      <year>2001</year>
+      <holder>&dhusername;</holder>
+    </copyright>
+    &dhdate;
+  </refentryinfo>
+  <refmeta>
+    &dhucpackage;
+
+    &dhsection;
+  </refmeta>
+  <refnamediv>
+    <refname>&dhpackage;</refname>
+
+    <refpurpose>extract data from scanned graphs</refpurpose>
+  </refnamediv>
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>&dhpackage;</command>
+
+      <arg><option>-max <replaceable>x y</replaceable></option></arg>
+
+      <arg><option>-scale <replaceable>factor</replaceable></option></arg>
+
+      <arg><option>-scroll</option></arg>
+
+      <arg choice="plain"><REPLACEABLE>file</REPLACEABLE></ARG>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  <refsect1>
+    <title>DESCRIPTION</title>
+
+    <para>This manual page documents briefly the
+      <command>&dhpackage;</command> command.</para>
+
+    <para><command>&dhpackage;</command> is a program that extracts data
+    from scanned graphs.  For example, graphs are typically published in
+    scientific journals without tables of the actual data; g3data makes the
+    process of extracting these data easy.</para>
+
+  </refsect1>
+  <refsect1>
+    <title>OPTIONS</title>
+
+    <variablelist>
+      <varlistentry>
+        <term><option>-max <replaceable>x y</replaceable></option>
+        </term>
+        <listitem>
+          <para> If picture is larger x-wise than x or y-wise than y,
+                 the picture is scaled down accordingly otherwise this
+                 parameter has no effect.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-scale <replaceable>factor</replaceable></option>
+        </term>
+        <listitem>
+          <para>Scales the picture size by factor. This parameter nullifies
+                effect of the -max parameter.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-scroll</option>
+        </term>
+        <listitem>
+          <para>Picture is viewed through a viewport with scrollbars,
+                use this for very large pictures if you need accuracy.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-coords <replaceable>llx lly rux ruy</replaceable></option>
+        </term>
+        <listitem>
+          <para> Preset the coordinates of the left lower (ll) corner
+                 and the right upper (ru) corner.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-errors</option>
+        </term>
+        <listitem>
+          <para>Print out the error of the x value in column 3 and the
+                error of y value in column 4 of the output. </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-lnx</option>
+        </term>
+        <listitem>
+          <para>Use logarithmic scale for x coordinates.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-lny</option>
+        </term>
+        <listitem>
+          <para>Use logarithmic scale for y coordinates.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><replaceable>file</replaceable></term>
+        <listitem>
+          <para>The filename of the graph.  This parameter is required.
+          Supported image formats: JPEG, GIF, PPM, PGM, XPM, PNG, TIFF,
+          EIM.</para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  <refsect1>
+    <title>HINTS</title>
+
+    <para>To access fullscreen mode use the F10 key.</para>
+
+    <para>Hint for increased accuracy : Use -scale with a large parameter
+     to achieve finer granularity and thus smaller errors.</para>
+
+  </refsect1>
+  <refsect1>
+    <title>TESTING AND USAGE</title>
+
+    <para>There are two testdata files included with the program: test1.gif
+     and test2.gif. Their corresponding data can be found in test1.values
+     and test2.values.</para>
+
+    <para>To test the program, start it with the command <command>g3data
+     test1.gif</command> or with <command>g3data test2.gif</command>. When
+     the program has started, click on the button labelled <emphasis>Set
+     point 1 on X axis</emphasis> and lay out the corresponding point on
+     the image by pressing on it. Do the same for point 2 on the X axis and
+     points 1 and 2 on the Y axis. The axis points can also be layed out by
+     pressing the middle mouse button for the x axis and the right button
+     for the y axis. Fill out the entry boxes for the values of the axis
+     points.  Then continue to lay out the desired data points on the graph
+     itself.</para>
+
+    <para>If by accident you lay out a data point where it doesn't belong,
+     you can remove it by pressing the <emphasis>Remove last
+     point</emphasis> button. To remove all layed out data points, press the
+     <emphasis>Remove all points</emphasis> button. The axis points can be
+     reset by pressing the corresponding button.</para>
+
+    <para>After all the points been layed out, press the <emphasis>Print
+     data</emphasis> button and the coordinates of the data will be printed
+     out through stdout.  If you'd like to write the data to a file, fill
+     out the filename entry box and press the <emphasis>Print to
+     file</emphasis> button.</para>
+
+    <para>Remember to apply the logarithmic scale on x axis for
+     test2.gif.</para>
+  </refsect1>
+  <refsect1>
+    <title>AUTHOR</title>
+
+    <para><command>&dhpackage;</command> is written and maintained by Jonas
+    Frantz jonas.frantz@helsinki.fi.  The <command>&dhpackage;</command>
+    home page is</para>
+
+    <LITERALLAYOUT>http://www.acclab.helsinki.fi/~frantz/software/g3data.php</LITERALLAYOUT>
+
+    <para>This manual page was created by &dhusername; &dhemail; for the
+      &debian; system (but may be used by others) using the command's help
+      files.  Permission is granted to copy, distribute and/or modify this
+      document under the terms of the <acronym>GNU</acronym> GPL Version 2
+      or any later version published by the Free Software
+      Foundation.</para>
+
+  </refsect1>
+</refentry>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:2
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:nil
+sgml-exposed-tags:nil
+sgml-local-catalogs:nil
+sgml-local-ecat-files:nil
+End:
+-->

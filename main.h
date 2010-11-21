@@ -24,11 +24,6 @@ Authors email : jonas.frantz@welho.com
 
 */
 
-#define G_DISABLE_DEPRECATED
-#define GDK_DISABLE_DEPRECATED
-#define GDK_PIXBUF_DISABLE_DEPRECATED
-#define GTK_DISABLE_DEPRECATED
-
 #define ZOOMPIXSIZE 200					/* Size of zoom in window */
 #define ZOOMFACTOR 4					/* Zoom factor of zoom window */
 #define INNERSIZE 1					/* Size of point marker white inner square */
@@ -47,7 +42,7 @@ Authors email : jonas.frantz@welho.com
 #define URI_IDENTIFIER "file://"
 
 struct PointValue {
-  gdouble 	Xv,Yv,Xerr,Yerr;
+  double 	Xv,Yv,Xerr,Yerr;
 };
 
 typedef enum {

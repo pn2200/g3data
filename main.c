@@ -67,7 +67,6 @@ GdkColor        *colors;								/* Pointer to colors */
 GdkPixbuf       *gpbimage[MAXNUMTABS];
 GtkWidget	*mainnotebook;
 GtkActionGroup	*tab_action_group;
-GtkTooltips 	*tooltip;
 
 /* Declaration of global variables */
 gint		axiscoords[MAXNUMTABS][4][2];						/* X,Y coordinates of axispoints */
@@ -136,7 +135,8 @@ void SetButtonSensitivity(int TabNum)
 
     if (Action[TabNum] == PRINT2FILE) {
 	snprintf(ttbuf, sizeof(ttbuf), printfilett, gtk_entry_get_text(GTK_ENTRY (file_entry[TabNum])));
-	gtk_tooltips_set_tip (tooltip,exportbutton[TabNum],ttbuf,ttbuf);
+        gtk_widget_set_tooltip_text(exportbutton[TabNum],ttbuf);
+
 	gtk_widget_set_sensitive(file_entry[TabNum], TRUE);
 	if (valueset[TabNum][0] && valueset[TabNum][1] && 
 	    valueset[TabNum][2] && valueset[TabNum][3] && 
@@ -146,7 +146,7 @@ void SetButtonSensitivity(int TabNum)
 		gtk_widget_set_sensitive(exportbutton[TabNum], TRUE);
 	else gtk_widget_set_sensitive(exportbutton[TabNum], FALSE);
     } else {
-	gtk_tooltips_set_tip (tooltip,exportbutton[TabNum],printrestt,printrestt);
+        gtk_widget_set_tooltip_text(exportbutton[TabNum],printrestt);
 	gtk_widget_set_sensitive(file_entry[TabNum], FALSE);
 	if (valueset[TabNum][0] && valueset[TabNum][1] && 
 	    valueset[TabNum][2] && valueset[TabNum][3] && 
@@ -795,7 +795,7 @@ static void update_preview_cb (GtkFileChooser *file_chooser, gpointer data) {
     g_free (filename);
 
     gtk_image_set_from_pixbuf (GTK_IMAGE (preview), pixbuf);
-    if (pixbuf) gdk_pixbuf_unref (pixbuf);
+    if (pixbuf) g_object_unref (pixbuf);
 
     gtk_file_chooser_set_preview_widget_active (file_chooser, have_preview);
 }
@@ -893,8 +893,6 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
 	}
     }
 
-    tooltip = gtk_tooltips_new();
-
     for(i=0;i<4;i++) {
 	xyentry[TabNum][i] = gtk_entry_new();  						/* Create text entry */
 	gtk_entry_set_max_length (GTK_ENTRY (xyentry[TabNum][i]), 20);
@@ -902,7 +900,7 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
 	gtk_widget_set_sensitive(xyentry[TabNum][i],FALSE);				/* Inactivate it */
 	g_signal_connect (G_OBJECT (xyentry[TabNum][i]), "changed",			/* Init the entry to call */
 			  G_CALLBACK (read_xy_entry), GINT_TO_POINTER (i));		/* read_x1_entry whenever */
-	gtk_tooltips_set_tip (tooltip,xyentry[TabNum][i],entryxytt[i],entryxytt[i]);
+        gtk_widget_set_tooltip_text (xyentry[TabNum][i],entryxytt[i]);
     }
 
     x_label = gtk_label_new(x_string);
@@ -946,26 +944,26 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
 	gtk_container_add((GtkContainer *) setxybutton[TabNum][i], tmplabel);
 	g_signal_connect (G_OBJECT (setxybutton[TabNum][i]), "toggled",			/* Connect button */
 			  G_CALLBACK (toggle_xy), GINT_TO_POINTER (i));
-	gtk_tooltips_set_tip (tooltip,setxybutton[TabNum][i],setxytts[i],setxytt[i]);
+        gtk_widget_set_tooltip_text(setxybutton[TabNum][i],setxytts[i]);
     }
 
     remlastbutton[TabNum] = gtk_button_new_with_mnemonic (RemLastBLabel);		/* Create button */
     g_signal_connect (G_OBJECT (remlastbutton[TabNum]), "clicked",			/* Connect button */
                   G_CALLBACK (remove_last), GINT_TO_POINTER (TabNum));
     gtk_widget_set_sensitive(remlastbutton[TabNum],FALSE);
-    gtk_tooltips_set_tip (tooltip,remlastbutton[TabNum],removeltt,removeltt);
+    gtk_widget_set_tooltip_text(remlastbutton[TabNum],removeltt);
 
     remallbutton[TabNum] = gtk_button_new_with_mnemonic (RemAllBLabel);			/* Create button */
     g_signal_connect (G_OBJECT (remallbutton[TabNum]), "clicked",			/* Connect button */
                   G_CALLBACK (remove_all), GINT_TO_POINTER (TabNum));
     gtk_widget_set_sensitive(remallbutton[TabNum],FALSE);
-    gtk_tooltips_set_tip (tooltip,remallbutton[TabNum],removeatts,removeatt);
+        gtk_widget_set_tooltip_text(remallbutton[TabNum],removeatts);
 
     for (i=0;i<2;i++) {
 	logcheckb[i] = gtk_check_button_new_with_mnemonic(loglabel[i]);			/* Create check button */
 	g_signal_connect (G_OBJECT (logcheckb[i]), "toggled",				/* Connect button */
 			  G_CALLBACK (islogxy), GINT_TO_POINTER (i));
-	gtk_tooltips_set_tip (tooltip,logcheckb[i],logxytt[i],logxytt[i]);
+        gtk_widget_set_tooltip_text (logcheckb[i],logxytt[i]);
 	gtk_toggle_button_set_active (( GtkToggleButton *) logcheckb[i], logxy[TabNum][i]);
     }
 
@@ -1093,7 +1091,7 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     UseErrCheckB = gtk_check_button_new_with_mnemonic(PrintErrCBLabel);
     g_signal_connect (G_OBJECT (UseErrCheckB), "toggled",
 		      G_CALLBACK (UseErrCB), GINT_TO_POINTER (TabNum));
-    gtk_tooltips_set_tip (tooltip,UseErrCheckB,uetts,uett);
+    gtk_widget_set_tooltip_text (UseErrCheckB,uetts);
     gtk_toggle_button_set_active (( GtkToggleButton *) UseErrCheckB, UseErrors[TabNum]);
 
     Elabel = gtk_label_new (NULL);
@@ -1132,7 +1130,7 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     gtk_editable_set_editable((GtkEditable *) file_entry[TabNum],TRUE);
     g_signal_connect (G_OBJECT (file_entry[TabNum]), "changed",				/* Init the entry to call */
                     G_CALLBACK (read_file_entry), GINT_TO_POINTER (TabNum));
-    gtk_tooltips_set_tip (tooltip,file_entry[TabNum],filenamett,filenamett);
+    gtk_widget_set_tooltip_text(file_entry[TabNum],filenamett);
 
     if (FileInCwd) {
 	snprintf(buf2, 256, "%s.dat",basename(filename));
@@ -1157,7 +1155,7 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
 
     g_signal_connect (G_OBJECT (exportbutton[TabNum]), "clicked",
                   G_CALLBACK (print_results), GINT_TO_POINTER(FALSE));
-    gtk_tooltips_set_tip (tooltip,exportbutton[TabNum],printrestt,printrestt);
+    gtk_widget_set_tooltip_text(exportbutton[TabNum],printrestt);
 
     brvbox = gtk_vbox_new (FALSE, GROUP_SEP);
     gtk_box_pack_start (GTK_BOX (bottomhbox), brvbox, TRUE, TRUE, 0);
@@ -1230,8 +1228,6 @@ void drag_data_received(GtkWidget *widget,
   gint		i;
   GtkWidget	*dialog;
 
-//printf("DnD received\n");
-
     switch (info) {
 	case URI_LIST: {
 //	    printf("Received uri : %s\n", (gchar *) data->data);
@@ -1248,7 +1244,6 @@ void drag_data_received(GtkWidget *widget,
 	    }
 	    strncpy(filename,&(c[strlen(URI_IDENTIFIER)]),256);
 	    for (i=0;i<strlen(filename);i++) if (filename[i] == '\n') filename[i] = '\0';
-//printf("Opening file >%s<\n",filename);
 	    SetupNewTab(filename, 1.0, -1, -1, FALSE);
 	    break;
 	}
@@ -1265,11 +1260,6 @@ void drag_data_received(GtkWidget *widget,
                         int width = gdk_pixbuf_get_width(pbuf);
                         int height = gdk_pixbuf_get_height(pbuf);
                         printf("Received image of size %d x %d\n", width, height);  // Print debugging information
-/*                        snprintf(tmp, sizeof(tmp), "%d", width);
-                        newImage->setAttribute("width", tmp);
- 
-                        snprintf(tmp, sizeof(tmp), "%d", height);
-                        newImage->setAttribute("height", tmp); */
                     }
                 }
             }
@@ -1606,7 +1596,6 @@ int main (int argc, char **argv)
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);					/* Create window */
     gtk_window_set_default_size((GtkWindow *) window, 640, 480);
     gtk_window_set_title(GTK_WINDOW (window), Window_Title_NoneOpen);			/* Set window title */
-    gtk_window_set_policy(GTK_WINDOW (window), FALSE, FALSE, TRUE);
     gtk_window_set_resizable(GTK_WINDOW (window), TRUE);
     gtk_container_set_border_width(GTK_CONTAINER (window), 0);				/* Set borders in window */
     mainvbox = gtk_vbox_new(FALSE, 0);

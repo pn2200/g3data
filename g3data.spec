@@ -1,4 +1,4 @@
-%define base_version		1.5.2
+%define base_version		1.5.3
 %define rel			1
 
 Summary: Program for extracting the data from scanned graphs
@@ -46,6 +46,9 @@ rm -rf $RPM_BUILD_ROOT
 %doc README.TEST README.SOURCE README.INSTALL test1.png test1.values test2.png test2.values gpl.txt
 
 %changelog
+* Sun Dec 14 2008 Jonas Frantz <jonas.frantz@welho.com>
+- 1.5.3 released:
+   * Updated deprecated symbols
 * Sun Nov 30 2008 Jonas Frantz <jonas.frantz@welho.com>
 - 1.5.2 released:
    * Fixed the "beeping" bug

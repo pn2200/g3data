@@ -37,7 +37,7 @@ Authors email : jonas.frantz@welho.com
 #define MARKERTHICKNESS 2				/* Axis marker thickness */
 #define MAXPOINTS 256					/* Maximum number of points per memory allocation */
 #define MAXNUMTABS 128					/* Maximum number of open tabs */
-#define VERSION "1.5.1"					/* Version number */
+#define VERSION "1.5.2"					/* Version number */
 #define MOVETRESHOLD 3
 
 #define ACTIONBNUM 2

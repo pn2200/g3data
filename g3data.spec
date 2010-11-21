@@ -1,4 +1,4 @@
-%define base_version		1.5.1
+%define base_version		1.5.2
 %define rel			1
 
 Summary: Program for extracting the data from scanned graphs
@@ -7,8 +7,8 @@ Version: %{base_version}
 Release: %{rel}
 License: GPL
 Group: Applications/Engineering
-URL: http://www.acclab.helsinki.fi/~frantz/software/g3data.php
-Source0: http://www.acclab.helsinki.fi/~frantz/software/g3data-%{version}.tar.gz
+URL: http://www.frantz.fi/software/g3data.php
+Source0: http://www.frantz.fi/software/g3data-%{version}.tar.gz
 BuildRoot: %{_tmppath}/g3data-%{version}-root
 
 Requires: gtk2
@@ -46,8 +46,11 @@ rm -rf $RPM_BUILD_ROOT
 %doc README.TEST README.SOURCE README.INSTALL test1.png test1.values test2.png test2.values gpl.txt
 
 %changelog
+* Sun Nov 30 2008 Jonas Frantz <jonas.frantz@welho.com>
+- 1.5.2 released:
+   * Fixed the "beeping" bug
 * Fri Mar 16 2007 Jonas Frantz <jonas.frantz@welho.com>
-- 1.5.1 released :
+- 1.5.1 released:
    * Added basic drag-n-drop support, current version only supports uri drops
    * Added preliminary basis for datapoint movement
    * Minor GUI changes

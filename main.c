@@ -337,13 +337,13 @@ gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data
 	if (valueset[TabNum][0] && valueset[TabNum][1] && valueset[TabNum][2] && valueset[TabNum][3]) {
 	    CalcVal = CalcPointValue(x,y,TabNum);
 
-	    sprintf(buf,"%.12g",CalcVal.Xv);
+	    sprintf(buf,"%16.10g",CalcVal.Xv);
 	    gtk_entry_set_text(GTK_ENTRY(xc_entry[TabNum]),buf);			/* Put out coordinates in entries */
-	    sprintf(buf,"%.12g",CalcVal.Yv);
+	    sprintf(buf,"%16.10g",CalcVal.Yv);
 	    gtk_entry_set_text(GTK_ENTRY(yc_entry[TabNum]),buf);
-	    sprintf(buf,"%.12g",CalcVal.Xerr);
+	    sprintf(buf,"%16.10g",CalcVal.Xerr);
 	    gtk_entry_set_text(GTK_ENTRY(xerr_entry[TabNum]),buf);			/* Put out coordinates in entries */
-	    sprintf(buf,"%.12g",CalcVal.Yerr);
+	    sprintf(buf,"%16.10g",CalcVal.Yerr);
 	    gtk_entry_set_text(GTK_ENTRY(yerr_entry[TabNum]),buf);
 	}
 	else {

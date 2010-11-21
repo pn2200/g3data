@@ -22,7 +22,6 @@ drawing.o: drawing.c main.h
 g3data.1.gz: g3data.sgml
 	rm -f *.1
 	onsgmls g3data.sgml | sgmlspl /usr/share/sgml/docbook/utils-0.6.14/helpers/docbook2man-spec.pl
-	mv *.1 g3data.1
 	gzip g3data.1
 
 clean:

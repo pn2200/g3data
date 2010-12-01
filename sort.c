@@ -25,56 +25,37 @@ Authors email : jonas.frantz@welho.com
 */
 
 #include <gtk/gtk.h>
+#include <stdlib.h>
 #include "main.h"
 
-/****************************************************************/
-/* The following sorting functions is a copy of the example in  */
-/* K & R C programming 2nd ed. page 120. Some sort of quicksort.*/
-/****************************************************************/
-void swap3(struct PointValue *RealPos, gint i, gint j)
+/**********************************/
+/* Sort points by x- or y-values  */
+/**********************************/
+gint compare_x(const void *a, const void *b)
 {
-  struct PointValue tmp;
-
-    tmp.Xv = RealPos[i].Xv;
-    tmp.Yv = RealPos[i].Yv;
-    tmp.Xerr = RealPos[i].Xerr;
-    tmp.Yerr = RealPos[i].Yerr;
-    RealPos[i].Xv = RealPos[j].Xv;
-    RealPos[i].Yv = RealPos[j].Yv;
-    RealPos[i].Xerr = RealPos[j].Xerr;
-    RealPos[i].Yerr = RealPos[j].Yerr;
-    RealPos[j].Xv = tmp.Xv;
-    RealPos[j].Yv = tmp.Yv;
-    RealPos[j].Xerr = tmp.Xerr;
-    RealPos[j].Yerr = tmp.Yerr;
+    const struct PointValue *da = (const struct PointValue *) a;
+    const struct PointValue *db = (const struct PointValue *) b;
+    
+    return (da->Xv > db->Xv) - (da->Xv < db->Xv);
 }
 
 
-gint compare3(struct PointValue *RealPos, gint i, gint j, gint orderv)
+gint compare_y(const void *a, const void *b)
 {
-    if (orderv == 1) {
-	if (RealPos[i].Xv < RealPos[j].Xv) return (-1);
-	else return (1);
+    const struct PointValue *da = (const struct PointValue *) a;
+    const struct PointValue *db = (const struct PointValue *) b;
+    
+    return (da->Yv > db->Yv) - (da->Yv < db->Yv);
+}
+
+
+void Order(struct PointValue *RealPos, gint count, gint ordering)
+{
+    /* Sort by x-values */
+    if (ordering == 1) {
+        qsort(RealPos, count, sizeof (struct PointValue), compare_x);
     } else {
-	if (RealPos[i].Yv < RealPos[j].Yv) return (-1);
-	else return (1);
+    /* Sort by y-values */
+        qsort(RealPos, count, sizeof (struct PointValue), compare_y);
     }
-}
-
-
-void Order(struct PointValue *RealPos, gint left, gint right, gint ordering)
-{
-  gint i,last;
-
-    if (left>=right) return;
- 
-    swap3(RealPos, left, (left+right)/2);
-   
-    last = left;
- 
-    for (i=left+1;i<=right;i++) if (compare3(RealPos,i,left,ordering)<0) swap3(RealPos, ++last, i);
-          
-    swap3(RealPos, left, last);
-    Order(RealPos, left, last-1, ordering);
-    Order(RealPos, last+1, right, ordering);
 }

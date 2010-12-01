@@ -32,7 +32,7 @@ Authors email : jonas.frantz@welho.com
 
 /* Extern functions */
 
-extern	void	Order(struct PointValue *RealPos, gint left, gint right, gint ordering);
+extern	void	Order(struct PointValue *RealPos, gint count, gint ordering);
 
 /* Extern variables */
 
@@ -178,7 +178,7 @@ void print_results(GtkWidget *widget, gpointer func_data)
     }
 
     if (ordering[ViewedTabNum] != 0) {
-	Order(RealPos, 0, numpoints[ViewedTabNum]-1, ordering[ViewedTabNum]);
+	Order(RealPos, numpoints[ViewedTabNum], ordering[ViewedTabNum]);
     }
 
 /* Print results to stdout or file */

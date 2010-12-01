@@ -1306,7 +1306,7 @@ GCallback menu_file_open(void)
 
     scalelabel = gtk_label_new(scale_string);
 
-    scaleadj = (GtkAdjustment *) gtk_adjustment_new(1, 0.1, 100, 0.1, 0.1, 1);
+    scaleadj = (GtkAdjustment *) gtk_adjustment_new(1, 0.1, 100, 0.1, 0.1, 0);
     scalespinbutton = gtk_spin_button_new(scaleadj, 0.1, 1);
 
     gtk_box_pack_start (GTK_BOX (hboxextra), scalelabel, FALSE, FALSE, 0);

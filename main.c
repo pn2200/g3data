@@ -1246,7 +1246,9 @@ void drag_data_received(GtkWidget *widget,
 		break;
 	    }
 	    strncpy(filename,&(c[strlen(URI_IDENTIFIER)]),256);
-	    for (i=0;i<strlen(filename);i++) if (filename[i] == '\n') filename[i] = '\0';
+	    for (i=0;i<strlen(filename);i++)
+            if (filename[i] == '\n' || filename[i] == '\r')
+                filename[i] = '\0';
 	    SetupNewTab(filename, 1.0, -1, -1, FALSE);
 	    break;
 	}

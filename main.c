@@ -62,7 +62,7 @@ GtkWidget	*file_entry[MAXNUMTABS], *nump_entry[MAXNUMTABS];
 GtkWidget	*xerr_entry[MAXNUMTABS],*yerr_entry[MAXNUMTABS];			/* Coordinate and filename entries */
 GtkWidget       *logbox[MAXNUMTABS] = {NULL}, *zoomareabox[MAXNUMTABS] = {NULL}, *oppropbox[MAXNUMTABS] = {NULL};
 GtkWidget	*pm_label, *pm_label2, *file_label;
-GtkWidget	*ViewPort;
+GtkWidget	*ViewPort = NULL;
 GdkColor        *colors;								/* Pointer to colors */
 GdkPixbuf       *gpbimage[MAXNUMTABS];
 GtkWidget	*mainnotebook;
@@ -619,6 +619,8 @@ gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer)
   gdouble adj_val;
   GdkCursor	*cursor;
 
+    if (ViewPort != NULL) {
+
     if (event->keyval==GDK_Left) {
 	adjustment = gtk_viewport_get_hadjustment((GtkViewport *) ViewPort);
 	adj_val = gtk_adjustment_get_value(adjustment);
@@ -653,6 +655,7 @@ gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer)
 	    gdk_window_set_cursor (drawing_area[ViewedTabNum]->window, cursor);
 	    MovePointMode = TRUE;
 	}
+    }
     }
 
   return 0;

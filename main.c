@@ -281,23 +281,6 @@ gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
 
 
 /****************************************************************/
-/* This function is called when a button is released on the	*/
-/* drawing area, currently this function does not perform any	*/
-/* task.							*/
-/****************************************************************/
-gint button_release_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
-{
-    if (event->button == 1) {
-    }
-    else if (event->button == 2) {
-    }
-    else if (event->button == 3) {
-    }
-    return TRUE;
-}
-
-
-/****************************************************************/
 /* This function is called when movement is detected in the	*/
 /* drawing area, it captures the coordinates and zoom in om the */
 /* position and plots it on the zoom area.			*/
@@ -747,9 +730,6 @@ gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gint
     g_signal_connect (G_OBJECT (drawing_area[TabNum]), "button_press_event",		/* Connect drawing area to */
               G_CALLBACK (button_press_event), GINT_TO_POINTER (TabNum));		/* button_press_event. */
 
-    g_signal_connect (G_OBJECT (drawing_area[TabNum]), "button_release_event",		/* Connect drawing area to */
-              G_CALLBACK (button_release_event), GINT_TO_POINTER (TabNum));		/* button_release_event */
-
     g_signal_connect (G_OBJECT (drawing_area[TabNum]), "motion_notify_event",		/* Connect drawing area to */
               G_CALLBACK (motion_notify_event), GINT_TO_POINTER (TabNum));		/* motion_notify_event. */
 
@@ -769,17 +749,6 @@ gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gint
     return 0;
 }
 
-
-/****************************************************************/
-/* This callback is called when the file - exit menuoptioned is */
-/* selected.							*/
-/****************************************************************/
-GCallback menu_file_exit(void)
-{
-    close_application(NULL,NULL,NULL);
-
-  return NULL;
-}
 
 /****************************************************************/
 /* This callback sets up the thumbnail in the Fileopen dialog.	*/
@@ -1338,24 +1307,6 @@ GCallback menu_file_open(void)
 }
 
 
-/****************************************************************/
-/* This function destroys a dialog.				*/
-/****************************************************************/
-void dialog_destroy( GtkWidget *widget, gpointer data)
-{
-    gtk_grab_remove(GTK_WIDGET(widget));
-}
-
-
-/****************************************************************/
-/* This function closes a dialog.				*/
-/****************************************************************/
-void dialog_close( GtkWidget *widget, gpointer data)
-{
-    gtk_widget_destroy(GTK_WIDGET(data));
-}
-
- 
 /****************************************************************/
 /* This Callback generates the help - about dialog.		*/
 /****************************************************************/

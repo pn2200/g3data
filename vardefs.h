@@ -30,7 +30,7 @@ Authors email : jonas.frantz@welho.com
         { "ViewMenu", NULL, "_View" },
         { "HelpMenu", NULL, "_Help" },
         { "Open", GTK_STOCK_OPEN, "_Open", "<control>O", "Open an image in a new tab", (GCallback) menu_file_open },
-        { "Quit", GTK_STOCK_QUIT, "_Quit", "<control>Q", "Quit program", (GCallback) menu_file_exit },
+        { "Quit", GTK_STOCK_QUIT, "_Quit", "<control>Q", "Quit program", (GCallback) close_application },
         { "About", GTK_STOCK_HELP, "_About", "<control>H", "About g3data", (GCallback) menu_help_about }
   };
 

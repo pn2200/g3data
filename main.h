@@ -46,11 +46,6 @@ struct PointValue {
 };
 
 typedef enum {
-  PRINT2STDOUT = 0,
-  PRINT2FILE
-} ACTION;
-
-typedef enum {
     URI_LIST,
     PNG_DATA,
     JPEG_DATA,

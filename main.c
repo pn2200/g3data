@@ -78,10 +78,10 @@ gint		remthis = 0, ordering[MAXNUMTABS];					/* Various control variables */
 gint		XSize[MAXNUMTABS], YSize[MAXNUMTABS];
 gint		file_name_length[MAXNUMTABS];
 gint 		MaxPoints[MAXNUMTABS] = {MAXPOINTS};
-gint		Action[MAXNUMTABS];
 gint		ViewedTabNum = -1;							/* The currently viewed tab */
 gint		NoteBookNumPages = 0;
 gdouble		realcoords[MAXNUMTABS][4];						/* X,Y coords on graph */
+gboolean	print2file[MAXNUMTABS];
 gboolean	UseErrors[MAXNUMTABS], WinFullScreen;
 gboolean	setxypressed[MAXNUMTABS][4];
 gboolean	bpressed[MAXNUMTABS][4];						/* What axispoints have been set out ? */
@@ -108,7 +108,7 @@ extern	gboolean setcolors(GdkColor **color);
 
 void remove_last(GtkWidget *widget, gpointer data);
 void SetOrdering(GtkWidget *widget, gpointer func_data);
-void SetAction(GtkWidget *widget, gpointer func_data);
+void SetAction(GtkWidget *widget);
 void UseErrCB(GtkWidget *widget, gpointer func_data);
 void read_file_entry(GtkWidget *entry, gpointer func_data);
 
@@ -133,7 +133,7 @@ void SetButtonSensitivity(int TabNum)
 {
   char ttbuf[256];
 
-    if (Action[TabNum] == PRINT2FILE) {
+    if (print2file[TabNum] == TRUE) {
 	snprintf(ttbuf, sizeof(ttbuf), printfilett, gtk_entry_get_text(GTK_ENTRY (file_entry[TabNum])));
         gtk_widget_set_tooltip_text(exportbutton[TabNum],ttbuf);
 
@@ -436,9 +436,9 @@ void SetOrdering(GtkWidget *widget, gpointer func_data)
 
 /****************************************************************/
 /****************************************************************/
-void SetAction(GtkWidget *widget, gpointer func_data)
+void SetAction(GtkWidget *widget)
 {
-    Action[ViewedTabNum] = GPOINTER_TO_INT (func_data);
+    print2file[ViewedTabNum] = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
     SetButtonSensitivity(ViewedTabNum);
 }
 
@@ -819,7 +819,7 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
   GtkWidget	*APlabel, *PIlabel, *ZAlabel, *Llabel, *tab_label;
   GtkWidget 	*alignment, *fixed;
   GtkWidget 	*x_label, *y_label, *tmplabel;
-  GtkWidget	*ordercheckb[3], *UseErrCheckB, *actioncheckb[2];
+  GtkWidget	*ordercheckb[3], *UseErrCheckB, *print_to_stdout_button, *print_to_file_button;
   GtkWidget	*Olabel, *Elabel, *Alabel;
   GSList 	*group;
   GtkWidget	*dialog;
@@ -1109,24 +1109,24 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     subvbox = gtk_vbox_new (FALSE, ELEM_SEP);
     gtk_box_pack_start (GTK_BOX (blvbox), subvbox, FALSE, FALSE, 0);
     group = NULL;
-    for (i=0;i<ACTIONBNUM;i++) {
-	actioncheckb[i] = gtk_radio_button_new_with_label (group, actionlabel[i]);	/* Create radio button */
-	g_signal_connect (G_OBJECT (actioncheckb[i]), "toggled",			/* Connect button */
-			  G_CALLBACK (SetAction), GINT_TO_POINTER (i));
-	group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (actioncheckb[i]));	/* Get buttons group */
-    }
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (actioncheckb[0]), TRUE);		/* Set no ordering button active */
+    print_to_stdout_button = gtk_radio_button_new_with_label (group, actionlabel[0]);
+	group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (print_to_stdout_button));	/* Get buttons group */
+    print_to_file_button = gtk_radio_button_new_with_label (group, actionlabel[1]);
+	g_signal_connect (G_OBJECT (print_to_file_button), "toggled",			/* Connect to toggled signal of only print_to_file_button */
+			  G_CALLBACK (SetAction), NULL);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (print_to_stdout_button), TRUE);		/* Set no ordering button active */
 
     Alabel = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (Alabel), Aheader);
     alignment = gtk_alignment_new (0, 1, 0, 0);
     gtk_container_add((GtkContainer *) alignment, Alabel);
     gtk_box_pack_start (GTK_BOX (subvbox), alignment, FALSE, FALSE, 0);
-    for (i=0;i<ACTIONBNUM;i++) {
 	fixed = gtk_fixed_new ();
-	gtk_fixed_put((GtkFixed *) fixed, actioncheckb[i], FRAME_INDENT, 0);
+	gtk_fixed_put((GtkFixed *) fixed, print_to_stdout_button, FRAME_INDENT, 0);
 	gtk_box_pack_start (GTK_BOX (subvbox), fixed, FALSE, FALSE, 0);
-    }
+	fixed = gtk_fixed_new ();
+	gtk_fixed_put((GtkFixed *) fixed, print_to_file_button, FRAME_INDENT, 0);
+	gtk_box_pack_start (GTK_BOX (subvbox), fixed, FALSE, FALSE, 0);
 
     file_entry[TabNum] = gtk_entry_new();						/* Create text entry */
     gtk_entry_set_max_length (GTK_ENTRY (file_entry[TabNum]), 256);

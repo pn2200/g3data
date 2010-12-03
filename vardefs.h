@@ -29,20 +29,20 @@ Authors email : jonas.frantz@welho.com
         { "FileMenu", NULL, "_File" },
         { "ViewMenu", NULL, "_View" },
         { "HelpMenu", NULL, "_Help" },
-        { "Open", GTK_STOCK_OPEN, "_Open", "<control>O", "Open an image in a new tab", (GCallback) menu_file_open },
-        { "Quit", GTK_STOCK_QUIT, "_Quit", "<control>Q", "Quit program", (GCallback) close_application },
-        { "About", GTK_STOCK_HELP, "_About", "<control>H", "About g3data", (GCallback) menu_help_about }
+        { "Open", GTK_STOCK_OPEN, "_Open", "<control>O", "Open an image in a new tab", G_CALLBACK( menu_file_open ) },
+        { "Quit", GTK_STOCK_QUIT, "_Quit", "<control>Q", "Quit program", G_CALLBACK( close_application ) },
+        { "About", GTK_STOCK_HELP, "_About", "<control>H", "About g3data", G_CALLBACK( menu_help_about ) }
   };
 
   GtkActionEntry closeaction[] = {
-        { "Close", GTK_STOCK_CLOSE, "_Close", "<control>C", "Close current tab", (GCallback) menu_tab_close }
+        { "Close", GTK_STOCK_CLOSE, "_Close", "<control>C", "Close current tab", G_CALLBACK( menu_tab_close ) }
   };
 
   GtkToggleActionEntry toggle_entries[] = {
-	{ "Zoom area", NULL, "Zoom area", "F5", "Hide zoom area", (GCallback) hide_zoom_area_callback, FALSE },
-	{ "Axis settings", NULL, "Axis settings", "F6", "Hide axis settings", (GCallback) hide_axis_settings_callback, FALSE },
-	{ "Output properties", NULL, "Output properties", "F7", "Hide output properties", (GCallback) hide_output_prop_callback, FALSE },
-	{ "FullScreen", NULL, "_Full Screen", "F11", "Switch between full screen and windowed mode", (GCallback) full_screen_action_callback, FALSE }
+	{ "Zoom area", NULL, "Zoom area", "F5", "Hide zoom area", G_CALLBACK( hide_zoom_area_callback ), FALSE },
+	{ "Axis settings", NULL, "Axis settings", "F6", "Hide axis settings", G_CALLBACK( hide_axis_settings_callback ), FALSE },
+	{ "Output properties", NULL, "Output properties", "F7", "Hide output properties", G_CALLBACK( hide_output_prop_callback ), FALSE },
+	{ "FullScreen", NULL, "_Full Screen", "F11", "Switch between full screen and windowed mode", G_CALLBACK( full_screen_action_callback ), FALSE }
   };
 
 /* Menu definitions */

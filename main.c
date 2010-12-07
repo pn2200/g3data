@@ -1324,7 +1324,7 @@ GCallback menu_help_about(void)
 	"comments", COMMENTS,
 	"copyright", COPYRIGHT,
 	"license", LICENSE,
-	"name", PROGNAME,
+	"program-name", PROGNAME,
 	"version", VERSION,
 	"website", HOMEPAGEURL,
 	"website-label", HOMEPAGELABEL,

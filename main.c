@@ -865,7 +865,21 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
 	}
     }
 
-    for(i=0;i<4;i++) {
+    for (i=0;i<4;i++) {
+    /* buttons for setting axis points x_1, x_2, etc. */
+	tmplabel = gtk_label_new(NULL);
+	gtk_label_set_markup_with_mnemonic((GtkLabel *) tmplabel, setxylabel[i]);
+	setxybutton[TabNum][i] = gtk_toggle_button_new();				/* Create button */
+	gtk_container_add((GtkContainer *) setxybutton[TabNum][i], tmplabel);
+	g_signal_connect (G_OBJECT (setxybutton[TabNum][i]), "toggled",			/* Connect button */
+			  G_CALLBACK (toggle_xy), GINT_TO_POINTER (i));
+        gtk_widget_set_tooltip_text(setxybutton[TabNum][i],setxytts[i]);
+
+    /* labels for axis points x_1, x_2, etc. */
+	xy_label[i] = gtk_label_new(NULL);
+	gtk_label_set_markup((GtkLabel *) xy_label[i], xy_label_text[i]);
+
+    /* text entries to enter axis points x_1, x_2, etc. */
 	xyentry[TabNum][i] = gtk_entry_new();  						/* Create text entry */
 	gtk_entry_set_max_length (GTK_ENTRY (xyentry[TabNum][i]), 20);
 	gtk_editable_set_editable((GtkEditable *) xyentry[TabNum][i],FALSE);
@@ -903,21 +917,6 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     gtk_widget_set_size_request (zoom_area[TabNum], ZOOMPIXSIZE, ZOOMPIXSIZE);
 
     setcolors(&colors);
-
-    for (i=0;i<4;i++) {
-	xy_label[i] = gtk_label_new(NULL);
-	gtk_label_set_markup((GtkLabel *) xy_label[i], xy_label_text[i]);
-    }
-
-    for (i=0;i<4;i++) {
-	tmplabel = gtk_label_new(NULL);
-	gtk_label_set_markup_with_mnemonic((GtkLabel *) tmplabel, setxylabel[i]);
-	setxybutton[TabNum][i] = gtk_toggle_button_new();				/* Create button */
-	gtk_container_add((GtkContainer *) setxybutton[TabNum][i], tmplabel);
-	g_signal_connect (G_OBJECT (setxybutton[TabNum][i]), "toggled",			/* Connect button */
-			  G_CALLBACK (toggle_xy), GINT_TO_POINTER (i));
-        gtk_widget_set_tooltip_text(setxybutton[TabNum][i],setxytts[i]);
-    }
 
     remlastbutton[TabNum] = gtk_button_new_with_mnemonic (RemLastBLabel);		/* Create button */
     g_signal_connect (G_OBJECT (remlastbutton[TabNum]), "clicked",			/* Connect button */

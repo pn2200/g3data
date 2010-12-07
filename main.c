@@ -1584,9 +1584,11 @@ int main (int argc, char **argv)
 /* Create menues */
     action_group = gtk_action_group_new("MenuActions");
     gtk_action_group_add_actions(action_group, entries, G_N_ELEMENTS (entries), window);
-    gtk_action_group_add_toggle_actions(action_group, toggle_entries, G_N_ELEMENTS (toggle_entries), window);
+    gtk_action_group_add_toggle_actions(action_group, full_screen, G_N_ELEMENTS (full_screen), window);
+
     tab_action_group = gtk_action_group_new("TabActions");
     gtk_action_group_add_actions(tab_action_group, closeaction, G_N_ELEMENTS (closeaction), window);
+    gtk_action_group_add_toggle_actions(tab_action_group, toggle_entries, G_N_ELEMENTS (toggle_entries), window);
     gtk_action_group_set_sensitive(tab_action_group, FALSE);
 
     ui_manager = gtk_ui_manager_new();

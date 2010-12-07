@@ -41,10 +41,12 @@ Authors email : jonas.frantz@welho.com
   GtkToggleActionEntry toggle_entries[] = {
 	{ "Zoom area", NULL, "Zoom area", "F5", "Zoom area", G_CALLBACK( hide_zoom_area_callback ), TRUE },
 	{ "Axis settings", NULL, "Axis settings", "F6", "Axis settings", G_CALLBACK( hide_axis_settings_callback ), TRUE },
-	{ "Output properties", NULL, "Output properties", "F7", "Output properties", G_CALLBACK( hide_output_prop_callback ), TRUE },
-	{ "FullScreen", NULL, "_Full Screen", "F11", "Switch between full screen and windowed mode", G_CALLBACK( full_screen_action_callback ), FALSE }
+	{ "Output properties", NULL, "Output properties", "F7", "Output properties", G_CALLBACK( hide_output_prop_callback ), TRUE }
   };
 
+  GtkToggleActionEntry full_screen[] = {
+	{ "FullScreen", NULL, "_Full Screen", "F11", "Switch between full screen and windowed mode", G_CALLBACK( full_screen_action_callback ), FALSE }
+  };
 /* Menu definitions */
   char *ui_description =
         "<ui>"

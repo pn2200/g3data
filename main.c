@@ -786,7 +786,7 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
   GtkWidget 	*logcheckb[2];								/* Logarithmic checkbuttons */
   GtkWidget 	*nump_label, *ScrollWindow;						/* Various widgets */
   GtkWidget	*APlabel, *PIlabel, *ZAlabel, *Llabel, *tab_label;
-  GtkWidget 	*alignment, *fixed;
+  GtkWidget 	*alignment;
   GtkWidget 	*x_label, *y_label, *tmplabel;
   GtkWidget	*ordercheckb[3], *UseErrCheckB, *print_to_stdout_button, *print_to_file_button;
   GtkWidget	*Olabel, *Elabel, *Alabel;
@@ -889,6 +889,7 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
         gtk_widget_set_tooltip_text (xyentry[TabNum][i],entryxytt[i]);
     }
 
+    /* Processing information labels and text entries */
     x_label = gtk_label_new(x_string);
     y_label = gtk_label_new(y_string);
     xc_entry[TabNum] = gtk_entry_new();							/* Create text entry */
@@ -898,8 +899,10 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     gtk_entry_set_max_length (GTK_ENTRY (yc_entry[TabNum]), 16);
     gtk_editable_set_editable((GtkEditable *) yc_entry[TabNum],FALSE);
 
+    /* plus/minus (+/-) symbol labels */
     pm_label = gtk_label_new(pm_string);
     pm_label2 = gtk_label_new(pm_string);
+    /* labels and error text entries */
     xerr_entry[TabNum] = gtk_entry_new();						/* Create text entry */
     gtk_entry_set_max_length (GTK_ENTRY (xerr_entry[TabNum]), 16);
     gtk_editable_set_editable((GtkEditable *) xerr_entry[TabNum],FALSE);
@@ -907,17 +910,20 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     gtk_entry_set_max_length (GTK_ENTRY (yerr_entry[TabNum]), 16);
     gtk_editable_set_editable((GtkEditable *) yerr_entry[TabNum],FALSE);
 
+    /* Number of points label and entry */
     nump_label = gtk_label_new(nump_string);
     nump_entry[TabNum] = gtk_entry_new();						/* Create text entry */
     gtk_entry_set_max_length (GTK_ENTRY (nump_entry[TabNum]), 10);
     gtk_editable_set_editable((GtkEditable *) nump_entry[TabNum],FALSE);
     SetNumPointsEntry(nump_entry[TabNum], numpoints[TabNum]);
 
+    /* Zoom area */
     zoom_area[TabNum] = gtk_drawing_area_new ();					/* Create new drawing area */
     gtk_widget_set_size_request (zoom_area[TabNum], ZOOMPIXSIZE, ZOOMPIXSIZE);
 
     setcolors(&colors);
 
+    /* Remove points buttons and labels */
     remlastbutton[TabNum] = gtk_button_new_with_mnemonic (RemLastBLabel);		/* Create button */
     g_signal_connect (G_OBJECT (remlastbutton[TabNum]), "clicked",			/* Connect button */
                   G_CALLBACK (remove_last), GINT_TO_POINTER (TabNum));
@@ -930,6 +936,7 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     gtk_widget_set_sensitive(remallbutton[TabNum],FALSE);
         gtk_widget_set_tooltip_text(remallbutton[TabNum],removeatts);
 
+    /* Logarithmic axes */
     for (i=0;i<2;i++) {
 	logcheckb[i] = gtk_check_button_new_with_mnemonic(loglabel[i]);			/* Create check button */
 	g_signal_connect (G_OBJECT (logcheckb[i]), "toggled",				/* Connect button */
@@ -948,6 +955,7 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     gtk_table_attach(GTK_TABLE(table), alignment, 0, 1, 1, 2, 5, 5, 0, 0);
     gtk_container_add((GtkContainer *) alignment, bottomhbox);
 
+    /* Packing the axis points labels and entries */
     tlvbox = gtk_vbox_new (FALSE, ELEM_SEP);
     gtk_box_pack_start (GTK_BOX (tophbox), tlvbox, FALSE, FALSE, ELEM_SEP);
     APlabel = gtk_label_new (NULL);
@@ -956,17 +964,16 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     gtk_container_add((GtkContainer *) alignment, APlabel);
     gtk_box_pack_start (GTK_BOX (tlvbox), alignment, FALSE, FALSE, 0);
     table = gtk_table_new(3, 4 ,FALSE);
-    fixed = gtk_fixed_new ();
-    gtk_fixed_put((GtkFixed *) fixed, table, FRAME_INDENT, 0);
     gtk_table_set_row_spacings(GTK_TABLE(table), ELEM_SEP);
     gtk_table_set_col_spacings(GTK_TABLE(table), ELEM_SEP);
-    gtk_box_pack_start (GTK_BOX (tlvbox), fixed, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (tlvbox), table, FALSE, FALSE, 0);
     for (i=0;i<4;i++) {
-	gtk_table_attach(GTK_TABLE(table), setxybutton[TabNum][i], 0, 1, i, i+1, 5, 0, 0, 0);
-	gtk_table_attach(GTK_TABLE(table), xy_label[i], 1, 2, i, i+1, 0, 0, 0, 0);
-	gtk_table_attach(GTK_TABLE(table), xyentry[TabNum][i], 2, 3, i, i+1, 0, 0, 0, 0);
+	    gtk_table_attach_defaults(GTK_TABLE(table), setxybutton[TabNum][i], 0, 1, i, i+1);
+	    gtk_table_attach_defaults(GTK_TABLE(table), xy_label[i], 1, 2, i, i+1);
+	    gtk_table_attach_defaults(GTK_TABLE(table), xyentry[TabNum][i], 2, 3, i, i+1);
     }
 
+    /* Packing the point information boxes */
     trvbox = gtk_vbox_new (FALSE, ELEM_SEP);
     gtk_box_pack_start (GTK_BOX (tophbox), trvbox, FALSE, FALSE, ELEM_SEP);
 
@@ -979,29 +986,27 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     table = gtk_table_new(4, 2 ,FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(table), ELEM_SEP);
     gtk_table_set_col_spacings(GTK_TABLE(table), ELEM_SEP);
-    fixed = gtk_fixed_new ();
-    gtk_fixed_put((GtkFixed *) fixed, table, FRAME_INDENT, 0);
-    gtk_box_pack_start (GTK_BOX (trvbox), fixed, FALSE, FALSE, 0);
-    gtk_table_attach(GTK_TABLE(table), x_label, 0, 1, 0, 1, 0, 0, 0, 0);
-    gtk_table_attach(GTK_TABLE(table), xc_entry[TabNum], 1, 2, 0, 1, 0, 0, 0, 0);
-    gtk_table_attach(GTK_TABLE(table), pm_label, 2, 3, 0, 1, 0, 0, 0, 0);
-    gtk_table_attach(GTK_TABLE(table), xerr_entry[TabNum], 3, 4, 0, 1, 0, 0, 0, 0);
-    gtk_table_attach(GTK_TABLE(table), y_label, 0, 1, 1, 2, 0, 0, 0, 0);
-    gtk_table_attach(GTK_TABLE(table), yc_entry[TabNum], 1, 2, 1, 2, 0, 0, 0, 0);
-    gtk_table_attach(GTK_TABLE(table), pm_label2, 2, 3, 1, 2, 0, 0, 0, 0);
-    gtk_table_attach(GTK_TABLE(table), yerr_entry[TabNum], 3, 4, 1, 2, 0, 0, 0, 0);
+    gtk_box_pack_start (GTK_BOX (trvbox), table, FALSE, FALSE, 0);
+    gtk_table_attach_defaults(GTK_TABLE(table), x_label, 0, 1, 0, 1);
+    gtk_table_attach_defaults(GTK_TABLE(table), xc_entry[TabNum], 1, 2, 0, 1);
+    gtk_table_attach_defaults(GTK_TABLE(table), pm_label, 2, 3, 0, 1);
+    gtk_table_attach_defaults(GTK_TABLE(table), xerr_entry[TabNum], 3, 4, 0, 1);
+    gtk_table_attach_defaults(GTK_TABLE(table), y_label, 0, 1, 1, 2);
+    gtk_table_attach_defaults(GTK_TABLE(table), yc_entry[TabNum], 1, 2, 1, 2);
+    gtk_table_attach_defaults(GTK_TABLE(table), pm_label2, 2, 3, 1, 2);
+    gtk_table_attach_defaults(GTK_TABLE(table), yerr_entry[TabNum], 3, 4, 1, 2);
 
+    /* Pack number of points boxes */
     table = gtk_table_new(3, 1 ,FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(table), 6);
     gtk_table_set_col_spacings(GTK_TABLE(table), 6);
-    fixed = gtk_fixed_new ();
-    gtk_fixed_put((GtkFixed *) fixed, table, FRAME_INDENT, 0);
-    gtk_box_pack_start (GTK_BOX (trvbox), fixed, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (trvbox), table, FALSE, FALSE, 0);
     alignment = gtk_alignment_new (0, 1, 0, 0);
     gtk_container_add((GtkContainer *) alignment, nump_label);
     gtk_table_attach(GTK_TABLE(table), alignment, 0, 1, 0, 1, 0, 0, 0, 0);
     gtk_table_attach(GTK_TABLE(table), nump_entry[TabNum], 1, 2, 0, 1, 0, 0, 0, 0);
 
+    /* Pack remove points buttons */
     blvbox = gtk_vbox_new (FALSE, GROUP_SEP);
     gtk_box_pack_start (GTK_BOX (bottomhbox), blvbox, FALSE, FALSE, ELEM_SEP);
 
@@ -1010,6 +1015,7 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     gtk_box_pack_start (GTK_BOX (subvbox), remlastbutton[TabNum], FALSE, FALSE, 0);	/* Pack button in vert. box */
     gtk_box_pack_start (GTK_BOX (subvbox), remallbutton[TabNum], FALSE, FALSE, 0);		/* Pack button in vert. box */
 
+    /* Pack zoom area */
     subvbox = gtk_vbox_new (FALSE, ELEM_SEP);
     zoomareabox[TabNum] = subvbox;
     gtk_box_pack_start (GTK_BOX (blvbox), subvbox, FALSE, FALSE, 0);
@@ -1018,10 +1024,9 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     alignment = gtk_alignment_new (0, 1, 0, 0);
     gtk_container_add((GtkContainer *) alignment, ZAlabel);
     gtk_box_pack_start (GTK_BOX (subvbox), alignment, FALSE, FALSE, 0);
-    fixed = gtk_fixed_new ();
-    gtk_fixed_put((GtkFixed *) fixed, zoom_area[TabNum], FRAME_INDENT, 0);
-    gtk_box_pack_start (GTK_BOX (subvbox), fixed, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (subvbox), zoom_area[TabNum], FALSE, FALSE, 0);
 
+    /* Pack logarithmic axes */
     subvbox = gtk_vbox_new (FALSE, ELEM_SEP);
     logbox[TabNum] = subvbox;
     gtk_box_pack_start (GTK_BOX (blvbox), subvbox, FALSE, FALSE, 0);
@@ -1031,11 +1036,10 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     gtk_container_add((GtkContainer *) alignment, Llabel);
     gtk_box_pack_start (GTK_BOX (subvbox), alignment, FALSE, FALSE, 0);
     for (i=0;i<2;i++) {
-	fixed = gtk_fixed_new ();
-	gtk_fixed_put((GtkFixed *) fixed, logcheckb[i], FRAME_INDENT, 0);
-	gtk_box_pack_start (GTK_BOX (subvbox), fixed, FALSE, FALSE, 0);			/* Pack checkbutton in vert. box */
+	gtk_box_pack_start (GTK_BOX (subvbox), logcheckb[i], FALSE, FALSE, 0);			/* Pack checkbutton in vert. box */
     }
 
+    /* Create and pack radio buttons for sorting */
     group = NULL;
     for (i=0;i<ORDERBNUM;i++) {
 	ordercheckb[i] = gtk_radio_button_new_with_label (group, orderlabel[i]);	/* Create radio button */
@@ -1054,11 +1058,10 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     gtk_container_add((GtkContainer *) alignment, Olabel);
     gtk_box_pack_start (GTK_BOX (subvbox), alignment, FALSE, FALSE, 0);
     for (i=0;i<ORDERBNUM;i++) {
-	fixed = gtk_fixed_new ();
-	gtk_fixed_put((GtkFixed *) fixed, ordercheckb[i], FRAME_INDENT, 0);
-	gtk_box_pack_start (GTK_BOX (subvbox), fixed, FALSE, FALSE, 0);			/* Pack radiobutton in vert. box */
+	gtk_box_pack_start (GTK_BOX (subvbox), ordercheckb[i], FALSE, FALSE, 0);			/* Pack radiobutton in vert. box */
     }
 
+    /* Create and pack value errors button */
     UseErrCheckB = gtk_check_button_new_with_mnemonic(PrintErrCBLabel);
     g_signal_connect (G_OBJECT (UseErrCheckB), "toggled",
 		      G_CALLBACK (UseErrCB), GINT_TO_POINTER (TabNum));
@@ -1070,10 +1073,9 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     alignment = gtk_alignment_new (0, 1, 0, 0);
     gtk_container_add((GtkContainer *) alignment, Elabel);
     gtk_box_pack_start (GTK_BOX (subvbox), alignment, FALSE, FALSE, 0);
-    fixed = gtk_fixed_new ();
-    gtk_fixed_put((GtkFixed *) fixed, UseErrCheckB, FRAME_INDENT, 0);
-    gtk_box_pack_start (GTK_BOX (subvbox), fixed, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (subvbox), UseErrCheckB, FALSE, FALSE, 0);
 
+    /* Create and pack buttons for output to stdout or file */
     subvbox = gtk_vbox_new (FALSE, ELEM_SEP);
     gtk_box_pack_start (GTK_BOX (blvbox), subvbox, FALSE, FALSE, 0);
     group = NULL;
@@ -1089,12 +1091,8 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     alignment = gtk_alignment_new (0, 1, 0, 0);
     gtk_container_add((GtkContainer *) alignment, Alabel);
     gtk_box_pack_start (GTK_BOX (subvbox), alignment, FALSE, FALSE, 0);
-	fixed = gtk_fixed_new ();
-	gtk_fixed_put((GtkFixed *) fixed, print_to_stdout_button, FRAME_INDENT, 0);
-	gtk_box_pack_start (GTK_BOX (subvbox), fixed, FALSE, FALSE, 0);
-	fixed = gtk_fixed_new ();
-	gtk_fixed_put((GtkFixed *) fixed, print_to_file_button, FRAME_INDENT, 0);
-	gtk_box_pack_start (GTK_BOX (subvbox), fixed, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (subvbox), print_to_stdout_button, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (subvbox), print_to_file_button, FALSE, FALSE, 0);
 
     file_entry[TabNum] = gtk_entry_new();						/* Create text entry */
     gtk_entry_set_max_length (GTK_ENTRY (file_entry[TabNum]), 256);
@@ -1114,9 +1112,7 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     snprintf(buf, 256, Window_Title, FileNames[TabNum]);				/* Print window title in buffer */
     gtk_window_set_title (GTK_WINDOW (window), buf);                    		/* Set window title */
 
-    fixed = gtk_fixed_new ();
-    gtk_fixed_put((GtkFixed *) fixed, file_entry[TabNum], FRAME_INDENT, 0);
-    gtk_box_pack_start (GTK_BOX (subvbox), fixed, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (subvbox), file_entry[TabNum], FALSE, FALSE, 0);
     gtk_widget_set_sensitive(file_entry[TabNum],FALSE);
 
     exportbutton[TabNum] = gtk_button_new_with_mnemonic (PrintBLabel);			/* Create button */
@@ -1133,6 +1129,7 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
 
     gtk_entry_set_text(GTK_ENTRY (file_entry[TabNum]), buf2);				/* Set text of text entry to filename */
 
+    /* Create a scroll window to hold image */
     ScrollWindow = gtk_scrolled_window_new(NULL,NULL);
     gtk_scrolled_window_set_policy ((GtkScrolledWindow *) ScrollWindow, GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     ViewPort = gtk_viewport_new(NULL,NULL);

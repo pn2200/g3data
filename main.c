@@ -88,7 +88,7 @@ gboolean	bpressed[MAXNUMTABS][4];						/* What axispoints have been set out ? */
 gboolean	valueset[MAXNUMTABS][4];
 gboolean	logxy[MAXNUMTABS][2] = {{FALSE,FALSE}};
 gboolean	MovePointMode = FALSE;
-gboolean        HideLog = FALSE, HideZoomArea = FALSE, HideOpProp = FALSE;
+gboolean        ShowLog = FALSE, ShowZoomArea = FALSE, ShowOpProp = FALSE;
 gchar 		*file_name[MAXNUMTABS];							/* Pointer to filename */
 gchar		FileNames[MAXNUMTABS][256];
 FILE		*FP;									/* File pointer */
@@ -1174,9 +1174,18 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     gtk_action_group_set_sensitive(tab_action_group, TRUE);
     NoteBookNumPages++;
 
-    if (HideZoomArea) for (i=0;i<MAXNUMTABS;i++) if (zoomareabox[i] != NULL) gtk_widget_hide(zoomareabox[i]);
-    if (HideLog) for (i=0;i<MAXNUMTABS;i++) if (logbox[i] != NULL) gtk_widget_hide(logbox[i]);
-    if (HideOpProp) for (i=0;i<MAXNUMTABS;i++) if (oppropbox[i] != NULL) gtk_widget_hide(oppropbox[i]);
+    if (ShowZoomArea)
+        for (i = 0; i < MAXNUMTABS; i++)
+            if (zoomareabox[i] != NULL)
+                gtk_widget_show(zoomareabox[i]);
+    if (ShowLog)
+        for (i = 0; i < MAXNUMTABS; i++)
+            if (logbox[i] != NULL)
+                gtk_widget_show(logbox[i]);
+    if (ShowOpProp)
+        for (i = 0; i < MAXNUMTABS; i++)
+            if (oppropbox[i] != NULL)
+                gtk_widget_show(oppropbox[i]);
 
   return 0;
 }
@@ -1371,11 +1380,15 @@ GCallback hide_zoom_area_callback(GtkWidget *widget, gpointer func_data)
   int i;
 
     if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(widget))) {
-        for (i=0;i<MAXNUMTABS;i++) if (zoomareabox[i] != NULL) gtk_widget_hide(zoomareabox[i]);
-	HideZoomArea = TRUE;
+        for (i = 0; i < MAXNUMTABS; i++)
+            if (zoomareabox[i] != NULL)
+                gtk_widget_show(zoomareabox[i]);
+    	ShowZoomArea = TRUE;
     } else {
-        for (i=0;i<MAXNUMTABS;i++) if (zoomareabox[i] != NULL) gtk_widget_show(zoomareabox[i]);
-	HideZoomArea = FALSE;
+        for (i = 0; i < MAXNUMTABS; i++)
+            if (zoomareabox[i] != NULL)
+                gtk_widget_hide(zoomareabox[i]);
+    	ShowZoomArea = FALSE;
     }
   return NULL;
 }
@@ -1388,11 +1401,15 @@ GCallback hide_axis_settings_callback(GtkWidget *widget, gpointer func_data)
   int i;
 
     if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(widget))) {
-        for (i=0;i<MAXNUMTABS;i++) if (logbox[i] != NULL) gtk_widget_hide(logbox[i]);
-	HideLog = TRUE;
+        for (i=0;i<MAXNUMTABS;i++)
+            if (logbox[i] != NULL)
+                gtk_widget_show(logbox[i]);
+    	ShowLog = TRUE;
     } else {
-        for (i=0;i<MAXNUMTABS;i++) if (logbox[i] != NULL) gtk_widget_show(logbox[i]);
-	HideLog = FALSE;
+        for (i=0;i<MAXNUMTABS;i++)
+            if (logbox[i] != NULL)
+                gtk_widget_hide(logbox[i]);
+	    ShowLog = FALSE;
     }
   return NULL;
 }
@@ -1405,11 +1422,15 @@ GCallback hide_output_prop_callback(GtkWidget *widget, gpointer func_data)
   int i;
 
     if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(widget))) {
-        for (i=0;i<MAXNUMTABS;i++) if (oppropbox[i] != NULL) gtk_widget_hide(oppropbox[i]);
-	HideOpProp = TRUE;
+        for (i=0;i<MAXNUMTABS;i++)
+            if (oppropbox[i] != NULL)
+                gtk_widget_show(oppropbox[i]);
+    	ShowOpProp = TRUE;
     } else {
-        for (i=0;i<MAXNUMTABS;i++) if (oppropbox[i] != NULL) gtk_widget_show(oppropbox[i]);
-	HideOpProp = FALSE;
+        for (i=0;i<MAXNUMTABS;i++)
+            if (oppropbox[i] != NULL)
+                gtk_widget_hide(oppropbox[i]);
+    	ShowOpProp = FALSE;
     }
   return NULL;
 }

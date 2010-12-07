@@ -31,7 +31,7 @@ Authors email : jonas.frantz@welho.com
         { "HelpMenu", NULL, "_Help" },
         { "Open", GTK_STOCK_OPEN, "_Open", "<control>O", "Open an image in a new tab", G_CALLBACK( menu_file_open ) },
         { "Quit", GTK_STOCK_QUIT, "_Quit", "<control>Q", "Quit program", G_CALLBACK( close_application ) },
-        { "About", GTK_STOCK_HELP, "_About", "<control>H", "About g3data", G_CALLBACK( menu_help_about ) }
+        { "About", GTK_STOCK_HELP, "_About", "", "About g3data", G_CALLBACK( menu_help_about ) }
   };
 
   GtkActionEntry closeaction[] = {

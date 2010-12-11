@@ -32,7 +32,6 @@ Authors email : jonas.frantz@welho.com
 #include <string.h>									/* Include string library */
 #include <math.h>									/* Include math library */
 #include <libgen.h>
-#include <unistd.h>
 #include "main.h"									/* Include predined variables */
 #include "strings.h"									/* Include strings */
 
@@ -90,7 +89,7 @@ gboolean	logxy[MAXNUMTABS][2] = {{FALSE,FALSE}};
 gboolean	MovePointMode = FALSE;
 gboolean        ShowLog = FALSE, ShowZoomArea = FALSE, ShowOpProp = FALSE;
 gchar 		*file_name[MAXNUMTABS];							/* Pointer to filename */
-gchar		FileNames[MAXNUMTABS][256];
+gchar		*FileNames[MAXNUMTABS];
 FILE		*FP;									/* File pointer */
 
 GtkWidget 	*drawing_area_alignment;
@@ -674,7 +673,6 @@ gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gint
   GdkPixbuf	*loadgpbimage;
   GdkCursor	*cursor;
   GtkWidget	*dialog;
-  gchar 	buf[256];								/* Text buffer for window title */
 
     loadgpbimage = gdk_pixbuf_new_from_file(filename,NULL);				/* Load image */
     if (loadgpbimage==NULL) {								/* If unable to load image */
@@ -691,9 +689,6 @@ gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gint
     }
     XSize[TabNum] = gdk_pixbuf_get_width(loadgpbimage);					/* Get image width */
     YSize[TabNum] = gdk_pixbuf_get_height(loadgpbimage);				/* Get image height */
-
-    sprintf(buf, Window_Title, filename);						/* Print window title in buffer */
-    gtk_window_set_title (GTK_WINDOW (window), buf);					/* Set window title */
 
     mScale = -1;
     if (maxX != -1 && maxY != -1) {
@@ -795,9 +790,9 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
   GSList 	*group;
   GtkWidget	*dialog;
 
-  gchar 	buf[256], buf2[256];
+    gchar buf[256];
+    gchar *buffer, *buffer2;
   gint 		i, TabNum;
-  gboolean	FileInCwd;
   static gint	NumberOfTabs=0;
 
     if (NumberOfTabs == MAXNUMTABS-1) {
@@ -814,14 +809,7 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
 
     NumberOfTabs++;
 
-    strncpy(buf2,filename,256);
-    if (strcmp(dirname(buf2),getcwd(buf,256)) == 0) {
 	tab_label = gtk_label_new(basename(filename));
-	FileInCwd = TRUE;
-    } else {
-	tab_label = gtk_label_new(filename);
-	FileInCwd = FALSE;
-    }
 
     table = gtk_table_new(1, 2 ,FALSE);							/* Create table */
     gtk_container_set_border_width (GTK_CONTAINER (table), WINDOW_BORDER);
@@ -834,6 +822,7 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     }
 
 /* Init datastructures */
+    FileNames[TabNum] = g_strdup_printf("%s", basename(filename));
 
     bpressed[TabNum][0] = FALSE;
     bpressed[TabNum][1] = FALSE;
@@ -1103,16 +1092,9 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
                     G_CALLBACK (read_file_entry), GINT_TO_POINTER (TabNum));
     gtk_widget_set_tooltip_text(file_entry[TabNum],filenamett);
 
-    if (FileInCwd) {
-	snprintf(buf2, 256, "%s.dat",basename(filename));
-	strncpy(FileNames[TabNum], basename(filename), 256);
-    } else {
-	snprintf(buf2, 256, "%s.dat",filename);
-	strncpy(FileNames[TabNum], filename, 256);
-    }
-
-    snprintf(buf, 256, Window_Title, FileNames[TabNum]);				/* Print window title in buffer */
-    gtk_window_set_title (GTK_WINDOW (window), buf);                    		/* Set window title */
+    buffer = g_strdup_printf(Window_Title, filename);
+    buffer2 = g_strdup_printf("%s.dat", filename);
+    gtk_window_set_title (GTK_WINDOW (window), buffer);                    		/* Set window title */
 
     gtk_box_pack_start (GTK_BOX (subvbox), file_entry[TabNum], FALSE, FALSE, 0);
     gtk_widget_set_sensitive(file_entry[TabNum],FALSE);
@@ -1129,7 +1111,7 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     brvbox = gtk_vbox_new (FALSE, GROUP_SEP);
     gtk_box_pack_start (GTK_BOX (bottomhbox), brvbox, TRUE, TRUE, 0);
 
-    gtk_entry_set_text(GTK_ENTRY (file_entry[TabNum]), buf2);				/* Set text of text entry to filename */
+    gtk_entry_set_text(GTK_ENTRY (file_entry[TabNum]), buffer2);				/* Set text of text entry to filename */
 
     /* Create a scroll window to hold image */
     ScrollWindow = gtk_scrolled_window_new(NULL,NULL);
@@ -1443,13 +1425,10 @@ GCallback hide_output_prop_callback(GtkWidget *widget, gpointer func_data)
 GCallback NoteBookTabChange(GtkNotebook *notebook, GtkNotebookPage *page, 
 			    guint page_num, gpointer user_data)
 {
-  gchar		buf[256];
-
     ViewedTabNum = page_num;
-    sprintf(buf, Window_Title, FileNames[ViewedTabNum]);                        	/* Print window title in buffer */
-    gtk_window_set_title (GTK_WINDOW (window), buf);                    		/* Set window title */
+    gtk_window_set_title (GTK_WINDOW (window), FileNames[ViewedTabNum]);
 
-  return NULL;
+    return NULL;
 }
 
 

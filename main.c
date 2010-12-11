@@ -82,7 +82,7 @@ gint		ViewedTabNum = -1;							/* The currently viewed tab */
 gint		NoteBookNumPages = 0;
 gdouble		realcoords[MAXNUMTABS][4];						/* X,Y coords on graph */
 gboolean	print2file[MAXNUMTABS];
-gboolean	UseErrors[MAXNUMTABS], WinFullScreen;
+gboolean	UseErrors[MAXNUMTABS];
 gboolean	setxypressed[MAXNUMTABS][4];
 gboolean	bpressed[MAXNUMTABS][4];						/* What axispoints have been set out ? */
 gboolean	valueset[MAXNUMTABS][4];
@@ -1364,10 +1364,8 @@ GCallback full_screen_action_callback(GtkWidget *widget, gpointer func_data)
 {
     if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(widget))) {
 	gtk_window_fullscreen(GTK_WINDOW (window));
-	WinFullScreen = TRUE;
     } else {
 	gtk_window_unfullscreen(GTK_WINDOW (window));
-	WinFullScreen = FALSE;
     }
   return NULL;
 }

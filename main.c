@@ -790,7 +790,7 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
   GSList 	*group;
   GtkWidget	*dialog;
 
-    gchar buf[256];
+    gchar buf[20];
     gchar *buffer, *buffer2;
   gint 		i, TabNum;
   static gint	NumberOfTabs=0;
@@ -1144,7 +1144,7 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
 	for (i=0;i<4;i++) {
 	    gtk_widget_set_sensitive(xyentry[TabNum][i],TRUE);
 	    gtk_editable_set_editable(GTK_EDITABLE(xyentry[TabNum][i]),TRUE);
-	    sprintf(buf,"%lf",realcoords[TabNum][i]);
+        g_ascii_formatd(buf, 20, "%lf", realcoords[TabNum][i]);
 	    gtk_entry_set_text(GTK_ENTRY(xyentry[TabNum][i]), buf);
 	    lastpoints[TabNum][numlastpoints[TabNum]]=-(i+1);
 	    numlastpoints[TabNum]++;

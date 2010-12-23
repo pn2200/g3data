@@ -28,6 +28,9 @@ Authors email : jonas.frantz@welho.com
 #include <gtk/gtk.h>
 #include "main.h"
 
+#define MARKERLENGTH 6					/* Axis marker length */
+#define MARKERTHICKNESS 2				/* Axis marker thickness */
+
 /****************************************************************/
 /* This function draws the X-axis, Y-axis or point marker on	*/
 /* the drawing_area depending on the value of the type		*/
@@ -35,31 +38,29 @@ Authors email : jonas.frantz@welho.com
 /****************************************************************/
 void DrawMarker(GtkWidget *da, gint x, gint y, gint type, GdkColor *color) 
 {
-  GdkGC *bpegc;
+    cairo_t *cr = gdk_cairo_create(gtk_widget_get_window(da));
 
-    bpegc = gdk_gc_new (da->window);
-
-    if (type==0) {
-	gdk_gc_set_foreground (bpegc, &color[0]);
-	gdk_draw_rectangle(da->window,bpegc,TRUE,
-			   x-MARKERLENGTH,y-MARKERTHICKNESS/2,MARKERLENGTH*2+1,MARKERTHICKNESS+1);
-	gdk_draw_rectangle(da->window,bpegc,TRUE,
-			   x-MARKERTHICKNESS/2,y-MARKERLENGTH,MARKERTHICKNESS+1,MARKERLENGTH+1);
-    } else if (type==1) {
-	gdk_gc_set_foreground (bpegc, &color[1]);
-	gdk_draw_rectangle(da->window,bpegc,TRUE,
-			   x-MARKERTHICKNESS/2,y-MARKERLENGTH,MARKERTHICKNESS+1,MARKERLENGTH*2+1);
-	gdk_draw_rectangle(da->window,bpegc,TRUE,
-			   x,y-MARKERTHICKNESS/2,MARKERLENGTH+1,MARKERTHICKNESS+1);
-    } else {
-	gdk_gc_set_foreground (bpegc, &color[2]);
-	gdk_draw_rectangle(da->window,bpegc,TRUE,
-			   x-OUTERSIZE,y-OUTERSIZE,OUTERSIZE*2+1,OUTERSIZE*2+1);
-	gdk_gc_set_foreground (bpegc, &color[3]);
-	gdk_draw_rectangle(da->window,bpegc,TRUE,
-			   x-INNERSIZE,y-INNERSIZE,INNERSIZE*2+1,INNERSIZE*2+1);
+    if (type == 0) {
+        gdk_cairo_set_source_color(cr, &color[0]);
+        cairo_move_to(cr, x - MARKERLENGTH, y);
+        cairo_rel_line_to(cr, 2 * MARKERLENGTH, 0);
+        cairo_move_to(cr, x, y);
+        cairo_rel_line_to(cr, 0, -MARKERLENGTH);
+        cairo_stroke(cr);
+    } else if (type == 1) {
+        gdk_cairo_set_source_color(cr, &color[1]);
+        cairo_move_to(cr, x, y - MARKERLENGTH);
+        cairo_rel_line_to(cr, 0, 2 * MARKERLENGTH);
+        cairo_move_to(cr, x, y);
+        cairo_rel_line_to(cr, MARKERLENGTH, 0);
+        cairo_stroke(cr);
+    } else if (type == 2) {
+        gdk_cairo_set_source_color(cr, &color[2]);
+        cairo_rectangle(cr, x - MARKERLENGTH / 2, y - MARKERLENGTH / 2, MARKERLENGTH, MARKERLENGTH);
+        cairo_stroke(cr);
     }
-    g_object_unref(bpegc);
+
+    cairo_destroy(cr);
 }
 
 

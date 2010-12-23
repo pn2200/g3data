@@ -351,15 +351,14 @@ gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data
 /****************************************************************/
 static gint expose_event(GtkWidget *widget, GdkEventExpose *event, gpointer data)
 {
-  gint i, TabNum;
+    gint i, TabNum;
+    cairo_t *cr = gdk_cairo_create (gtk_widget_get_window(widget));
 
     TabNum = GPOINTER_TO_INT(data);
 
-    gdk_draw_pixbuf(widget->window,widget->style->white_gc,gpbimage[TabNum],
-		    event->area.x, event->area.y,
-		    event->area.x, event->area.y,
-		    min(event->area.width,XSize[TabNum]), min(event->area.height,YSize[TabNum]),
-		    GDK_RGB_DITHER_NONE,0,0);
+    gdk_cairo_set_source_pixbuf (cr, gpbimage[TabNum], 0, 0);
+    cairo_paint (cr);
+    cairo_destroy (cr);
 
     for (i=0;i<4;i++) if (bpressed[TabNum][i]) DrawMarker(drawing_area[TabNum], axiscoords[TabNum][i][0], axiscoords[TabNum][i][1], i/2, colors);
     for (i=0;i<numpoints[TabNum];i++) DrawMarker(drawing_area[TabNum], points[TabNum][i][0], points[TabNum][i][1], 2, colors);

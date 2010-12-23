@@ -288,17 +288,13 @@ gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data
 {
   gint x, y, TabNum;
   gchar buf[32];
-  GdkModifierType 	state;
   static gboolean 	FirstTime = TRUE;
-  static GdkGC 		*mngc;								/* Graphic context */
   static GdkPixbuf	*gpbzoomimage;
   struct PointValue	CalcVal;
 
     TabNum = GPOINTER_TO_INT(data);
 
-    gdk_window_get_pointer (event->window, &x, &y, &state);				/* Grab mousepointers coordinates */
-											/* on drawing area. */
-    mngc = gdk_gc_new (zoom_area[TabNum]->window);					/* Create graphics context */
+    gdk_window_get_pointer (event->window, &x, &y, NULL);
 
     if (FirstTime) {
 	gpbzoomimage = gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, ZOOMPIXSIZE, ZOOMPIXSIZE);
@@ -340,7 +336,6 @@ gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data
 	gtk_entry_set_text(GTK_ENTRY(xerr_entry[TabNum]),"");
 	gtk_entry_set_text(GTK_ENTRY(yerr_entry[TabNum]),"");
     }
-    g_object_unref(mngc);								/* Kill graphics context */
     return TRUE;
 }
 

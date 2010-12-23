@@ -286,11 +286,11 @@ gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
 /****************************************************************/
 gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data)
 {
-  gint x, y, TabNum;
-  gchar buf[32];
-  static gboolean 	FirstTime = TRUE;
-  static GdkPixbuf	*gpbzoomimage;
-  struct PointValue	CalcVal;
+    gint x, y, TabNum;
+    gchar buf[32];
+    static gboolean FirstTime = TRUE;
+    static GdkPixbuf *gpbzoomimage;
+    struct PointValue CalcVal;
     cairo_t *cr;
 
     TabNum = GPOINTER_TO_INT(data);
@@ -298,46 +298,45 @@ gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data
     gdk_window_get_pointer (event->window, &x, &y, NULL);
 
     if (FirstTime) {
-	gpbzoomimage = gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, ZOOMPIXSIZE, ZOOMPIXSIZE);
-	FirstTime = FALSE;
+        gpbzoomimage = gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, ZOOMPIXSIZE, ZOOMPIXSIZE);
+        FirstTime = FALSE;
     }
 
-    if (x>=0 && y>=0 && x<XSize[TabNum] && y<YSize[TabNum]) {
+    if (x >= 0 && y >= 0 && x < XSize[TabNum] && y < YSize[TabNum]) {
+        gdk_pixbuf_composite(gpbimage[TabNum], gpbzoomimage, 0, 0, ZOOMPIXSIZE, 
+                             ZOOMPIXSIZE, -x*ZOOMFACTOR + ZOOMPIXSIZE/2, 
+                             -y*ZOOMFACTOR + ZOOMPIXSIZE/2, 1.0*ZOOMFACTOR, 
+                             1.0*ZOOMFACTOR, GDK_INTERP_BILINEAR, 255);
+        cr = gdk_cairo_create (gtk_widget_get_window(zoom_area[TabNum]));
+        gdk_cairo_set_source_pixbuf (cr, gpbzoomimage, 0, 0);
+        cairo_paint (cr);
+        cairo_destroy (cr);
 
-	gdk_pixbuf_composite(gpbimage[TabNum], gpbzoomimage, 0, 0, ZOOMPIXSIZE, 
-			     ZOOMPIXSIZE, -x*ZOOMFACTOR + ZOOMPIXSIZE/2, 
-			     -y*ZOOMFACTOR + ZOOMPIXSIZE/2, 1.0*ZOOMFACTOR, 
-			     1.0*ZOOMFACTOR, GDK_INTERP_BILINEAR, 255);
-    cr = gdk_cairo_create (gtk_widget_get_window(zoom_area[TabNum]));
-    gdk_cairo_set_source_pixbuf (cr, gpbzoomimage, 0, 0);
-    cairo_paint (cr);
-    cairo_destroy (cr);
+        /* Then draw the square in the middle of the zoom area */
+        DrawMarker(zoom_area[TabNum], ZOOMPIXSIZE/2, ZOOMPIXSIZE/2, 2, colors);
 
-	DrawMarker(zoom_area[TabNum], ZOOMPIXSIZE/2, ZOOMPIXSIZE/2, 2, colors);		/* Then draw the square in the middle of the zoom area */
+        if (valueset[TabNum][0] && valueset[TabNum][1] && valueset[TabNum][2] && valueset[TabNum][3]) {
+            CalcVal = CalcPointValue(x,y,TabNum);
 
-	if (valueset[TabNum][0] && valueset[TabNum][1] && valueset[TabNum][2] && valueset[TabNum][3]) {
-	    CalcVal = CalcPointValue(x,y,TabNum);
-
-        g_ascii_formatd(buf, 32, "%.5f", CalcVal.Xv);
-        gtk_entry_set_text(GTK_ENTRY(xc_entry[TabNum]),buf);
-        g_ascii_formatd(buf, 32, "%.5f", CalcVal.Yv);
-        gtk_entry_set_text(GTK_ENTRY(yc_entry[TabNum]),buf);
-        g_ascii_formatd(buf, 32, "%.5f", CalcVal.Xerr);
-        gtk_entry_set_text(GTK_ENTRY(xerr_entry[TabNum]),buf);
-        g_ascii_formatd(buf, 32, "%.5f", CalcVal.Yerr);
-        gtk_entry_set_text(GTK_ENTRY(yerr_entry[TabNum]),buf);
-	}
-	else {
-	    gtk_entry_set_text(GTK_ENTRY(xc_entry[TabNum]),"");				/* Else clear entries */
-	    gtk_entry_set_text(GTK_ENTRY(yc_entry[TabNum]),"");
-	    gtk_entry_set_text(GTK_ENTRY(xerr_entry[TabNum]),"");
-	    gtk_entry_set_text(GTK_ENTRY(yerr_entry[TabNum]),"");
-	}
+            g_ascii_formatd(buf, 32, "%.5f", CalcVal.Xv);
+            gtk_entry_set_text(GTK_ENTRY(xc_entry[TabNum]),buf);
+            g_ascii_formatd(buf, 32, "%.5f", CalcVal.Yv);
+            gtk_entry_set_text(GTK_ENTRY(yc_entry[TabNum]),buf);
+            g_ascii_formatd(buf, 32, "%.5f", CalcVal.Xerr);
+            gtk_entry_set_text(GTK_ENTRY(xerr_entry[TabNum]),buf);
+            g_ascii_formatd(buf, 32, "%.5f", CalcVal.Yerr);
+            gtk_entry_set_text(GTK_ENTRY(yerr_entry[TabNum]),buf);
+        } else {
+            gtk_entry_set_text(GTK_ENTRY(xc_entry[TabNum]),"");
+            gtk_entry_set_text(GTK_ENTRY(yc_entry[TabNum]),"");
+            gtk_entry_set_text(GTK_ENTRY(xerr_entry[TabNum]),"");
+            gtk_entry_set_text(GTK_ENTRY(yerr_entry[TabNum]),"");
+        }
     } else {
-	gtk_entry_set_text(GTK_ENTRY(xc_entry[TabNum]),"");				/* Else clear entries */
-	gtk_entry_set_text(GTK_ENTRY(yc_entry[TabNum]),"");
-	gtk_entry_set_text(GTK_ENTRY(xerr_entry[TabNum]),"");
-	gtk_entry_set_text(GTK_ENTRY(yerr_entry[TabNum]),"");
+        gtk_entry_set_text(GTK_ENTRY(xc_entry[TabNum]),"");
+        gtk_entry_set_text(GTK_ENTRY(yc_entry[TabNum]),"");
+        gtk_entry_set_text(GTK_ENTRY(xerr_entry[TabNum]),"");
+        gtk_entry_set_text(GTK_ENTRY(yerr_entry[TabNum]),"");
     }
     return TRUE;
 }

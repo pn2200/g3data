@@ -288,6 +288,7 @@ gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data
 {
     gint x, y, TabNum;
     gchar buf[32];
+    gboolean has_alpha;
     static gboolean FirstTime = TRUE;
     static GdkPixbuf *gpbzoomimage;
     struct PointValue CalcVal;
@@ -298,7 +299,8 @@ gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data
     gdk_window_get_pointer (event->window, &x, &y, NULL);
 
     if (FirstTime) {
-        gpbzoomimage = gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, ZOOMPIXSIZE, ZOOMPIXSIZE);
+        has_alpha = gdk_pixbuf_get_has_alpha(gpbimage[TabNum]);
+        gpbzoomimage = gdk_pixbuf_new (GDK_COLORSPACE_RGB, has_alpha, 8, ZOOMPIXSIZE, ZOOMPIXSIZE);
         FirstTime = FALSE;
     }
 
@@ -663,7 +665,7 @@ gint key_release_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer)
 /* and sets up all of the different signals associated with it.	*/
 /****************************************************************/
 gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gint TabNum) {
-
+  gboolean has_alpha;
   gint 		newX, newY;
   gdouble 	mScale;
   GdkPixbuf	*loadgpbimage;
@@ -685,6 +687,7 @@ gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gint
     }
     XSize[TabNum] = gdk_pixbuf_get_width(loadgpbimage);					/* Get image width */
     YSize[TabNum] = gdk_pixbuf_get_height(loadgpbimage);				/* Get image height */
+    has_alpha = gdk_pixbuf_get_has_alpha(loadgpbimage);
 
     mScale = -1;
     if (maxX != -1 && maxY != -1) {
@@ -699,7 +702,7 @@ gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gint
     if (Scale != -1) {
 	newX = XSize[TabNum]*Scale;
 	newY = YSize[TabNum]*Scale;
-	gpbimage[TabNum] = gdk_pixbuf_new (GDK_COLORSPACE_RGB, FALSE, 8, newX, newY);
+	gpbimage[TabNum] = gdk_pixbuf_new (GDK_COLORSPACE_RGB, has_alpha, 8, newX, newY);
 	gdk_pixbuf_composite(loadgpbimage, gpbimage[TabNum], 0, 0, newX, newY,
 			     0, 0, Scale, Scale, GDK_INTERP_BILINEAR, 255);
 	g_object_unref(loadgpbimage);

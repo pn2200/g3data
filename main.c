@@ -72,7 +72,7 @@ GtkActionGroup	*tab_action_group;
 gint		axiscoords[MAXNUMTABS][4][2];						/* X,Y coordinates of axispoints */
 gint		**points[MAXNUMTABS];							/* Indexes of graphpoints and their coordinates */
 gint		numpoints[MAXNUMTABS];
-gint		remthis = 0, ordering[MAXNUMTABS];					/* Various control variables */
+gint		ordering[MAXNUMTABS];
 gint		XSize[MAXNUMTABS], YSize[MAXNUMTABS];
 gint		file_name_length[MAXNUMTABS];
 gint 		MaxPoints[MAXNUMTABS] = {MAXPOINTS};
@@ -504,10 +504,7 @@ void islogxy(GtkWidget *widget, gpointer func_data)
 }
 
 
-/****************************************************************/
-/* This function removes the last inserted point or the point	*/
-/* indexed by remthis (<0).					*/
-/****************************************************************/
+/* Removes the last data point inserted */
 void remove_last(GtkWidget *widget, gpointer data)
 {
     gint i, TabNum;

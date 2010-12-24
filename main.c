@@ -285,9 +285,6 @@ gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data
 {
     gint x, y, TabNum;
     gchar buf[32];
-    gboolean has_alpha;
-    static gboolean FirstTime = TRUE;
-    static GdkPixbuf *gpbzoomimage;
     struct PointValue CalcVal;
     cairo_t *cr;
 
@@ -295,20 +292,13 @@ gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data
 
     gdk_window_get_pointer (event->window, &x, &y, NULL);
 
-    if (FirstTime) {
-        has_alpha = gdk_pixbuf_get_has_alpha(gpbimage[TabNum]);
-        gpbzoomimage = gdk_pixbuf_new (GDK_COLORSPACE_RGB, has_alpha, 8, ZOOMPIXSIZE, ZOOMPIXSIZE);
-        FirstTime = FALSE;
-    }
-
     if (x >= 0 && y >= 0 && x < XSize[TabNum] && y < YSize[TabNum]) {
-        gdk_pixbuf_composite(gpbimage[TabNum], gpbzoomimage, 0, 0, ZOOMPIXSIZE, 
-                             ZOOMPIXSIZE, -x*ZOOMFACTOR + ZOOMPIXSIZE/2, 
-                             -y*ZOOMFACTOR + ZOOMPIXSIZE/2, 1.0*ZOOMFACTOR, 
-                             1.0*ZOOMFACTOR, GDK_INTERP_BILINEAR, 255);
         cr = gdk_cairo_create (gtk_widget_get_window(zoom_area[TabNum]));
-        gdk_cairo_set_source_pixbuf (cr, gpbzoomimage, 0, 0);
-        cairo_paint (cr);
+
+        cairo_translate(cr, -x*ZOOMFACTOR + ZOOMPIXSIZE/2, -y*ZOOMFACTOR + ZOOMPIXSIZE/2);
+        cairo_scale(cr, 1.0*ZOOMFACTOR, 1.0*ZOOMFACTOR);
+        gdk_cairo_set_source_pixbuf (cr, gpbimage[TabNum], 0, 0);
+        cairo_paint(cr);
         cairo_destroy (cr);
 
         /* Then draw the square in the middle of the zoom area */

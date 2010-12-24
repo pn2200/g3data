@@ -68,11 +68,10 @@ GtkWidget	*mainnotebook;
 GtkActionGroup	*tab_action_group;
 
 /* Declaration of global variables */
+/* axiscoords[][][0] will be set to -1 when not used */
 gint		axiscoords[MAXNUMTABS][4][2];						/* X,Y coordinates of axispoints */
 gint		**points[MAXNUMTABS];							/* Indexes of graphpoints and their coordinates */
-gint		*lastpoints[MAXNUMTABS];						/* Indexes of last points put out */
 gint		numpoints[MAXNUMTABS];
-gint		numlastpoints[MAXNUMTABS];						/* Number of points on graph and last put out */
 gint		remthis = 0, ordering[MAXNUMTABS];					/* Various control variables */
 gint		XSize[MAXNUMTABS], YSize[MAXNUMTABS];
 gint		file_name_length[MAXNUMTABS];
@@ -156,12 +155,23 @@ void SetButtonSensitivity(int TabNum)
 	else gtk_widget_set_sensitive(exportbutton[TabNum], FALSE);
     }
 
-    if (numlastpoints[TabNum]==0) {
-	gtk_widget_set_sensitive(remlastbutton[TabNum],FALSE);
-	gtk_widget_set_sensitive(remallbutton[TabNum],FALSE);
+    if (numpoints[TabNum]==0 &&
+        axiscoords[TabNum][0][0] == -1 &&
+        axiscoords[TabNum][1][0] == -1 &&
+        axiscoords[TabNum][2][0] == -1 &&
+        axiscoords[TabNum][3][0] == -1) {
+        gtk_widget_set_sensitive(remlastbutton[TabNum],FALSE);
+        gtk_widget_set_sensitive(remallbutton[TabNum],FALSE);
+    } else if (numpoints[TabNum]==0 &&
+              (axiscoords[TabNum][0][0] != -1 ||
+               axiscoords[TabNum][1][0] != -1 ||
+               axiscoords[TabNum][2][0] != -1 ||
+               axiscoords[TabNum][3][0] != -1)) {
+        gtk_widget_set_sensitive(remlastbutton[TabNum],FALSE);
+        gtk_widget_set_sensitive(remallbutton[TabNum],TRUE);
     } else {
-	gtk_widget_set_sensitive(remlastbutton[TabNum],TRUE);
-	gtk_widget_set_sensitive(remallbutton[TabNum],TRUE);
+        gtk_widget_set_sensitive(remlastbutton[TabNum],TRUE);
+        gtk_widget_set_sensitive(remallbutton[TabNum],TRUE);
     }
 }
 
@@ -194,11 +204,6 @@ gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
 	    if (numpoints[TabNum] > MaxPoints[TabNum]-1) {
 		i = MaxPoints[TabNum];
 		MaxPoints[TabNum] += MAXPOINTS;
-		lastpoints[TabNum] = realloc(lastpoints[TabNum],sizeof(gint) * (MaxPoints[TabNum]+4));
-		if (lastpoints[TabNum]==NULL) {
-		    printf("Error reallocating memory for lastpoints. Exiting.\n");
-		    exit(-1);
-		}
 		points[TabNum] = realloc(points[TabNum],sizeof(gint *) * MaxPoints[TabNum]);
 		if (points[TabNum]==NULL) {
 		    printf("Error reallocating memory for points. Exiting.\n");
@@ -214,8 +219,6 @@ gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
 	    }
 	    points[TabNum][numpoints[TabNum]][0]=x;					/* Save x coordinate */
 	    points[TabNum][numpoints[TabNum]][1]=y;					/* Save x coordinate */
-	    lastpoints[TabNum][numlastpoints[TabNum]]=numpoints[TabNum];		/* Save index of point */
-	    numlastpoints[TabNum]++;							/* Increase lastpoint index */
 	    numpoints[TabNum]++;							/* Increase point counter */
 	    SetNumPointsEntry(nump_entry[TabNum], numpoints[TabNum]);
 
@@ -231,13 +234,10 @@ gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
 		setxypressed[TabNum][i]=FALSE;						/* Mark the button as not pressed */
 		bpressed[TabNum][i]=TRUE;						/* Mark that axis point's been set */
 		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(setxybutton[TabNum][i]),FALSE); /* Pop up the button */
-		lastpoints[TabNum][numlastpoints[TabNum]]=-(i+1);			/* Remember that the points been put out */
-		numlastpoints[TabNum]++;						/* Increase index of lastpoints */
 
 		DrawMarker(drawing_area[TabNum], x, y, i/2, colors);			/* Draw marker */
 	    }
 	}
-	SetButtonSensitivity(ViewedTabNum);
 	}
     } else if (event->button == 2) {							/* Is the middle button pressed ? */
 	for (i=0;i<2;i++) if (!bpressed[TabNum][i]) {
@@ -250,8 +250,6 @@ gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
 	    setxypressed[TabNum][i]=FALSE;
 	    bpressed[TabNum][i]=TRUE;
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(setxybutton[TabNum][i]),FALSE);
-	    lastpoints[TabNum][numlastpoints[TabNum]]=-(i+1);
-	    numlastpoints[TabNum]++;
 
 	    DrawMarker(drawing_area[TabNum], x, y, 0, colors);
 	    break;
@@ -267,14 +265,13 @@ gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
 	    setxypressed[TabNum][i]=FALSE;
 	    bpressed[TabNum][i]=TRUE;
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(setxybutton[TabNum][i]),FALSE);
-	    lastpoints[TabNum][numlastpoints[TabNum]]=-(i+1);
-	    numlastpoints[TabNum]++;
 
 	    DrawMarker(drawing_area[TabNum], x, y, 1, colors);
 	    break;
 	}
     }
     SetButtonSensitivity(TabNum);
+
     return TRUE;
 }
 
@@ -394,14 +391,15 @@ void toggle_xy(GtkWidget *widget, gpointer func_data)
 	    if (index != i) gtk_widget_set_sensitive(setxybutton[ViewedTabNum][i],FALSE);
 	}
 	if (bpressed[index]) {								/* If the x axis point is already set */
-	    remthis=-(index+1);								/* remove the square */
-	    remove_last(widget,NULL);
+        axiscoords[ViewedTabNum][index][0] = -1;
+        axiscoords[ViewedTabNum][index][1] = -1;
 	}
 	bpressed[ViewedTabNum][index]=FALSE;						/* Set x axis point 1 to unset */
     } else {										/* If button is trying to get unpressed */
 	if (setxypressed[ViewedTabNum][index]) 
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget),TRUE); 		/* Set button down */
     }
+    gtk_widget_queue_draw(drawing_area[ViewedTabNum]);
 }
 
 
@@ -510,44 +508,37 @@ void islogxy(GtkWidget *widget, gpointer func_data)
 /* This function removes the last inserted point or the point	*/
 /* indexed by remthis (<0).					*/
 /****************************************************************/
-void remove_last(GtkWidget *widget, gpointer data) 
+void remove_last(GtkWidget *widget, gpointer data)
 {
-  gint i, j, TabNum;
+    gint i, TabNum;
 
     TabNum = GPOINTER_TO_INT(data);
 
-/* First redraw the drawing_area with the original image, to clean it. */
+    /* First redraw the drawing_area with the original image, to clean it. */
 
     gdk_draw_pixbuf(drawing_area[TabNum]->window,widget->style->white_gc,gpbimage[TabNum],
-		    0, 0, 0, 0, XSize[TabNum], YSize[TabNum],GDK_RGB_DITHER_NONE,0,0);
+                    0, 0, 0, 0, XSize[TabNum], YSize[TabNum],GDK_RGB_DITHER_NONE,0,0);
 
-    if (numlastpoints[TabNum]>0) {							/* If points been put out, remove last one */
-	if (remthis==0) {								/* If remthis is 0, ignore it.		*/
-	    numlastpoints[TabNum]--;
-	    for (i=0;i<4;i++) if (lastpoints[TabNum][numlastpoints[TabNum]]==-(i+1)) {	/* If point to be removed is axispoint 1-4 */
-		bpressed[TabNum][i]=FALSE;						/* Mark it unpressed.			*/
-		gtk_widget_set_sensitive(xyentry[TabNum][i],FALSE);			/* Inactivate entry for point.		*/
-		break;
-	    }
-	    if (i==4) numpoints[TabNum]--;						/* If its none of the X/Y markers then	*/
-	    SetNumPointsEntry(nump_entry[TabNum], numpoints[TabNum]);			/* its an ordinary marker, remove it.	 */
-	}
-
-	if (numlastpoints[TabNum]>0) {							/* If more than 0 points left, start to redraw */
-	    for (i=0;i<numlastpoints[TabNum];i++) {					/* Loop over all remaining points.	*/
-		for (j=0;j<4;j++) 
-		    if (lastpoints[TabNum][i]==-(j+1) && remthis!=-(j+1)) 
-			DrawMarker(drawing_area[TabNum], axiscoords[TabNum][j][0], 
-				   axiscoords[TabNum][j][1], j/2, colors);
-		if (lastpoints[TabNum][i]>=0) 
-		    DrawMarker(drawing_area[TabNum], points[TabNum][lastpoints[TabNum][i]][0], 
-			       points[TabNum][lastpoints[TabNum][i]][1], 2, colors);
-	    }
-	}
+    /* If there are any points, remove one. */
+    if (numpoints[TabNum] > 0) {
+        points[TabNum][numpoints[TabNum]][0] = -1;
+        points[TabNum][numpoints[TabNum]][1] = -1;
+        numpoints[TabNum]--;
+        SetNumPointsEntry(nump_entry[TabNum], numpoints[TabNum]);
+        /* Draw remaining points. */
+        for (i = 0; i < numpoints[TabNum]; i++) {
+            DrawMarker(drawing_area[TabNum], points[TabNum][i][0], points[TabNum][i][1], 2, colors);
+        }
+    }
+    /* Draw axis points, if any. */
+    for (i = 0; i < 4; i++) {
+        if (axiscoords[TabNum][i][0] != -1) {
+            DrawMarker(drawing_area[TabNum], axiscoords[TabNum][i][0], axiscoords[TabNum][i][1], i/2, colors);
+        }
     }
 
     SetButtonSensitivity(TabNum);
-    remthis = 0;									/* Reset remthis variable */
+    gtk_widget_queue_draw(drawing_area[ViewedTabNum]);
 }
 
 
@@ -557,35 +548,25 @@ void remove_last(GtkWidget *widget, gpointer data)
 /****************************************************************/
 void remove_all(GtkWidget *widget, gpointer data) 
 {
-  gint i, j, index, TabNum;
+    gint i, TabNum;
 
     TabNum = GPOINTER_TO_INT(data);
 
-    if (numlastpoints[TabNum]>0 && numpoints[TabNum]>0) {
-	index = 0;
-	for (i=0;i<numlastpoints[TabNum];i++) for (j=0;j<4;j++) {			/* Search for axispoints and store them in */
-	    if (lastpoints[TabNum][i]==-(j+1)) {					/* lastpoints at the first positions.      */
-		lastpoints[TabNum][index] = -(j+1);
-		index++;
-	    }
-	}
-	lastpoints[TabNum][index] = 0;
-
-	numlastpoints[TabNum] = index+1;
-	numpoints[TabNum] = 1;
-	SetNumPointsEntry(nump_entry[TabNum], numpoints[TabNum]);
-
-	remove_last(widget,data);							/* Call remove_last() */
-    } else if (numlastpoints[TabNum]>0 && numpoints[TabNum]==0) {
-	numlastpoints[TabNum] = 0;							/* Nullify amount of points */
-	for (i=0;i<4;i++) {
+    /* set axiscoords to -1, so the axis points do not get drawn*/
+    for (i = 0; i < 4; i++) {
+        axiscoords[TabNum][i][0] = -1;
+        axiscoords[TabNum][i][1] = -1;
+        /* Clear axis points text entries, make buttons insensitive */
 	    valueset[TabNum][i] = FALSE;
 	    bpressed[TabNum][i] = FALSE;
 	    gtk_entry_set_text(GTK_ENTRY(xyentry[TabNum][i]), "");
-	}
-	remove_last(widget,data);							/* Call remove_last() */
+        gtk_widget_set_sensitive(xyentry[TabNum][i], FALSE);
     }
-    SetButtonSensitivity(TabNum);
+
+    numpoints[TabNum] = 0;
+    SetNumPointsEntry(nump_entry[TabNum], numpoints[TabNum]);
+
+    remove_last(widget, data);
 }
 
 
@@ -823,25 +804,16 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
 /* Init datastructures */
     FileNames[TabNum] = g_strdup_printf("%s", basename(filename));
 
-    bpressed[TabNum][0] = FALSE;
-    bpressed[TabNum][1] = FALSE;
-    bpressed[TabNum][2] = FALSE;
-    bpressed[TabNum][3] = FALSE;
-
-    valueset[TabNum][0] = FALSE;
-    valueset[TabNum][1] = FALSE;
-    valueset[TabNum][2] = FALSE;
-    valueset[TabNum][3] = FALSE;
+    for (i = 0; i < 4; i++) {
+        axiscoords[TabNum][i][0] = -1;
+        axiscoords[TabNum][i][1] = -1;
+        bpressed[TabNum][i] = FALSE;
+        valueset[TabNum][i] = FALSE;
+    }
 
     numpoints[TabNum] = 0;
-    numlastpoints[TabNum] = 0;
     ordering[TabNum] = 0;
 
-    lastpoints[TabNum] = (gint *) malloc(sizeof(gint) * (MaxPoints[TabNum]+4));
-    if (lastpoints[TabNum]==NULL) {
-	printf("Error allocating memory for lastpoints. Exiting.\n");
-	return -1;
-    }
     points[TabNum] = (void *) malloc(sizeof(gint *) * MaxPoints[TabNum]);
     if (points[TabNum]==NULL) {
 	printf("Error allocating memory for points. Exiting.\n");
@@ -1145,8 +1117,6 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
 	    gtk_editable_set_editable(GTK_EDITABLE(xyentry[TabNum][i]),TRUE);
         g_ascii_formatd(buf, 20, "%lf", realcoords[TabNum][i]);
 	    gtk_entry_set_text(GTK_ENTRY(xyentry[TabNum][i]), buf);
-	    lastpoints[TabNum][numlastpoints[TabNum]]=-(i+1);
-	    numlastpoints[TabNum]++;
 	    valueset[TabNum][i] = TRUE;
 	    bpressed[TabNum][i] = TRUE;
 	    setxypressed[TabNum][i]=FALSE;

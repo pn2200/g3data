@@ -36,10 +36,8 @@ Authors email : jonas.frantz@welho.com
 /* the drawing_area depending on the value of the type		*/
 /* parameter.							*/
 /****************************************************************/
-void DrawMarker(GtkWidget *da, gint x, gint y, gint type, GdkColor *color) 
+void DrawMarker(cairo_t *cr, gint x, gint y, gint type, GdkColor *color) 
 {
-    cairo_t *cr = gdk_cairo_create(gtk_widget_get_window(da));
-
     if (type == 0) {
         gdk_cairo_set_source_color(cr, &color[0]);
         cairo_move_to(cr, x - MARKERLENGTH, y);
@@ -59,8 +57,6 @@ void DrawMarker(GtkWidget *da, gint x, gint y, gint type, GdkColor *color)
         cairo_rectangle(cr, x - MARKERLENGTH / 2, y - MARKERLENGTH / 2, MARKERLENGTH, MARKERLENGTH);
         cairo_stroke(cr);
     }
-
-    cairo_destroy(cr);
 }
 
 

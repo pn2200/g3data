@@ -99,7 +99,7 @@ GtkWidget 	*drawing_area_alignment;
 
 extern	void SetNumPointsEntry(GtkWidget *np_entry, gint np);
 extern	gint min(gint x, gint y);
-extern	void DrawMarker(GtkWidget *da, gint x, gint y, gint type, GdkColor *color);
+extern	void DrawMarker(cairo_t *cr, gint x, gint y, gint type, GdkColor *color);
 extern	struct PointValue CalcPointValue(gint Xpos, gint Ypos, gint TabNum);
 extern	void print_results(GtkWidget *widget, gpointer func_data);
 extern	gboolean setcolors(GdkColor **color);
@@ -345,19 +345,20 @@ static gboolean expose_event_callback(GtkWidget *widget, GdkEventExpose *event, 
     cairo_t *cr;
 
     TabNum = GPOINTER_TO_INT(data);
+    cr = gdk_cairo_create (gtk_widget_get_window(widget));
 
     if (xpointer >= 0 && ypointer >= 0 && xpointer < XSize[TabNum] && ypointer < YSize[TabNum]) {
-        cr = gdk_cairo_create (gtk_widget_get_window(widget));
-
+        cairo_save(cr);
         cairo_translate(cr, -xpointer*ZOOMFACTOR + ZOOMPIXSIZE/2, -ypointer*ZOOMFACTOR + ZOOMPIXSIZE/2);
         cairo_scale(cr, 1.0*ZOOMFACTOR, 1.0*ZOOMFACTOR);
         gdk_cairo_set_source_pixbuf (cr, gpbimage[TabNum], 0, 0);
         cairo_paint(cr);
-        cairo_destroy (cr);
-    
+        cairo_restore(cr);
     }
+
     /* Then draw the square in the middle of the zoom area */
-    DrawMarker(widget, ZOOMPIXSIZE/2, ZOOMPIXSIZE/2, 2, colors);
+    DrawMarker(cr, ZOOMPIXSIZE/2, ZOOMPIXSIZE/2, 2, colors);
+    cairo_destroy (cr);
     return TRUE;
 }
 
@@ -375,11 +376,11 @@ static gint expose_event(GtkWidget *widget, GdkEventExpose *event, gpointer data
 
     gdk_cairo_set_source_pixbuf (cr, gpbimage[TabNum], 0, 0);
     cairo_paint (cr);
+
+    for (i=0;i<4;i++) if (bpressed[TabNum][i]) DrawMarker(cr, axiscoords[TabNum][i][0], axiscoords[TabNum][i][1], i/2, colors);
+    for (i=0;i<numpoints[TabNum];i++) DrawMarker(cr, points[TabNum][i][0], points[TabNum][i][1], 2, colors);
+
     cairo_destroy (cr);
-
-    for (i=0;i<4;i++) if (bpressed[TabNum][i]) DrawMarker(drawing_area[TabNum], axiscoords[TabNum][i][0], axiscoords[TabNum][i][1], i/2, colors);
-    for (i=0;i<numpoints[TabNum];i++) DrawMarker(drawing_area[TabNum], points[TabNum][i][0], points[TabNum][i][1], 2, colors);
-
     return FALSE;
 }   
 

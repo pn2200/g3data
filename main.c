@@ -185,92 +185,111 @@ void SetButtonSensitivity(int TabNum)
 /****************************************************************/
 gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
 {
-  GdkModifierType state;
-  gint x, y, i, j, TabNum;
+    GdkModifierType state;
+    gint x, y, i, j, TabNum;
 
     TabNum = GPOINTER_TO_INT(data);
 
-    gdk_window_get_pointer (event->window, &x, &y, &state); 				/* Get pointer state */
+    gdk_window_get_pointer (event->window, &x, &y, &state);
 
-    if (event->button == 1) {								/* If button 1 (leftmost) is pressed */
-	if (MovePointMode) {
-	    for (i=0;i<numpoints[TabNum];i++) {
-		if (abs(points[TabNum][i][0]-x) < MOVETRESHOLD &&
-		    abs(points[TabNum][i][1]-y) < MOVETRESHOLD) {
-		    printf("Moving point %d\n",i);
-		}
-	    }
-	} else {
-/* If none of the set axispoint buttons been pressed */
-	if (!setxypressed[TabNum][0] && !setxypressed[TabNum][1] && !setxypressed[TabNum][2] && !setxypressed[TabNum][3]) {
-	    if (numpoints[TabNum] > MaxPoints[TabNum]-1) {
-		i = MaxPoints[TabNum];
-		MaxPoints[TabNum] += MAXPOINTS;
-		points[TabNum] = realloc(points[TabNum],sizeof(gint *) * MaxPoints[TabNum]);
-		if (points[TabNum]==NULL) {
-		    printf("Error reallocating memory for points. Exiting.\n");
-		    exit(-1);
-		}
-		for (;i<MaxPoints[TabNum];i++) {
-		    points[TabNum][i] = malloc(sizeof(gint) * 2);
-		    if (points[TabNum][i]==NULL) {
-			printf("Error allocating memory for points[%d]. Exiting.\n",i);
-			exit(-1);
-		    }
-		}
-	    }
-	    points[TabNum][numpoints[TabNum]][0]=x;					/* Save x coordinate */
-	    points[TabNum][numpoints[TabNum]][1]=y;					/* Save x coordinate */
-	    numpoints[TabNum]++;							/* Increase point counter */
-	    SetNumPointsEntry(nump_entry[TabNum], numpoints[TabNum]);
+    if (event->button == 1) {
+        if (MovePointMode) {
+            for (i=0;i<numpoints[TabNum];i++) {
+                if (abs(points[TabNum][i][0]-x) < MOVETRESHOLD &&
+                    abs(points[TabNum][i][1]-y) < MOVETRESHOLD) {
+                    printf("Moving point %d\n",i);
+                }
+            }
+        } else {
+            /* If none of the set axispoint buttons been pressed */
+            if (!setxypressed[TabNum][0] && !setxypressed[TabNum][1] && !setxypressed[TabNum][2] && !setxypressed[TabNum][3]) {
+                if (numpoints[TabNum] > MaxPoints[TabNum]-1) {
+                    i = MaxPoints[TabNum];
+                    MaxPoints[TabNum] += MAXPOINTS;
+                    points[TabNum] = realloc(points[TabNum],sizeof(gint *) * MaxPoints[TabNum]);
+                    if (points[TabNum]==NULL) {
+                        printf("Error reallocating memory for points. Exiting.\n");
+                        exit(-1);
+                    }
+                    for (;i<MaxPoints[TabNum];i++) {
+                        points[TabNum][i] = malloc(sizeof(gint) * 2);
+                        if (points[TabNum][i]==NULL) {
+                            printf("Error allocating memory for points[%d]. Exiting.\n",i);
+                            exit(-1);
+                        }
+                    }
+                }
+                points[TabNum][numpoints[TabNum]][0]=x;
+                points[TabNum][numpoints[TabNum]][1]=y;
+                numpoints[TabNum]++;
+                SetNumPointsEntry(nump_entry[TabNum], numpoints[TabNum]);
 
-	    DrawMarker(drawing_area[TabNum], x, y, 2, colors);
-	} else {
-	    for (i=0;i<4;i++) if (setxypressed[TabNum][i]) {				/* If the "Set point 1 on x axis" button is pressed */
-		axiscoords[TabNum][i][0]=x;						/* Save coordinates */
-		axiscoords[TabNum][i][1]=y;
-		for (j=0;j<4;j++) if (i!=j) gtk_widget_set_sensitive(setxybutton[TabNum][j],TRUE);
-		gtk_widget_set_sensitive(xyentry[TabNum][i],TRUE);			/* Sensitize the entry */
-		gtk_editable_set_editable(GTK_EDITABLE(xyentry[TabNum][i]),TRUE);
-		gtk_widget_grab_focus(xyentry[TabNum][i]);				/* Focus on entry */
-		setxypressed[TabNum][i]=FALSE;						/* Mark the button as not pressed */
-		bpressed[TabNum][i]=TRUE;						/* Mark that axis point's been set */
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(setxybutton[TabNum][i]),FALSE); /* Pop up the button */
+                DrawMarker(drawing_area[TabNum], x, y, 2, colors);
+            } else {
+                for (i=0;i<4;i++) {
+                    /* If any of the set axispoint buttons are pressed */
+                    if (setxypressed[TabNum][i]) {
+                        axiscoords[TabNum][i][0]=x;
+                        axiscoords[TabNum][i][1]=y;
+                        for (j=0;j<4;j++) {
+                            if (i!=j) {
+                                gtk_widget_set_sensitive(setxybutton[TabNum][j],TRUE);
+                            }
+                        }
+                        gtk_widget_set_sensitive(xyentry[TabNum][i],TRUE);
+                        gtk_editable_set_editable(GTK_EDITABLE(xyentry[TabNum][i]),TRUE);
+                        gtk_widget_grab_focus(xyentry[TabNum][i]);
+                        setxypressed[TabNum][i]=FALSE;
+                        bpressed[TabNum][i]=TRUE;
+                        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(setxybutton[TabNum][i]),FALSE);
 
-		DrawMarker(drawing_area[TabNum], x, y, i/2, colors);			/* Draw marker */
-	    }
-	}
-	}
-    } else if (event->button == 2) {							/* Is the middle button pressed ? */
-	for (i=0;i<2;i++) if (!bpressed[TabNum][i]) {
-	    axiscoords[TabNum][i][0]=x;
-	    axiscoords[TabNum][i][1]=y;
-	    for (j=0;j<4;j++) if (i!=j) gtk_widget_set_sensitive(setxybutton[TabNum][j],TRUE);
-	    gtk_widget_set_sensitive(xyentry[TabNum][i],TRUE);
-	    gtk_editable_set_editable(GTK_EDITABLE(xyentry[TabNum][i]),TRUE);
-	    gtk_widget_grab_focus(xyentry[TabNum][i]);
-	    setxypressed[TabNum][i]=FALSE;
-	    bpressed[TabNum][i]=TRUE;
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(setxybutton[TabNum][i]),FALSE);
+                        DrawMarker(drawing_area[TabNum], x, y, i/2, colors);
+                    }
+                }
+            }
+        }
+    } else if (event->button == 2) {
+        for (i=0;i<2;i++) {
+            if (!bpressed[TabNum][i]) {
+                axiscoords[TabNum][i][0]=x;
+                axiscoords[TabNum][i][1]=y;
+                for (j=0;j<4;j++) {
+                    if (i!=j) {
+                        gtk_widget_set_sensitive(setxybutton[TabNum][j],TRUE);
+                    }
+                }
+                gtk_widget_set_sensitive(xyentry[TabNum][i],TRUE);
+                gtk_editable_set_editable(GTK_EDITABLE(xyentry[TabNum][i]),TRUE);
+                gtk_widget_grab_focus(xyentry[TabNum][i]);
+                setxypressed[TabNum][i]=FALSE;
+                bpressed[TabNum][i]=TRUE;
+                gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(setxybutton[TabNum][i]),FALSE);
 
-	    DrawMarker(drawing_area[TabNum], x, y, 0, colors);
-	    break;
-	}
-    } else if (event->button == 3) {							/* Is the right button pressed ? */
-	for (i=2;i<4;i++) if (!bpressed[TabNum][i]) {
-	    axiscoords[TabNum][i][0]=x;
-	    axiscoords[TabNum][i][1]=y;
-	    for (j=0;j<4;j++) if (i!=j) gtk_widget_set_sensitive(setxybutton[TabNum][j],TRUE);
-	    gtk_widget_set_sensitive(xyentry[TabNum][i],TRUE);
-	    gtk_editable_set_editable(GTK_EDITABLE(xyentry[TabNum][i]),TRUE);
-	    gtk_widget_grab_focus(xyentry[TabNum][i]);
-	    setxypressed[TabNum][i]=FALSE;
-	    bpressed[TabNum][i]=TRUE;
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(setxybutton[TabNum][i]),FALSE);
+                DrawMarker(drawing_area[TabNum], x, y, 0, colors);
+                break;
+            }
+        }
+    } else if (event->button == 3) {
+        for (i=2;i<4;i++) {
+            if (!bpressed[TabNum][i]) {
+                axiscoords[TabNum][i][0]=x;
+                axiscoords[TabNum][i][1]=y;
+                for (j=0;j<4;j++) {
+                    if (i!=j) {
+                        gtk_widget_set_sensitive(setxybutton[TabNum][j],TRUE);
+                    }
+                }
+                gtk_widget_set_sensitive(xyentry[TabNum][i],TRUE);
+                gtk_editable_set_editable(GTK_EDITABLE(xyentry[TabNum][i]),TRUE);
+                gtk_widget_grab_focus(xyentry[TabNum][i]);
+                setxypressed[TabNum][i]=FALSE;
+                bpressed[TabNum][i]=TRUE;
+                gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(setxybutton[TabNum][i]),FALSE);
 
-	    DrawMarker(drawing_area[TabNum], x, y, 1, colors);
-	    break;
-	}
+                DrawMarker(drawing_area[TabNum], x, y, 1, colors);
+                break;
+            }
+        }
     }
     SetButtonSensitivity(TabNum);
 

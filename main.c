@@ -223,8 +223,6 @@ gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
                 points[TabNum][numpoints[TabNum]][1]=y;
                 numpoints[TabNum]++;
                 SetNumPointsEntry(nump_entry[TabNum], numpoints[TabNum]);
-
-                DrawMarker(drawing_area[TabNum], x, y, 2, colors);
             } else {
                 for (i=0;i<4;i++) {
                     /* If any of the set axispoint buttons are pressed */
@@ -242,8 +240,6 @@ gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
                         setxypressed[TabNum][i]=FALSE;
                         bpressed[TabNum][i]=TRUE;
                         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(setxybutton[TabNum][i]),FALSE);
-
-                        DrawMarker(drawing_area[TabNum], x, y, i/2, colors);
                     }
                 }
             }
@@ -265,7 +261,6 @@ gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
                 bpressed[TabNum][i]=TRUE;
                 gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(setxybutton[TabNum][i]),FALSE);
 
-                DrawMarker(drawing_area[TabNum], x, y, 0, colors);
                 break;
             }
         }
@@ -286,12 +281,12 @@ gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
                 bpressed[TabNum][i]=TRUE;
                 gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(setxybutton[TabNum][i]),FALSE);
 
-                DrawMarker(drawing_area[TabNum], x, y, 1, colors);
                 break;
             }
         }
     }
     SetButtonSensitivity(TabNum);
+    gtk_widget_queue_draw(drawing_area[TabNum]);
 
     return TRUE;
 }

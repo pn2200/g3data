@@ -78,6 +78,8 @@ gint		file_name_length[MAXNUMTABS];
 gint 		MaxPoints[MAXNUMTABS] = {MAXPOINTS};
 gint		ViewedTabNum = -1;							/* The currently viewed tab */
 gint		NoteBookNumPages = 0;
+gint xpointer = -1;
+gint ypointer = -1;
 gdouble		realcoords[MAXNUMTABS][4];						/* X,Y coords on graph */
 gboolean	print2file[MAXNUMTABS];
 gboolean	UseErrors[MAXNUMTABS];
@@ -286,24 +288,14 @@ gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data
     gint x, y, TabNum;
     gchar buf[32];
     struct PointValue CalcVal;
-    cairo_t *cr;
 
     TabNum = GPOINTER_TO_INT(data);
 
     gdk_window_get_pointer (event->window, &x, &y, NULL);
+    xpointer = x;
+    ypointer = y;
 
     if (x >= 0 && y >= 0 && x < XSize[TabNum] && y < YSize[TabNum]) {
-        cr = gdk_cairo_create (gtk_widget_get_window(zoom_area[TabNum]));
-
-        cairo_translate(cr, -x*ZOOMFACTOR + ZOOMPIXSIZE/2, -y*ZOOMFACTOR + ZOOMPIXSIZE/2);
-        cairo_scale(cr, 1.0*ZOOMFACTOR, 1.0*ZOOMFACTOR);
-        gdk_cairo_set_source_pixbuf (cr, gpbimage[TabNum], 0, 0);
-        cairo_paint(cr);
-        cairo_destroy (cr);
-
-        /* Then draw the square in the middle of the zoom area */
-        DrawMarker(zoom_area[TabNum], ZOOMPIXSIZE/2, ZOOMPIXSIZE/2, 2, colors);
-
         if (valueset[TabNum][0] && valueset[TabNum][1] && valueset[TabNum][2] && valueset[TabNum][3]) {
             CalcVal = CalcPointValue(x,y,TabNum);
 
@@ -327,6 +319,31 @@ gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data
         gtk_entry_set_text(GTK_ENTRY(xerr_entry[TabNum]),"");
         gtk_entry_set_text(GTK_ENTRY(yerr_entry[TabNum]),"");
     }
+    gtk_widget_queue_draw(zoom_area[TabNum]);
+
+    return TRUE;
+}
+
+
+/* expose_event_callback for the zoom area. */
+static gboolean expose_event_callback(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
+    gint TabNum;
+    cairo_t *cr;
+
+    TabNum = GPOINTER_TO_INT(data);
+
+    if (xpointer >= 0 && ypointer >= 0 && xpointer < XSize[TabNum] && ypointer < YSize[TabNum]) {
+        cr = gdk_cairo_create (gtk_widget_get_window(widget));
+
+        cairo_translate(cr, -xpointer*ZOOMFACTOR + ZOOMPIXSIZE/2, -ypointer*ZOOMFACTOR + ZOOMPIXSIZE/2);
+        cairo_scale(cr, 1.0*ZOOMFACTOR, 1.0*ZOOMFACTOR);
+        gdk_cairo_set_source_pixbuf (cr, gpbimage[TabNum], 0, 0);
+        cairo_paint(cr);
+        cairo_destroy (cr);
+    
+    }
+    /* Then draw the square in the middle of the zoom area */
+    DrawMarker(widget, ZOOMPIXSIZE/2, ZOOMPIXSIZE/2, 2, colors);
     return TRUE;
 }
 
@@ -869,6 +886,7 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
     /* Zoom area */
     zoom_area[TabNum] = gtk_drawing_area_new ();					/* Create new drawing area */
     gtk_widget_set_size_request (zoom_area[TabNum], ZOOMPIXSIZE, ZOOMPIXSIZE);
+    g_signal_connect(G_OBJECT(zoom_area[TabNum]), "expose_event", G_CALLBACK(expose_event_callback), GINT_TO_POINTER (TabNum));
 
     setcolors(&colors);
 

@@ -514,14 +514,7 @@ void islogxy(GtkWidget *widget, gpointer func_data)
 /* Removes the last data point inserted */
 void remove_last(GtkWidget *widget, gpointer data)
 {
-    gint i, TabNum;
-
-    TabNum = GPOINTER_TO_INT(data);
-
-    /* First redraw the drawing_area with the original image, to clean it. */
-
-    gdk_draw_pixbuf(drawing_area[TabNum]->window,widget->style->white_gc,gpbimage[TabNum],
-                    0, 0, 0, 0, XSize[TabNum], YSize[TabNum],GDK_RGB_DITHER_NONE,0,0);
+    gint TabNum = GPOINTER_TO_INT(data);
 
     /* If there are any points, remove one. */
     if (numpoints[TabNum] > 0) {
@@ -529,16 +522,6 @@ void remove_last(GtkWidget *widget, gpointer data)
         points[TabNum][numpoints[TabNum]][1] = -1;
         numpoints[TabNum]--;
         SetNumPointsEntry(nump_entry[TabNum], numpoints[TabNum]);
-        /* Draw remaining points. */
-        for (i = 0; i < numpoints[TabNum]; i++) {
-            DrawMarker(drawing_area[TabNum], points[TabNum][i][0], points[TabNum][i][1], 2, colors);
-        }
-    }
-    /* Draw axis points, if any. */
-    for (i = 0; i < 4; i++) {
-        if (axiscoords[TabNum][i][0] != -1) {
-            DrawMarker(drawing_area[TabNum], axiscoords[TabNum][i][0], axiscoords[TabNum][i][1], i/2, colors);
-        }
     }
 
     SetButtonSensitivity(TabNum);

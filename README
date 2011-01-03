@@ -1,0 +1,13 @@
+What is g3data?
+---------------
+g3data is a tool for extracting data from scanned graphs. For graphs
+published in scientific articles the actual data is usually not
+explicitly given; g3data makes the process of extracting this data easy.
+
+Web: http://github.com/pn2200/g3data/
+
+License
+-------
+g3data is distributed under the GNU General Public License (GPL), as
+described in the 'COPYING' file.
+

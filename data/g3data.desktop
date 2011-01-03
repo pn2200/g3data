@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=g3data
+Comment=Data Extraction Tool
+Exec=g3data
+Icon=g3data-icon.xpm
+Terminal=false
+Type=Application
+Categories=GNOME;Science;Graphics;
+StartupNotify=true
+X-Desktop-File-Install-Version=0.12

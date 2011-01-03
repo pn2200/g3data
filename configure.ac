@@ -37,5 +37,6 @@ AC_FUNC_REALLOC
 AC_CHECK_FUNCS([strstr])
 
 AC_CONFIG_FILES([Makefile
-                 doc/Makefile])
+                 doc/Makefile
+                 data/Makefile])
 AC_OUTPUT

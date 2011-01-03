@@ -1,4 +1,5 @@
-SUBDIRS = doc
+SUBDIRS = doc \
+	data
 
 bin_PROGRAMS = g3data/g3data
 

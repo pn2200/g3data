@@ -98,7 +98,6 @@ GtkWidget 	*drawing_area_alignment;
 /* Declaration of extern functions */
 
 extern	void SetNumPointsEntry(GtkWidget *np_entry, gint np);
-extern	gint min(gint x, gint y);
 extern	void DrawMarker(cairo_t *cr, gint x, gint y, gint type, GdkColor *color);
 extern	struct PointValue CalcPointValue(gint Xpos, gint Ypos, gint TabNum);
 extern	void print_results(GtkWidget *widget, gpointer func_data);

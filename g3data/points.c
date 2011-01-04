@@ -58,16 +58,6 @@ void SetNumPointsEntry(GtkWidget *np_entry, gint np)
 
 
 /****************************************************************/
-/* This function returns the integer with the lesser value.	*/
-/****************************************************************/
-gint min(gint x, gint y)
-{
-    if (x < y) return x;
-    else return y;
-}
-
-
-/****************************************************************/
 /* This function calculates the true value of the point based	*/
 /* on the coordinates of the point on the bitmap.		*/
 /****************************************************************/

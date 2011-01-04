@@ -34,6 +34,7 @@ Authors email : jonas.frantz@welho.com
 #include <libgen.h>
 #include "main.h"									/* Include predined variables */
 #include "strings.h"									/* Include strings */
+#include "points.h"
 
 #ifdef NOSPACING
 #define SECT_SEP 0
@@ -94,14 +95,6 @@ gchar		*FileNames[MAXNUMTABS];
 FILE		*FP;									/* File pointer */
 
 GtkWidget 	*drawing_area_alignment;
-
-/* Declaration of extern functions */
-
-extern	void SetNumPointsEntry(GtkWidget *np_entry, gint np);
-extern	void DrawMarker(cairo_t *cr, gint x, gint y, gint type, GdkColor *color);
-extern	struct PointValue CalcPointValue(gint Xpos, gint Ypos, gint TabNum);
-extern	void print_results(GtkWidget *widget, gpointer func_data);
-extern	gboolean setcolors(GdkColor **color);
 
 /* Explicit declaration of functions */
 

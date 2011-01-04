@@ -8,6 +8,7 @@ g3data_source_files = \
 	g3data/main.c \
 	g3data/main.h \
 	g3data/points.c \
+	g3data/points.h \
 	g3data/sort.c \
 	g3data/sort.h \
 	g3data/strings.h \

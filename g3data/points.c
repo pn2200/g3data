@@ -30,6 +30,7 @@ Authors email : jonas.frantz@welho.com
 #include <math.h>
 #include "main.h"
 #include "sort.h"
+#include "points.h"
 
 /* Extern variables */
 

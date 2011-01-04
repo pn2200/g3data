@@ -29,10 +29,7 @@ Authors email : jonas.frantz@welho.com
 #include <gtk/gtk.h>
 #include <math.h>
 #include "main.h"
-
-/* Extern functions */
-
-extern	void	Order(struct PointValue *RealPos, gint count, gint ordering);
+#include "sort.h"
 
 /* Extern variables */
 

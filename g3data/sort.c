@@ -27,11 +27,13 @@ Authors email : jonas.frantz@welho.com
 #include <gtk/gtk.h>
 #include <stdlib.h>
 #include "main.h"
+#include "sort.h"
 
-/**********************************/
-/* Sort points by x- or y-values  */
-/**********************************/
-gint compare_x(const void *a, const void *b)
+static gint compare_x(const void *a, const void *b);
+static gint compare_y(const void *a, const void *b);
+
+
+static gint compare_x(const void *a, const void *b)
 {
     const struct PointValue *da = (const struct PointValue *) a;
     const struct PointValue *db = (const struct PointValue *) b;
@@ -40,7 +42,7 @@ gint compare_x(const void *a, const void *b)
 }
 
 
-gint compare_y(const void *a, const void *b)
+static gint compare_y(const void *a, const void *b)
 {
     const struct PointValue *da = (const struct PointValue *) a;
     const struct PointValue *db = (const struct PointValue *) b;

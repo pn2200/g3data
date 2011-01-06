@@ -1390,7 +1390,9 @@ GCallback NoteBookTabChange(GtkNotebook *notebook, GtkNotebookPage *page,
 			    guint page_num, gpointer user_data)
 {
     ViewedTabNum = page_num;
-    gtk_window_set_title (GTK_WINDOW (window), FileNames[ViewedTabNum]);
+    if (FileNames[ViewedTabNum] != NULL) {
+        gtk_window_set_title (GTK_WINDOW (window), FileNames[ViewedTabNum]);
+    }
 
     return NULL;
 }

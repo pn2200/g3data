@@ -1289,8 +1289,6 @@ GCallback menu_help_about(void)
 /****************************************************************/
 GCallback menu_tab_close(void)
 {
-    gtk_notebook_remove_page(GTK_NOTEBOOK(mainnotebook), ViewedTabNum);		/* This appearently takes care of everything */
-
     logxy[ViewedTabNum][0] = FALSE;
     logxy[ViewedTabNum][1] = FALSE;
 
@@ -1299,6 +1297,8 @@ GCallback menu_tab_close(void)
     oppropbox[ViewedTabNum] = NULL;
 
     NoteBookNumPages--;
+
+    gtk_notebook_remove_page(GTK_NOTEBOOK(mainnotebook), ViewedTabNum);
 
     if (NoteBookNumPages == 0) gtk_action_group_set_sensitive(tab_action_group, FALSE);
 

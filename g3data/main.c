@@ -177,12 +177,11 @@ void SetButtonSensitivity(int TabNum)
 /****************************************************************/
 gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
 {
-    GdkModifierType state;
     gint x, y, i, j, TabNum;
 
     TabNum = GPOINTER_TO_INT(data);
 
-    gdk_window_get_pointer (event->window, &x, &y, &state);
+    gdk_window_get_pointer (event->window, &x, &y, NULL);
 
     if (event->button == 1) {
         if (MovePointMode) {

@@ -88,7 +88,6 @@ gboolean	setxypressed[MAXNUMTABS][4];
 gboolean	bpressed[MAXNUMTABS][4];						/* What axispoints have been set out ? */
 gboolean	valueset[MAXNUMTABS][4];
 gboolean	logxy[MAXNUMTABS][2] = {{FALSE,FALSE}};
-gboolean	MovePointMode = FALSE;
 gboolean        ShowLog = FALSE, ShowZoomArea = FALSE, ShowOpProp = FALSE;
 gchar 		*file_name[MAXNUMTABS];							/* Pointer to filename */
 gchar		*FileNames[MAXNUMTABS];
@@ -184,54 +183,45 @@ gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
     gdk_window_get_pointer (event->window, &x, &y, NULL);
 
     if (event->button == 1) {
-        if (MovePointMode) {
-            for (i=0;i<numpoints[TabNum];i++) {
-                if (abs(points[TabNum][i][0]-x) < MOVETRESHOLD &&
-                    abs(points[TabNum][i][1]-y) < MOVETRESHOLD) {
-                    printf("Moving point %d\n",i);
+        /* If none of the set axispoint buttons been pressed */
+        if (!setxypressed[TabNum][0] && !setxypressed[TabNum][1] && !setxypressed[TabNum][2] && !setxypressed[TabNum][3]) {
+            if (numpoints[TabNum] > MaxPoints[TabNum]-1) {
+                i = MaxPoints[TabNum];
+                MaxPoints[TabNum] += MAXPOINTS;
+                points[TabNum] = realloc(points[TabNum],sizeof(gint *) * MaxPoints[TabNum]);
+                if (points[TabNum]==NULL) {
+                    printf("Error reallocating memory for points. Exiting.\n");
+                    exit(-1);
                 }
-            }
-        } else {
-            /* If none of the set axispoint buttons been pressed */
-            if (!setxypressed[TabNum][0] && !setxypressed[TabNum][1] && !setxypressed[TabNum][2] && !setxypressed[TabNum][3]) {
-                if (numpoints[TabNum] > MaxPoints[TabNum]-1) {
-                    i = MaxPoints[TabNum];
-                    MaxPoints[TabNum] += MAXPOINTS;
-                    points[TabNum] = realloc(points[TabNum],sizeof(gint *) * MaxPoints[TabNum]);
-                    if (points[TabNum]==NULL) {
-                        printf("Error reallocating memory for points. Exiting.\n");
+                for (;i<MaxPoints[TabNum];i++) {
+                    points[TabNum][i] = malloc(sizeof(gint) * 2);
+                    if (points[TabNum][i]==NULL) {
+                        printf("Error allocating memory for points[%d]. Exiting.\n",i);
                         exit(-1);
                     }
-                    for (;i<MaxPoints[TabNum];i++) {
-                        points[TabNum][i] = malloc(sizeof(gint) * 2);
-                        if (points[TabNum][i]==NULL) {
-                            printf("Error allocating memory for points[%d]. Exiting.\n",i);
-                            exit(-1);
-                        }
-                    }
                 }
-                points[TabNum][numpoints[TabNum]][0]=x;
-                points[TabNum][numpoints[TabNum]][1]=y;
-                numpoints[TabNum]++;
-                SetNumPointsEntry(nump_entry[TabNum], numpoints[TabNum]);
-            } else {
-                for (i=0;i<4;i++) {
-                    /* If any of the set axispoint buttons are pressed */
-                    if (setxypressed[TabNum][i]) {
-                        axiscoords[TabNum][i][0]=x;
-                        axiscoords[TabNum][i][1]=y;
-                        for (j=0;j<4;j++) {
-                            if (i!=j) {
-                                gtk_widget_set_sensitive(setxybutton[TabNum][j],TRUE);
-                            }
+            }
+            points[TabNum][numpoints[TabNum]][0]=x;
+            points[TabNum][numpoints[TabNum]][1]=y;
+            numpoints[TabNum]++;
+            SetNumPointsEntry(nump_entry[TabNum], numpoints[TabNum]);
+        } else {
+            for (i=0;i<4;i++) {
+                /* If any of the set axispoint buttons are pressed */
+                if (setxypressed[TabNum][i]) {
+                    axiscoords[TabNum][i][0]=x;
+                    axiscoords[TabNum][i][1]=y;
+                    for (j=0;j<4;j++) {
+                        if (i!=j) {
+                            gtk_widget_set_sensitive(setxybutton[TabNum][j],TRUE);
                         }
-                        gtk_widget_set_sensitive(xyentry[TabNum][i],TRUE);
-                        gtk_editable_set_editable(GTK_EDITABLE(xyentry[TabNum][i]),TRUE);
-                        gtk_widget_grab_focus(xyentry[TabNum][i]);
-                        setxypressed[TabNum][i]=FALSE;
-                        bpressed[TabNum][i]=TRUE;
-                        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(setxybutton[TabNum][i]),FALSE);
                     }
+                    gtk_widget_set_sensitive(xyentry[TabNum][i],TRUE);
+                    gtk_editable_set_editable(GTK_EDITABLE(xyentry[TabNum][i]),TRUE);
+                    gtk_widget_grab_focus(xyentry[TabNum][i]);
+                    setxypressed[TabNum][i]=FALSE;
+                    bpressed[TabNum][i]=TRUE;
+                    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(setxybutton[TabNum][i]),FALSE);
                 }
             }
         }
@@ -603,12 +593,6 @@ gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer)
 	if (adj_val > (adjustment->upper-adjustment->page_size)) adj_val = (adjustment->upper-adjustment->page_size);
 	gtk_adjustment_set_value(adjustment, adj_val);
 	gtk_viewport_set_vadjustment(GTK_VIEWPORT(ViewPort), adjustment);
-    } else if (event->keyval==GDK_Control_L) {
-	if (ViewedTabNum != -1) {
-	    cursor = gdk_cursor_new (GDK_CIRCLE);
-	    gdk_window_set_cursor (drawing_area[ViewedTabNum]->window, cursor);
-	    MovePointMode = TRUE;
-	}
     }
     }
 
@@ -626,7 +610,6 @@ gint key_release_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer)
 	if (ViewedTabNum != -1) {
 	    cursor = gdk_cursor_new (GDK_CROSSHAIR);
 	    gdk_window_set_cursor (drawing_area[ViewedTabNum]->window, cursor);
-	    MovePointMode = FALSE;
 	}
     }
 

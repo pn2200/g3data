@@ -32,8 +32,9 @@ Authors email : jonas.frantz@welho.com
 #include <string.h>									/* Include string library */
 #include <math.h>									/* Include math library */
 #include <libgen.h>
-#include "main.h"									/* Include predined variables */
-#include "strings.h"									/* Include strings */
+#include "main.h"
+#include "drawing.h"
+#include "strings.h"
 #include "points.h"
 
 #ifdef NOSPACING

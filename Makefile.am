@@ -5,6 +5,7 @@ bin_PROGRAMS = g3data/g3data
 
 g3data_source_files = \
 	g3data/drawing.c \
+	g3data/drawing.h \
 	g3data/main.c \
 	g3data/main.h \
 	g3data/points.c \

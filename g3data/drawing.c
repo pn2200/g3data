@@ -27,6 +27,7 @@ Authors email : jonas.frantz@welho.com
 #include <stdlib.h>
 #include <gtk/gtk.h>
 #include "main.h"
+#include "drawing.h"
 
 #define MARKERLENGTH 6					/* Axis marker length */
 #define MARKERTHICKNESS 2				/* Axis marker thickness */

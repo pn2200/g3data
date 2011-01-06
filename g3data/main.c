@@ -640,12 +640,11 @@ gint key_release_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer)
 /* and sets up all of the different signals associated with it.	*/
 /****************************************************************/
 gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gint TabNum) {
-  gboolean has_alpha;
-  gint 		newX, newY;
-  gdouble 	mScale;
-  GdkPixbuf	*loadgpbimage;
-  GdkCursor	*cursor;
-  GtkWidget	*dialog;
+    gboolean has_alpha;
+    gint width, height;
+    GdkPixbuf *loadgpbimage;
+    GdkCursor *cursor;
+    GtkWidget *dialog;
 
     loadgpbimage = gdk_pixbuf_new_from_file(filename,NULL);				/* Load image */
     if (loadgpbimage==NULL) {								/* If unable to load image */
@@ -660,32 +659,30 @@ gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gint
 
 	return -1;									/* exit */
     }
-    XSize[TabNum] = gdk_pixbuf_get_width(loadgpbimage);					/* Get image width */
-    YSize[TabNum] = gdk_pixbuf_get_height(loadgpbimage);				/* Get image height */
+
+    width = gdk_pixbuf_get_width(loadgpbimage);
+    height = gdk_pixbuf_get_height(loadgpbimage);
     has_alpha = gdk_pixbuf_get_has_alpha(loadgpbimage);
 
-    mScale = -1;
-    if (maxX != -1 && maxY != -1) {
-	if (XSize[TabNum] > maxX) {
-	    mScale = (double) maxX/XSize[TabNum];
-	}
-	if (YSize[TabNum] > maxY && (double) maxY/YSize[TabNum] < mScale) mScale = (double) maxY/YSize[TabNum];
+    if (maxX != -1 && maxY != -1 && Scale == -1) {
+        if (width > maxX || height > maxY) {
+            Scale = fmin((double) (maxX/width), (double) (maxY/height));
+        }
     }
-
-    if (Scale == -1 && mScale != -1) Scale = mScale;
 
     if (Scale != -1) {
-	newX = XSize[TabNum]*Scale;
-	newY = YSize[TabNum]*Scale;
-	gpbimage[TabNum] = gdk_pixbuf_new (GDK_COLORSPACE_RGB, has_alpha, 8, newX, newY);
-	gdk_pixbuf_composite(loadgpbimage, gpbimage[TabNum], 0, 0, newX, newY,
-			     0, 0, Scale, Scale, GDK_INTERP_BILINEAR, 255);
-	g_object_unref(loadgpbimage);
+        width = width * Scale;
+        height = height * Scale;
+        gpbimage[TabNum] = gdk_pixbuf_new (GDK_COLORSPACE_RGB, has_alpha, 8, width, height);
+        gdk_pixbuf_composite(loadgpbimage, gpbimage[TabNum], 0, 0, width, height,
+    	         0, 0, Scale, Scale, GDK_INTERP_BILINEAR, 255);
+        g_object_unref(loadgpbimage);
+    } else {
+        gpbimage[TabNum] = loadgpbimage;
     }
-    else gpbimage[TabNum] = loadgpbimage;
 
-    XSize[TabNum] = gdk_pixbuf_get_width(gpbimage[TabNum]);				/* Get image width */
-    YSize[TabNum] = gdk_pixbuf_get_height(gpbimage[TabNum]);				/* Get image height */
+    XSize[TabNum] = width;
+    YSize[TabNum] = height;
 
     drawing_area[TabNum] = gtk_drawing_area_new ();					/* Create new drawing area */
     gtk_widget_set_size_request (drawing_area[TabNum], XSize[TabNum], YSize[TabNum]);

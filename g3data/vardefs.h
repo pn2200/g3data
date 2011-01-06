@@ -26,9 +26,9 @@ Authors email : jonas.frantz@welho.com
 
 /* Actions definitions */
   GtkActionEntry entries[] = {
-        { "FileMenu", NULL, "_File" },
-        { "ViewMenu", NULL, "_View" },
-        { "HelpMenu", NULL, "_Help" },
+        { "FileMenu", NULL, "_File", NULL, NULL, NULL },
+        { "ViewMenu", NULL, "_View", NULL, NULL, NULL },
+        { "HelpMenu", NULL, "_Help", NULL, NULL, NULL },
         { "Open", GTK_STOCK_OPEN, "_Open", "<control>O", "Open an image in a new tab", G_CALLBACK( menu_file_open ) },
         { "Quit", GTK_STOCK_QUIT, "_Quit", "<control>Q", "Quit program", G_CALLBACK( close_application ) },
         { "About", GTK_STOCK_HELP, "_About", "", "About g3data", G_CALLBACK( menu_help_about ) }
@@ -48,7 +48,7 @@ Authors email : jonas.frantz@welho.com
 	{ "FullScreen", NULL, "_Full Screen", "F11", "Switch between full screen and windowed mode", G_CALLBACK( full_screen_action_callback ), FALSE }
   };
 /* Menu definitions */
-  char *ui_description =
+const gchar *ui_description =
         "<ui>"
         "  <menubar name='MainMenu'>"
         "    <menu action='FileMenu'>"
@@ -73,7 +73,7 @@ Authors email : jonas.frantz@welho.com
 
 /* Drag and drop definitions */
 
-static GtkTargetEntry ui_drop_target_entries [NUM_IMAGE_DATA] = {
+const GtkTargetEntry ui_drop_target_entries[] = {
   {"text/uri-list", 0, URI_LIST},
   {"image/png",     0, PNG_DATA},
   {"image/jpeg",    0, JPEG_DATA},

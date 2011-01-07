@@ -413,22 +413,22 @@ static gint configure_event(GtkWidget *widget, GdkEventConfigure *event,gpointer
 /****************************************************************/
 static void toggle_xy(GtkWidget *widget, gpointer func_data)
 {
-  gint index, i;
+    gint i, j;
 
-    index = GPOINTER_TO_INT (func_data);
+    i = GPOINTER_TO_INT (func_data);
 
     if (GTK_TOGGLE_BUTTON (widget)->active) {						/* Is the button pressed on ? */
-	setxypressed[ViewedTabNum][index]=TRUE;						/* The button is pressed down */
-	for (i=0;i<4;i++) {
-	    if (index != i) gtk_widget_set_sensitive(setxybutton[ViewedTabNum][i],FALSE);
+	setxypressed[ViewedTabNum][i] = TRUE;						/* The button is pressed down */
+	for (j = 0; j < 4; j++) {
+	    if (i != j) gtk_widget_set_sensitive(setxybutton[ViewedTabNum][j],FALSE);
 	}
-	if (bpressed[index]) {								/* If the x axis point is already set */
-        axiscoords[ViewedTabNum][index][0] = -1;
-        axiscoords[ViewedTabNum][index][1] = -1;
+	if (bpressed[i]) {								/* If the x axis point is already set */
+        axiscoords[ViewedTabNum][i][0] = -1;
+        axiscoords[ViewedTabNum][i][1] = -1;
 	}
-	bpressed[ViewedTabNum][index]=FALSE;						/* Set x axis point 1 to unset */
+	bpressed[ViewedTabNum][i]=FALSE;						/* Set x axis point 1 to unset */
     } else {										/* If button is trying to get unpressed */
-	if (setxypressed[ViewedTabNum][index]) 
+	if (setxypressed[ViewedTabNum][i]) 
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget),TRUE); 		/* Set button down */
     }
     gtk_widget_queue_draw(drawing_area[ViewedTabNum]);
@@ -468,17 +468,17 @@ static void UseErrCB(GtkWidget *widget, gpointer func_data)
 /****************************************************************/
 static void read_xy_entry(GtkWidget *entry, gpointer func_data)
 {
-  gchar *xy_text;
-  gint index;
+    gchar *xy_text;
+    gint i;
     
-    index = GPOINTER_TO_INT (func_data);
+    i = GPOINTER_TO_INT (func_data);
 
     xy_text = (gchar *) gtk_entry_get_text(GTK_ENTRY (entry));
-    sscanf(xy_text,"%lf",&realcoords[ViewedTabNum][index]);				/* Convert string to double value and */
+    sscanf(xy_text,"%lf",&realcoords[ViewedTabNum][i]);				/* Convert string to double value and */
 											/* store in realcoords[0]. */
-    if (logxy[ViewedTabNum][index/2] && realcoords[ViewedTabNum][index] > 0) valueset[ViewedTabNum][index]=TRUE;
-    else if (logxy[ViewedTabNum][index/2]) valueset[ViewedTabNum][index]=FALSE;
-    else valueset[ViewedTabNum][index]= TRUE; 
+    if (logxy[ViewedTabNum][i/2] && realcoords[ViewedTabNum][i] > 0) valueset[ViewedTabNum][i]=TRUE;
+    else if (logxy[ViewedTabNum][i/2]) valueset[ViewedTabNum][i]=FALSE;
+    else valueset[ViewedTabNum][i] = TRUE;
 
     SetButtonSensitivity(ViewedTabNum);
 }
@@ -517,20 +517,20 @@ static void read_file_entry(GtkWidget *entry, gpointer func_data)
 /****************************************************************/
 static void islogxy(GtkWidget *widget, gpointer func_data)
 {
-  gint index;
+  gint i;
 
-    index = GPOINTER_TO_INT (func_data);
+    i = GPOINTER_TO_INT (func_data);
 
-    logxy[ViewedTabNum][index] = (GTK_TOGGLE_BUTTON (widget)->active); 			/* If checkbutton is pressed down */
+    logxy[ViewedTabNum][i] = (GTK_TOGGLE_BUTTON (widget)->active); 			/* If checkbutton is pressed down */
 											/* logxy = TRUE else FALSE. */
-    if (logxy[ViewedTabNum][index]) {
-	if (realcoords[ViewedTabNum][index*2] <= 0) {					/* If a negative value has been insert */
-	    valueset[ViewedTabNum][index*2]=FALSE;
-	    gtk_entry_set_text(GTK_ENTRY(xyentry[ViewedTabNum][index*2]),"");		/* Zero it */
+    if (logxy[ViewedTabNum][i]) {
+	if (realcoords[ViewedTabNum][i*2] <= 0) {					/* If a negative value has been insert */
+	    valueset[ViewedTabNum][i*2]=FALSE;
+	    gtk_entry_set_text(GTK_ENTRY(xyentry[ViewedTabNum][i*2]),"");		/* Zero it */
 	}
-	if (realcoords[ViewedTabNum][index*2+1] <= 0) {					/* If a negative value has been insert */
-	    valueset[ViewedTabNum][index*2+1]=FALSE;
-	    gtk_entry_set_text(GTK_ENTRY(xyentry[ViewedTabNum][index*2+1]),"");		/* Zero it */
+	if (realcoords[ViewedTabNum][i*2+1] <= 0) {					/* If a negative value has been insert */
+	    valueset[ViewedTabNum][i*2+1]=FALSE;
+	    gtk_entry_set_text(GTK_ENTRY(xyentry[ViewedTabNum][i*2+1]),"");		/* Zero it */
         }
     }
 }

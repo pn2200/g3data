@@ -90,7 +90,7 @@ gboolean	bpressed[MAXNUMTABS][4];						/* What axispoints have been set out ? */
 gboolean	valueset[MAXNUMTABS][4];
 gboolean	logxy[MAXNUMTABS][2] = {{FALSE,FALSE}};
 gboolean        ShowLog = FALSE, ShowZoomArea = FALSE, ShowOpProp = FALSE;
-gchar 		*file_name[MAXNUMTABS];							/* Pointer to filename */
+const gchar *file_name[MAXNUMTABS];
 gchar		*FileNames[MAXNUMTABS];
 FILE		*FP;									/* File pointer */
 
@@ -468,12 +468,12 @@ static void UseErrCB(GtkWidget *widget, gpointer func_data)
 /****************************************************************/
 static void read_xy_entry(GtkWidget *entry, gpointer func_data)
 {
-    gchar *xy_text;
+    const gchar *xy_text;
     gint i;
     
     i = GPOINTER_TO_INT (func_data);
 
-    xy_text = (gchar *) gtk_entry_get_text(GTK_ENTRY (entry));
+    xy_text = gtk_entry_get_text(GTK_ENTRY (entry));
     sscanf(xy_text,"%lf",&realcoords[ViewedTabNum][i]);				/* Convert string to double value and */
 											/* store in realcoords[0]. */
     if (logxy[ViewedTabNum][i/2] && realcoords[ViewedTabNum][i] > 0) valueset[ViewedTabNum][i]=TRUE;
@@ -496,7 +496,7 @@ static void read_file_entry(GtkWidget *entry, gpointer func_data)
 
     TabNum = GPOINTER_TO_INT (func_data);
 
-    file_name[TabNum] = (gchar *) gtk_entry_get_text (GTK_ENTRY (entry));
+    file_name[TabNum] = gtk_entry_get_text (GTK_ENTRY (entry));
     file_name_length[TabNum] = strlen(file_name[TabNum]);			/* Get length of string */
 
     if (bpressed[TabNum][0] && bpressed[TabNum][1] && bpressed[TabNum][2] && 
@@ -1273,7 +1273,7 @@ static GCallback menu_file_open(void)
 /****************************************************************/
 static GCallback menu_help_about(void)
 {
-  gchar *authors[] = AUTHORS;
+    const gchar *authors[] = AUTHORS;
 
     gtk_show_about_dialog(GTK_WINDOW(window), 
 	"authors", authors, 

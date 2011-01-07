@@ -96,21 +96,49 @@ FILE		*FP;									/* File pointer */
 
 GtkWidget 	*drawing_area_alignment;
 
-/* Explicit declaration of functions */
-
-void remove_last(GtkWidget *widget, gpointer data);
-void SetOrdering(GtkWidget *widget, gpointer func_data);
-void SetAction(GtkWidget *widget);
-void UseErrCB(GtkWidget *widget, gpointer func_data);
-void read_file_entry(GtkWidget *entry, gpointer func_data);
-
-// GCallback full_screen_action_callback(GtkWidget *widget, gpointer func_dat);
+static gint close_application(GtkWidget *widget, GdkEvent *event, gpointer data);
+static void SetButtonSensitivity(int TabNum);
+static gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data);
+static gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data);
+static gboolean expose_event_callback(GtkWidget *widget, GdkEventExpose *event, gpointer data);
+static gint expose_event(GtkWidget *widget, GdkEventExpose *event, gpointer data);
+static gint configure_event(GtkWidget *widget, GdkEventConfigure *event,gpointer data);
+static void toggle_xy(GtkWidget *widget, gpointer func_data);
+static void SetOrdering(GtkWidget *widget, gpointer func_data);
+static void SetAction(GtkWidget *widget);
+static void UseErrCB(GtkWidget *widget, gpointer func_data);
+static void read_xy_entry(GtkWidget *entry, gpointer func_data);
+static void read_file_entry(GtkWidget *entry, gpointer func_data);
+static void islogxy(GtkWidget *widget, gpointer func_data);
+static void remove_last(GtkWidget *widget, gpointer data);
+static void remove_all(GtkWidget *widget, gpointer data) ;
+static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer);
+static gint key_release_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer);
+static gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gint TabNum);
+static void update_preview_cb (GtkFileChooser *file_chooser, gpointer data);
+static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboolean UsePreSetCoords);
+static void drag_data_received(GtkWidget *widget,
+                              GdkDragContext *drag_context,
+                              gint x, gint y,
+                              GtkSelectionData *data,
+                              guint info,
+                              guint event_time,
+                              gpointer user_data);
+static GCallback menu_file_open(void);
+static GCallback menu_help_about(void);
+static GCallback menu_tab_close(void);
+static GCallback full_screen_action_callback(GtkWidget *widget, gpointer func_data);
+static GCallback hide_zoom_area_callback(GtkWidget *widget, gpointer func_data);
+static GCallback hide_axis_settings_callback(GtkWidget *widget, gpointer func_data);
+static GCallback hide_output_prop_callback(GtkWidget *widget, gpointer func_data);
+static GCallback NoteBookTabChange(GtkNotebook *notebook, GtkNotebookPage *page, 
+			    guint page_num, gpointer user_data);
 
 /****************************************************************/
 /* This function closes the window when the application is 	*/
 /* killed.							*/
 /****************************************************************/
-gint close_application(GtkWidget *widget, GdkEvent *event, gpointer data)
+static gint close_application(GtkWidget *widget, GdkEvent *event, gpointer data)
 {
     gtk_main_quit();									/* Quit gtk */
     return FALSE;
@@ -121,7 +149,7 @@ gint close_application(GtkWidget *widget, GdkEvent *event, gpointer data)
 /* This function sets the sensitivity of the buttons depending	*/
 /* the control variables.					*/
 /****************************************************************/
-void SetButtonSensitivity(int TabNum)
+static void SetButtonSensitivity(int TabNum)
 {
   char ttbuf[256];
 
@@ -175,7 +203,7 @@ void SetButtonSensitivity(int TabNum)
 /* function is called, it handles axispoints and graphpoints	*/
 /* and paints a square in that position.			*/
 /****************************************************************/
-gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
+static gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
 {
     gint x, y, i, j, TabNum;
 
@@ -279,7 +307,7 @@ gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
 /* drawing area, it captures the coordinates and zoom in om the */
 /* position and plots it on the zoom area.			*/
 /****************************************************************/
-gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data)
+static gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data)
 {
     gint x, y, TabNum;
     gchar buf[32];
@@ -372,7 +400,7 @@ static gint expose_event(GtkWidget *widget, GdkEventExpose *event, gpointer data
 /* for the first time, currently this function does not perform	*/
 /* any task.							*/
 /****************************************************************/
-gint configure_event(GtkWidget *widget, GdkEventConfigure *event,gpointer data)
+static gint configure_event(GtkWidget *widget, GdkEventConfigure *event,gpointer data)
 {
     return TRUE;
 }
@@ -383,7 +411,7 @@ gint configure_event(GtkWidget *widget, GdkEventConfigure *event,gpointer data)
 /* button is pressed. It inactivates the other "Set" buttons	*/
 /* and makes sure the button stays down even when pressed on.	*/
 /****************************************************************/
-void toggle_xy(GtkWidget *widget, gpointer func_data)
+static void toggle_xy(GtkWidget *widget, gpointer func_data)
 {
   gint index, i;
 
@@ -410,7 +438,7 @@ void toggle_xy(GtkWidget *widget, gpointer func_data)
 /****************************************************************/
 /* Set type of ordering at output of data.			*/
 /****************************************************************/
-void SetOrdering(GtkWidget *widget, gpointer func_data)
+static void SetOrdering(GtkWidget *widget, gpointer func_data)
 {
     ordering[ViewedTabNum] = GPOINTER_TO_INT (func_data);				/* Set ordering control variable */
 }
@@ -418,7 +446,7 @@ void SetOrdering(GtkWidget *widget, gpointer func_data)
 
 /****************************************************************/
 /****************************************************************/
-void SetAction(GtkWidget *widget)
+static void SetAction(GtkWidget *widget)
 {
     print2file[ViewedTabNum] = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
     SetButtonSensitivity(ViewedTabNum);
@@ -428,7 +456,7 @@ void SetAction(GtkWidget *widget)
 /****************************************************************/
 /* Set whether to use error evaluation and printing or not.	*/
 /****************************************************************/
-void UseErrCB(GtkWidget *widget, gpointer func_data)
+static void UseErrCB(GtkWidget *widget, gpointer func_data)
 {
     UseErrors[ViewedTabNum] = (GTK_TOGGLE_BUTTON (widget)->active);
 }
@@ -438,7 +466,7 @@ void UseErrCB(GtkWidget *widget, gpointer func_data)
 /* When the value of the entry of any axis point is changed, 	*/
 /* this function gets called.					*/
 /****************************************************************/
-void read_xy_entry(GtkWidget *entry, gpointer func_data)
+static void read_xy_entry(GtkWidget *entry, gpointer func_data)
 {
   gchar *xy_text;
   gint index;
@@ -461,7 +489,7 @@ void read_xy_entry(GtkWidget *entry, gpointer func_data)
 /* have been assigned and at least one point has been set on	*/
 /* the graph activate the write to file button.			*/
 /****************************************************************/
-void read_file_entry(GtkWidget *entry, gpointer func_data)
+static void read_file_entry(GtkWidget *entry, gpointer func_data)
 {
 
   gint TabNum;
@@ -487,7 +515,7 @@ void read_file_entry(GtkWidget *entry, gpointer func_data)
 /* this function gets called. It sets the logx variable to its	*/
 /* correct value corresponding to the buttons state.		*/
 /****************************************************************/
-void islogxy(GtkWidget *widget, gpointer func_data)
+static void islogxy(GtkWidget *widget, gpointer func_data)
 {
   gint index;
 
@@ -509,7 +537,7 @@ void islogxy(GtkWidget *widget, gpointer func_data)
 
 
 /* Removes the last data point inserted */
-void remove_last(GtkWidget *widget, gpointer data)
+static void remove_last(GtkWidget *widget, gpointer data)
 {
     gint TabNum = GPOINTER_TO_INT(data);
 
@@ -530,7 +558,7 @@ void remove_last(GtkWidget *widget, gpointer data)
 /* This function sets the proper variables and then calls 	*/
 /* remove_last, to remove all points except the axis points.	*/
 /****************************************************************/
-void remove_all(GtkWidget *widget, gpointer data) 
+static void remove_all(GtkWidget *widget, gpointer data) 
 {
     gint i, TabNum;
 
@@ -558,7 +586,7 @@ void remove_all(GtkWidget *widget, gpointer data)
 /* This function handles all of the keypresses done within the	*/
 /* main window and handles the  appropriate measures.		*/
 /****************************************************************/
-gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer)
+static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer)
 {
   GtkAdjustment *adjustment;
   gdouble adj_val;
@@ -603,7 +631,7 @@ gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer)
 
 /****************************************************************/
 /****************************************************************/
-gint key_release_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer)
+static gint key_release_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer)
 {
   GdkCursor	*cursor;
 
@@ -622,7 +650,7 @@ gint key_release_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer)
 /* This function loads the image, and inserts it into the tab	*/
 /* and sets up all of the different signals associated with it.	*/
 /****************************************************************/
-gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gint TabNum) {
+static gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gint TabNum) {
     gboolean has_alpha;
     gint width, height;
     GdkPixbuf *loadgpbimage;
@@ -728,7 +756,7 @@ static void update_preview_cb (GtkFileChooser *file_chooser, gpointer data) {
 /* This function sets up a new tab, sets up all of the widgets 	*/
 /* needed.							*/
 /****************************************************************/
-gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboolean UsePreSetCoords)
+static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboolean UsePreSetCoords)
 {
   GtkWidget 	*table;									/* GTK table/box variables for packing */
   GtkWidget	*tophbox, *bottomhbox;
@@ -1121,7 +1149,7 @@ gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboo
 
 /****************************************************************/
 /****************************************************************/
-void drag_data_received(GtkWidget *widget,
+static void drag_data_received(GtkWidget *widget,
                               GdkDragContext *drag_context,
                               gint x, gint y,
                               GtkSelectionData *data,
@@ -1184,7 +1212,7 @@ void drag_data_received(GtkWidget *widget,
 /****************************************************************/
 /* This callback handles the file - open dialog.		*/
 /****************************************************************/
-GCallback menu_file_open(void)
+static GCallback menu_file_open(void)
 {
   GtkWidget *dialog, *scalespinbutton, *hboxextra, *scalelabel;
   GtkImage *preview;
@@ -1243,7 +1271,7 @@ GCallback menu_file_open(void)
 /****************************************************************/
 /* This Callback generates the help - about dialog.		*/
 /****************************************************************/
-GCallback menu_help_about(void)
+static GCallback menu_help_about(void)
 {
   gchar *authors[] = AUTHORS;
 
@@ -1267,7 +1295,7 @@ GCallback menu_help_about(void)
 /* page from the notebook, all widgets within the page are	*/
 /* destroyed.							*/
 /****************************************************************/
-GCallback menu_tab_close(void)
+static GCallback menu_tab_close(void)
 {
     logxy[ViewedTabNum][0] = FALSE;
     logxy[ViewedTabNum][1] = FALSE;
@@ -1288,7 +1316,7 @@ GCallback menu_tab_close(void)
 /****************************************************************/
 /* This callback handles the fullscreen toggling.		*/
 /****************************************************************/
-GCallback full_screen_action_callback(GtkWidget *widget, gpointer func_data)
+static GCallback full_screen_action_callback(GtkWidget *widget, gpointer func_data)
 {
     if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(widget))) {
 	gtk_window_fullscreen(GTK_WINDOW (window));
@@ -1301,7 +1329,7 @@ GCallback full_screen_action_callback(GtkWidget *widget, gpointer func_data)
 /****************************************************************/
 /* This callback handles the hide zoom area toggling.		*/
 /****************************************************************/
-GCallback hide_zoom_area_callback(GtkWidget *widget, gpointer func_data)
+static GCallback hide_zoom_area_callback(GtkWidget *widget, gpointer func_data)
 {
   int i;
 
@@ -1322,7 +1350,7 @@ GCallback hide_zoom_area_callback(GtkWidget *widget, gpointer func_data)
 /****************************************************************/
 /* This callback handles the hide axis settings toggling.	*/
 /****************************************************************/
-GCallback hide_axis_settings_callback(GtkWidget *widget, gpointer func_data)
+static GCallback hide_axis_settings_callback(GtkWidget *widget, gpointer func_data)
 {
   int i;
 
@@ -1343,7 +1371,7 @@ GCallback hide_axis_settings_callback(GtkWidget *widget, gpointer func_data)
 /****************************************************************/
 /* This callback handles the hide output properties toggling.	*/
 /****************************************************************/
-GCallback hide_output_prop_callback(GtkWidget *widget, gpointer func_data)
+static GCallback hide_output_prop_callback(GtkWidget *widget, gpointer func_data)
 {
   int i;
 
@@ -1366,7 +1394,7 @@ GCallback hide_output_prop_callback(GtkWidget *widget, gpointer func_data)
 /* It sets up the ViewedTabNum value as well as the title of	*/
 /* the window to match the image currently viewed.		*/
 /****************************************************************/
-GCallback NoteBookTabChange(GtkNotebook *notebook, GtkNotebookPage *page, 
+static GCallback NoteBookTabChange(GtkNotebook *notebook, GtkNotebookPage *page, 
 			    guint page_num, gpointer user_data)
 {
     ViewedTabNum = page_num;

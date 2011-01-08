@@ -408,7 +408,7 @@ static void toggle_xy(GtkWidget *widget, gpointer func_data)
 
     i = GPOINTER_TO_INT (func_data);
 
-    if (GTK_TOGGLE_BUTTON (widget)->active) {						/* Is the button pressed on ? */
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON (widget))) {
 	setxypressed[ViewedTabNum][i] = TRUE;						/* The button is pressed down */
 	for (j = 0; j < 4; j++) {
 	    if (i != j) gtk_widget_set_sensitive(setxybutton[ViewedTabNum][j],FALSE);
@@ -449,7 +449,7 @@ static void SetAction(GtkWidget *widget)
 /****************************************************************/
 static void UseErrCB(GtkWidget *widget, gpointer func_data)
 {
-    UseErrors[ViewedTabNum] = (GTK_TOGGLE_BUTTON (widget)->active);
+    UseErrors[ViewedTabNum] = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 }
 
 
@@ -512,7 +512,7 @@ static void islogxy(GtkWidget *widget, gpointer func_data)
 
     i = GPOINTER_TO_INT (func_data);
 
-    logxy[ViewedTabNum][i] = (GTK_TOGGLE_BUTTON (widget)->active); 			/* If checkbutton is pressed down */
+    logxy[ViewedTabNum][i] = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
 											/* logxy = TRUE else FALSE. */
     if (logxy[ViewedTabNum][i]) {
 	if (realcoords[ViewedTabNum][i*2] <= 0) {					/* If a negative value has been insert */
@@ -588,29 +588,29 @@ static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer poin
     if (event->keyval==GDK_Left) {
 	adjustment = gtk_viewport_get_hadjustment(GTK_VIEWPORT(ViewPort));
 	adj_val = gtk_adjustment_get_value(adjustment);
-	adj_val -= adjustment->page_size/10.0;
-	if (adj_val < adjustment->lower) adj_val = adjustment->lower;
+	adj_val -= gtk_adjustment_get_page_size(adjustment)/10.0;
+	if (adj_val < gtk_adjustment_get_lower(adjustment)) adj_val = gtk_adjustment_get_lower(adjustment);
 	gtk_adjustment_set_value(adjustment, adj_val);
 	gtk_viewport_set_hadjustment(GTK_VIEWPORT(ViewPort), adjustment);
     } else if (event->keyval==GDK_Right) {
 	adjustment = gtk_viewport_get_hadjustment(GTK_VIEWPORT(ViewPort));
 	adj_val = gtk_adjustment_get_value(adjustment);
-	adj_val += adjustment->page_size/10.0;
-	if (adj_val > (adjustment->upper-adjustment->page_size)) adj_val = (adjustment->upper-adjustment->page_size);
+	adj_val += gtk_adjustment_get_page_size(adjustment)/10.0;
+	if (adj_val > (gtk_adjustment_get_upper(adjustment)-gtk_adjustment_get_page_size(adjustment))) adj_val = (gtk_adjustment_get_upper(adjustment)-gtk_adjustment_get_page_size(adjustment));
 	gtk_adjustment_set_value(adjustment, adj_val);
 	gtk_viewport_set_hadjustment(GTK_VIEWPORT(ViewPort), adjustment);
     } else if (event->keyval==GDK_Up) {
 	adjustment = gtk_viewport_get_vadjustment(GTK_VIEWPORT(ViewPort));
 	adj_val = gtk_adjustment_get_value(adjustment);
-	adj_val -= adjustment->page_size/10.0;
-	if (adj_val < adjustment->lower) adj_val = adjustment->lower;
+	adj_val -= gtk_adjustment_get_page_size(adjustment)/10.0;
+	if (adj_val < gtk_adjustment_get_lower(adjustment)) adj_val = gtk_adjustment_get_lower(adjustment);
 	gtk_adjustment_set_value(adjustment, adj_val);
 	gtk_viewport_set_vadjustment(GTK_VIEWPORT(ViewPort), adjustment);
     } else if (event->keyval==GDK_Down) {
 	adjustment = gtk_viewport_get_vadjustment(GTK_VIEWPORT(ViewPort));
 	adj_val = gtk_adjustment_get_value(adjustment);
-	adj_val += adjustment->page_size/10.0;
-	if (adj_val > (adjustment->upper-adjustment->page_size)) adj_val = (adjustment->upper-adjustment->page_size);
+	adj_val += gtk_adjustment_get_page_size(adjustment)/10.0;
+	if (adj_val > (gtk_adjustment_get_upper(adjustment)-gtk_adjustment_get_page_size(adjustment))) adj_val = (gtk_adjustment_get_upper(adjustment)-gtk_adjustment_get_page_size(adjustment));
 	gtk_adjustment_set_value(adjustment, adj_val);
 	gtk_viewport_set_vadjustment(GTK_VIEWPORT(ViewPort), adjustment);
     }
@@ -712,7 +712,7 @@ static gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble max
     gtk_widget_show(drawing_area[TabNum]);
 
     cursor = gdk_cursor_new (GDK_CROSSHAIR);
-    gdk_window_set_cursor (drawing_area[TabNum]->window, cursor);
+    gdk_window_set_cursor (gtk_widget_get_window(drawing_area[TabNum]), cursor);
  
     return 0;
 }
@@ -1148,53 +1148,26 @@ static void drag_data_received(GtkWidget *widget,
                               guint event_time,
                               gpointer user_data)
 {
-  gchar 	filename[256], *c;
-  gint		i;
-  GtkWidget	*dialog;
+    gchar *filename;
+    gchar **uri_list;
+    gint i;
+    GError *error;
 
-    switch (info) {
-	case URI_LIST: {
-//	    printf("Received uri : %s\n", (gchar *) data->data);
-	    if ((c = strstr((gchar *) data->data, URI_IDENTIFIER)) == NULL) {
-		dialog = gtk_message_dialog_new (GTK_WINDOW(window),			/* Notify user of the error */
-                	                  	 GTK_DIALOG_DESTROY_WITH_PARENT,	/* with a dialog */
-	                                  	 GTK_MESSAGE_ERROR,
-	                                  	 GTK_BUTTONS_CLOSE,
-	                                  	 "Cannot extract filename from uri '%s'",
-       		                          	 filename);
- 		gtk_dialog_run (GTK_DIALOG (dialog));
-		gtk_widget_destroy (dialog);
-		break;
-	    }
-	    strncpy(filename,&(c[strlen(URI_IDENTIFIER)]),256);
-	    for (i=0;i<strlen(filename);i++)
-            if (filename[i] == '\n' || filename[i] == '\r')
-                filename[i] = '\0';
-	    SetupNewTab(filename, 1.0, -1, -1, FALSE);
-	    break;
-	}
-	case JPEG_DATA:
-	case PNG_DATA: {
-	    printf("Received drag-and-drop jpeg_data or png_data\n");
-            GError *error = NULL;
-            GdkPixbufLoader *loader = gdk_pixbuf_loader_new_with_mime_type(gdk_atom_name(data->type), &error);
-            if (loader) {
-            	error = NULL;
-            	if (gdk_pixbuf_loader_write( loader, data->data, data->length, &error)) {
-                    GdkPixbuf *pbuf = gdk_pixbuf_loader_get_pixbuf(loader);
-                    if ( pbuf ) {
-                        int width = gdk_pixbuf_get_width(pbuf);
-                        int height = gdk_pixbuf_get_height(pbuf);
-                        printf("Received image of size %d x %d\n", width, height);  // Print debugging information
-                    }
-                }
+    if (info == URI_LIST) {
+        uri_list = gtk_selection_data_get_uris(data);
+        i = 0;
+        while (uri_list[i] != NULL) {
+            error = NULL;
+            filename = g_filename_from_uri(uri_list[i], NULL, &error);
+            if (filename == NULL) {
+                g_message("Null filename: %s", error->message);
+                g_error_free(error);
+            } else{
+        	    SetupNewTab(filename, 1.0, -1, -1, FALSE);
             }
-	    break;
-	}
-	case APP_X_COLOR: {
-	    printf("Received drag-and-drop app-x-color\n");
-	    break;
-	}
+            i++;
+        }
+        g_strfreev(uri_list);
     }
     gtk_drag_finish (drag_context, TRUE, FALSE, event_time);
 }

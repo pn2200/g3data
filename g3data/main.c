@@ -113,7 +113,6 @@ static void islogxy(GtkWidget *widget, gpointer func_data);
 static void remove_last(GtkWidget *widget, gpointer data);
 static void remove_all(GtkWidget *widget, gpointer data) ;
 static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer);
-static gint key_release_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer);
 static gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gint TabNum);
 static void update_preview_cb (GtkFileChooser *file_chooser, gpointer data);
 static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboolean UsePreSetCoords);
@@ -614,23 +613,6 @@ static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer poin
 	gtk_adjustment_set_value(adjustment, adj_val);
 	gtk_viewport_set_vadjustment(GTK_VIEWPORT(ViewPort), adjustment);
     }
-    }
-
-  return 0;
-}
-
-
-/****************************************************************/
-/****************************************************************/
-static gint key_release_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer)
-{
-  GdkCursor	*cursor;
-
-    if (event->keyval==GDK_Control_L) {
-	if (ViewedTabNum != -1) {
-	    cursor = gdk_cursor_new (GDK_CROSSHAIR);
-	    gdk_window_set_cursor (drawing_area[ViewedTabNum]->window, cursor);
-	}
     }
 
   return 0;
@@ -1546,8 +1528,6 @@ int main (int argc, char **argv)
 
     g_signal_connect_swapped (G_OBJECT (window), "key_press_event",
 			          G_CALLBACK (key_press_event), NULL);
-    g_signal_connect_swapped (G_OBJECT (window), "key_release_event",
-			          G_CALLBACK (key_release_event), NULL);
 
     gtk_widget_show_all(window);							/* Show all widgets */
 

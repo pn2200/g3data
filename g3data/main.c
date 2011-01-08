@@ -302,11 +302,6 @@ static gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointe
 }
 
 
-/****************************************************************/
-/* This function is called when movement is detected in the	*/
-/* drawing area, it captures the coordinates and zoom in om the */
-/* position and plots it on the zoom area.			*/
-/****************************************************************/
 static gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data)
 {
     gint x, y, TabNum;
@@ -319,24 +314,20 @@ static gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpoint
     xpointer = x;
     ypointer = y;
 
-    if (x >= 0 && y >= 0 && x < XSize[TabNum] && y < YSize[TabNum]) {
-        if (valueset[TabNum][0] && valueset[TabNum][1] && valueset[TabNum][2] && valueset[TabNum][3]) {
-            CalcVal = CalcPointValue(x,y,TabNum);
+    /* If pointer over image, and axis points have been set,
+       then print the coordinates. */
+    if (x >= 0 && y >= 0 && x < XSize[TabNum] && y < YSize[TabNum] &&
+       (valueset[TabNum][0] && valueset[TabNum][1] && valueset[TabNum][2] && valueset[TabNum][3])) {
 
-            g_ascii_formatd(buf, 32, "%.5f", CalcVal.Xv);
-            gtk_entry_set_text(GTK_ENTRY(xc_entry[TabNum]),buf);
-            g_ascii_formatd(buf, 32, "%.5f", CalcVal.Yv);
-            gtk_entry_set_text(GTK_ENTRY(yc_entry[TabNum]),buf);
-            g_ascii_formatd(buf, 32, "%.5f", CalcVal.Xerr);
-            gtk_entry_set_text(GTK_ENTRY(xerr_entry[TabNum]),buf);
-            g_ascii_formatd(buf, 32, "%.5f", CalcVal.Yerr);
-            gtk_entry_set_text(GTK_ENTRY(yerr_entry[TabNum]),buf);
-        } else {
-            gtk_entry_set_text(GTK_ENTRY(xc_entry[TabNum]),"");
-            gtk_entry_set_text(GTK_ENTRY(yc_entry[TabNum]),"");
-            gtk_entry_set_text(GTK_ENTRY(xerr_entry[TabNum]),"");
-            gtk_entry_set_text(GTK_ENTRY(yerr_entry[TabNum]),"");
-        }
+        CalcVal = CalcPointValue(x,y,TabNum);
+        g_ascii_formatd(buf, 32, "%.5f", CalcVal.Xv);
+        gtk_entry_set_text(GTK_ENTRY(xc_entry[TabNum]),buf);
+        g_ascii_formatd(buf, 32, "%.5f", CalcVal.Yv);
+        gtk_entry_set_text(GTK_ENTRY(yc_entry[TabNum]),buf);
+        g_ascii_formatd(buf, 32, "%.5f", CalcVal.Xerr);
+        gtk_entry_set_text(GTK_ENTRY(xerr_entry[TabNum]),buf);
+        g_ascii_formatd(buf, 32, "%.5f", CalcVal.Yerr);
+        gtk_entry_set_text(GTK_ENTRY(yerr_entry[TabNum]),buf);
     } else {
         gtk_entry_set_text(GTK_ENTRY(xc_entry[TabNum]),"");
         gtk_entry_set_text(GTK_ENTRY(yc_entry[TabNum]),"");

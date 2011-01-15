@@ -30,6 +30,7 @@ Authors email : jonas.frantz@welho.com
         { "ViewMenu", NULL, "_View", NULL, NULL, NULL },
         { "HelpMenu", NULL, "_Help", NULL, NULL, NULL },
         { "Open", GTK_STOCK_OPEN, "_Open", "<control>O", "Open an image in a new tab", G_CALLBACK( menu_file_open ) },
+        { "Save As", GTK_STOCK_SAVE_AS, "Save _As...", "<control><shift>S", "Save data", G_CALLBACK( file_save_as_dialog ) },
         { "Quit", GTK_STOCK_QUIT, "_Quit", "<control>Q", "Quit program", G_CALLBACK( close_application ) },
         { "About", GTK_STOCK_HELP, "_About", "", "About g3data", G_CALLBACK( menu_help_about ) }
   };
@@ -53,8 +54,9 @@ const gchar *ui_description =
         "  <menubar name='MainMenu'>"
         "    <menu action='FileMenu'>"
         "      <menuitem action='Open'/>"
-        "      <menuitem action='Close'/>"
+        "      <menuitem action='Save As'/>"
 	"      <separator />"
+        "      <menuitem action='Close'/>"
         "      <menuitem action='Quit'/>"
         "    </menu>"
         "    <menu action='ViewMenu'>"

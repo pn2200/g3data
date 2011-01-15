@@ -91,9 +91,6 @@ gchar orderlabel[ORDERBNUM][40] = {"No ordering",
                                    "Based on X value",
                                    "Based on Y value"};
 
-gchar actionlabel[ACTIONBNUM][32] = {"Export data to stdout",
-			             "Export data to file"};
-                                                                                                                                                                    
 gchar loglabel[LOGBNUM][32] = {"_X axis is logarithmic",
                                "_Y axis is logarithmic"};
 
@@ -127,7 +124,6 @@ gchar ZAheader[] = "<b>Zoom area</b>";
 gchar Oheader[]  = "<b>Point ordering</b>";
 gchar Eheader[]  = "<b>Value errors</b>";
 gchar Lheader[]  = "<b>Logarithmic scales</b>";
-gchar Aheader[]  = "<b>Action</b>";
 
 /************************************************************************************************/
 /* 					TOOLTIPS 						*/
@@ -149,10 +145,6 @@ gchar *entryxytt[] = 	{&entryx1tt[0], &entryx2tt[0], &entryy1tt[0], &entryy2tt[0
 
 gchar removeltt[] =	"Remove last point";
 gchar removeatts[] =	"Remove all points";
-
-gchar printrestt[] =	"Export data to stdout";
-gchar printfilett[] =	"Export data to file %s";
-gchar filenamett[] =	"Filename to export data to";
 
 gchar logxtt[] =	"X axis is logarithmic";
 gchar logytt[] =	"Y axis is logarithmic";

@@ -41,7 +41,6 @@ extern	gint		ordering[MAXNUMTABS];
 extern	gdouble		realcoords[MAXNUMTABS][4];
 extern	gboolean	UseErrors[MAXNUMTABS];
 extern	gboolean	logxy[MAXNUMTABS][2];
-extern	gint		print2file[MAXNUMTABS];
 extern  gchar		*file_name[MAXNUMTABS];
 extern	gint		ViewedTabNum;
 
@@ -135,22 +134,10 @@ struct PointValue CalcPointValue(gint Xpos, gint Ypos, gint TabNum)
 /* pressed, it calculate the values of the datapoints and 	*/
 /* prints them through stdout.					*/
 /****************************************************************/
-void print_results(GtkWidget *widget, gpointer func_data) 
+void print_results(FILE *fp) 
 {
-  gint i;								/* Declare index variable */
-  FILE *FP;
-
+  gint i;
   struct PointValue *RealPos, CalcVal;
-
-    if (print2file[ViewedTabNum] == TRUE) {
-	FP = fopen(file_name[ViewedTabNum],"w");					/* Open file for writing */
-	if (FP==NULL) {
-	    printf("Could not open %s for writing\n",file_name[ViewedTabNum]);	/* If unable to open print error */
-	    return;
-	}
-    } else {
-        FP = stdout;
-    }
 
     RealPos = (struct PointValue *) malloc(sizeof(struct PointValue) * numpoints[ViewedTabNum]);
 
@@ -168,15 +155,13 @@ void print_results(GtkWidget *widget, gpointer func_data)
 	Order(RealPos, numpoints[ViewedTabNum], ordering[ViewedTabNum]);
     }
 
-/* Print results to stdout or file */
-
     for (i=0;i<numpoints[ViewedTabNum];i++) {
-	    fprintf(FP,"%.12g  %.12g", RealPos[i].Xv, RealPos[i].Yv);
+	    fprintf(fp, "%.12g  %.12g", RealPos[i].Xv, RealPos[i].Yv);
 	    if (UseErrors[ViewedTabNum]) {
-		fprintf(FP,"\t%.12g  %.12g\n", RealPos[i].Xerr, RealPos[i].Yerr);
-	    } else fprintf(FP,"\n");
+		fprintf(fp, "\t%.12g  %.12g\n", RealPos[i].Xerr, RealPos[i].Yerr);
+	    } else fprintf(fp, "\n");
     }
     free(RealPos);
 
-    if (print2file[ViewedTabNum] == TRUE) fclose(FP);
+    fclose(fp);
 }

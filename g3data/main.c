@@ -55,11 +55,11 @@ Authors email : jonas.frantz@welho.com
 GtkWidget	*window;								/* Window */
 GtkWidget	*drawing_area[MAXNUMTABS], *zoom_area[MAXNUMTABS];			/* Drawing areas */
 GtkWidget	*xyentry[MAXNUMTABS][4];
-GtkWidget	*exportbutton[MAXNUMTABS], *remlastbutton[MAXNUMTABS]; 			/* Various buttons */
+GtkWidget	*remlastbutton[MAXNUMTABS];
 GtkWidget	*setxybutton[MAXNUMTABS][4];
 GtkWidget	*remallbutton[MAXNUMTABS];						/* Even more various buttons */
 GtkWidget	*xc_entry[MAXNUMTABS],*yc_entry[MAXNUMTABS];
-GtkWidget	*file_entry[MAXNUMTABS], *nump_entry[MAXNUMTABS];
+GtkWidget	*nump_entry[MAXNUMTABS];
 GtkWidget	*xerr_entry[MAXNUMTABS],*yerr_entry[MAXNUMTABS];			/* Coordinate and filename entries */
 GtkWidget       *logbox[MAXNUMTABS] = {NULL}, *zoomareabox[MAXNUMTABS] = {NULL}, *oppropbox[MAXNUMTABS] = {NULL};
 GtkWidget	*pm_label, *pm_label2, *file_label;
@@ -83,7 +83,6 @@ gint		NoteBookNumPages = 0;
 gint xpointer = -1;
 gint ypointer = -1;
 gdouble		realcoords[MAXNUMTABS][4];						/* X,Y coords on graph */
-gboolean	print2file[MAXNUMTABS];
 gboolean	UseErrors[MAXNUMTABS];
 gboolean	setxypressed[MAXNUMTABS][4];
 gboolean	bpressed[MAXNUMTABS][4];						/* What axispoints have been set out ? */
@@ -105,10 +104,8 @@ static gint expose_event(GtkWidget *widget, GdkEventExpose *event, gpointer data
 static gint configure_event(GtkWidget *widget, GdkEventConfigure *event,gpointer data);
 static void toggle_xy(GtkWidget *widget, gpointer func_data);
 static void SetOrdering(GtkWidget *widget, gpointer func_data);
-static void SetAction(GtkWidget *widget);
 static void UseErrCB(GtkWidget *widget, gpointer func_data);
 static void read_xy_entry(GtkWidget *entry, gpointer func_data);
-static void read_file_entry(GtkWidget *entry, gpointer func_data);
 static void islogxy(GtkWidget *widget, gpointer func_data);
 static void remove_last(GtkWidget *widget, gpointer data);
 static void remove_all(GtkWidget *widget, gpointer data) ;
@@ -150,32 +147,6 @@ static gint close_application(GtkWidget *widget, GdkEvent *event, gpointer data)
 /****************************************************************/
 static void SetButtonSensitivity(int TabNum)
 {
-  char ttbuf[256];
-
-    if (print2file[TabNum] == TRUE) {
-	snprintf(ttbuf, sizeof(ttbuf), printfilett, gtk_entry_get_text(GTK_ENTRY (file_entry[TabNum])));
-        gtk_widget_set_tooltip_text(exportbutton[TabNum],ttbuf);
-
-	gtk_widget_set_sensitive(file_entry[TabNum], TRUE);
-	if (valueset[TabNum][0] && valueset[TabNum][1] && 
-	    valueset[TabNum][2] && valueset[TabNum][3] && 
-	    bpressed[TabNum][0] && bpressed[TabNum][1] && 
-	    bpressed[TabNum][2] && bpressed[TabNum][3] && 
-	    numpoints[TabNum] > 0 && file_name_length[TabNum] > 0) 
-		gtk_widget_set_sensitive(exportbutton[TabNum], TRUE);
-	else gtk_widget_set_sensitive(exportbutton[TabNum], FALSE);
-    } else {
-        gtk_widget_set_tooltip_text(exportbutton[TabNum],printrestt);
-	gtk_widget_set_sensitive(file_entry[TabNum], FALSE);
-	if (valueset[TabNum][0] && valueset[TabNum][1] && 
-	    valueset[TabNum][2] && valueset[TabNum][3] && 
-	    bpressed[TabNum][0] && bpressed[TabNum][1] && 
-	    bpressed[TabNum][2] && bpressed[TabNum][3] && 
-	    numpoints[TabNum] > 0)
-		gtk_widget_set_sensitive(exportbutton[TabNum], TRUE);
-	else gtk_widget_set_sensitive(exportbutton[TabNum], FALSE);
-    }
-
     if (numpoints[TabNum]==0 &&
         axiscoords[TabNum][0][0] == -1 &&
         axiscoords[TabNum][1][0] == -1 &&
@@ -435,15 +406,6 @@ static void SetOrdering(GtkWidget *widget, gpointer func_data)
 
 
 /****************************************************************/
-/****************************************************************/
-static void SetAction(GtkWidget *widget)
-{
-    print2file[ViewedTabNum] = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-    SetButtonSensitivity(ViewedTabNum);
-}
-
-
-/****************************************************************/
 /* Set whether to use error evaluation and printing or not.	*/
 /****************************************************************/
 static void UseErrCB(GtkWidget *widget, gpointer func_data)
@@ -471,32 +433,6 @@ static void read_xy_entry(GtkWidget *entry, gpointer func_data)
     else valueset[ViewedTabNum][i] = TRUE;
 
     SetButtonSensitivity(ViewedTabNum);
-}
-
-
-/****************************************************************/
-/* If all the axispoints has been put out, values for these	*/
-/* have been assigned and at least one point has been set on	*/
-/* the graph activate the write to file button.			*/
-/****************************************************************/
-static void read_file_entry(GtkWidget *entry, gpointer func_data)
-{
-
-  gint TabNum;
-
-    TabNum = GPOINTER_TO_INT (func_data);
-
-    file_name[TabNum] = gtk_entry_get_text (GTK_ENTRY (entry));
-    file_name_length[TabNum] = strlen(file_name[TabNum]);			/* Get length of string */
-
-    if (bpressed[TabNum][0] && bpressed[TabNum][1] && bpressed[TabNum][2] && 
-	bpressed[TabNum][3] && valueset[TabNum][0] && valueset[TabNum][1] && 
-	valueset[TabNum][2] && valueset[TabNum][3] && numpoints[TabNum] > 0 &&
-	file_name_length[TabNum] > 0) {
-	gtk_widget_set_sensitive(exportbutton[TabNum],TRUE);
-    }
-    else gtk_widget_set_sensitive(exportbutton[TabNum],FALSE);
-
 }
 
 
@@ -740,8 +676,8 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
   GtkWidget	*APlabel, *PIlabel, *ZAlabel, *Llabel, *tab_label;
   GtkWidget 	*alignment;
   GtkWidget 	*x_label, *y_label, *tmplabel;
-  GtkWidget	*ordercheckb[3], *UseErrCheckB, *print_to_stdout_button, *print_to_file_button;
-  GtkWidget	*Olabel, *Elabel, *Alabel;
+  GtkWidget	*ordercheckb[3], *UseErrCheckB;
+  GtkWidget	*Olabel, *Elabel;
   GSList 	*group;
   GtkWidget	*dialog;
 
@@ -1013,52 +949,12 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
     gtk_box_pack_start (GTK_BOX (subvbox), alignment, FALSE, FALSE, 0);
     gtk_box_pack_start (GTK_BOX (subvbox), UseErrCheckB, FALSE, FALSE, 0);
 
-    /* Create and pack buttons for output to stdout or file */
-    subvbox = gtk_vbox_new (FALSE, ELEM_SEP);
-    gtk_box_pack_start (GTK_BOX (blvbox), subvbox, FALSE, FALSE, 0);
-    group = NULL;
-    print_to_stdout_button = gtk_radio_button_new_with_label (group, actionlabel[0]);
-	group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (print_to_stdout_button));	/* Get buttons group */
-    print_to_file_button = gtk_radio_button_new_with_label (group, actionlabel[1]);
-	g_signal_connect (G_OBJECT (print_to_file_button), "toggled",			/* Connect to toggled signal of only print_to_file_button */
-			  G_CALLBACK (SetAction), NULL);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (print_to_stdout_button), TRUE);		/* Set no ordering button active */
-
-    Alabel = gtk_label_new (NULL);
-    gtk_label_set_markup (GTK_LABEL (Alabel), Aheader);
-    alignment = gtk_alignment_new (0, 1, 0, 0);
-    gtk_container_add(GTK_CONTAINER(alignment), Alabel);
-    gtk_box_pack_start (GTK_BOX (subvbox), alignment, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (subvbox), print_to_stdout_button, FALSE, FALSE, 0);
-	gtk_box_pack_start (GTK_BOX (subvbox), print_to_file_button, FALSE, FALSE, 0);
-
-    file_entry[TabNum] = gtk_entry_new();						/* Create text entry */
-    gtk_entry_set_max_length (GTK_ENTRY (file_entry[TabNum]), 256);
-    gtk_editable_set_editable(GTK_EDITABLE(file_entry[TabNum]),TRUE);
-    g_signal_connect (G_OBJECT (file_entry[TabNum]), "changed",				/* Init the entry to call */
-                    G_CALLBACK (read_file_entry), GINT_TO_POINTER (TabNum));
-    gtk_widget_set_tooltip_text(file_entry[TabNum],filenamett);
-
+    /* Print current image name in title bar*/
     buffer = g_strdup_printf(Window_Title, filename);
-    buffer2 = g_strdup_printf("%s.dat", filename);
-    gtk_window_set_title (GTK_WINDOW (window), buffer);                    		/* Set window title */
-
-    gtk_box_pack_start (GTK_BOX (subvbox), file_entry[TabNum], FALSE, FALSE, 0);
-    gtk_widget_set_sensitive(file_entry[TabNum],FALSE);
-
-    exportbutton[TabNum] = gtk_button_new_with_mnemonic (PrintBLabel);			/* Create button */
-
-    gtk_box_pack_start (GTK_BOX (subvbox), exportbutton[TabNum], FALSE, FALSE, 0);
-    gtk_widget_set_sensitive(exportbutton[TabNum],FALSE);
-
-    g_signal_connect (G_OBJECT (exportbutton[TabNum]), "clicked",
-                  G_CALLBACK (print_results), GINT_TO_POINTER(FALSE));
-    gtk_widget_set_tooltip_text(exportbutton[TabNum],printrestt);
+    gtk_window_set_title (GTK_WINDOW (window), buffer);
 
     brvbox = gtk_vbox_new (FALSE, GROUP_SEP);
     gtk_box_pack_start (GTK_BOX (bottomhbox), brvbox, TRUE, TRUE, 0);
-
-    gtk_entry_set_text(GTK_ENTRY (file_entry[TabNum]), buffer2);				/* Set text of text entry to filename */
 
     /* Create a scroll window to hold image */
     ScrollWindow = gtk_scrolled_window_new(NULL,NULL);
@@ -1070,7 +966,6 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
     gtk_container_add (GTK_CONTAINER (ScrollWindow), ViewPort);
 
     gtk_widget_show_all(window);
-
 
     gtk_notebook_set_current_page(GTK_NOTEBOOK(mainnotebook), TabNum);
 
@@ -1097,7 +992,6 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
 	    bpressed[TabNum][i] = TRUE;
 	    setxypressed[TabNum][i]=FALSE;
 	}
-	gtk_widget_set_sensitive(exportbutton[TabNum],TRUE);
     }
 
     gtk_action_group_set_sensitive(tab_action_group, TRUE);
@@ -1211,6 +1105,37 @@ static GCallback menu_file_open(void)
     gtk_widget_destroy (dialog);
 
     return NULL;
+}
+
+/* The File -> Save As... dialog.		*/
+static void file_save_as_dialog (GtkAction *action, gpointer data)
+{
+    GtkWidget *dialog;
+    gchar *filename;
+    FILE *fp;
+
+    dialog = gtk_file_chooser_dialog_new ("Save As...",
+                                          GTK_WINDOW (window),
+                                          GTK_FILE_CHOOSER_ACTION_OPEN,
+                                          GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+                                          GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+                                          NULL);
+
+    if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
+        filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+        fp = fopen (filename, "w");
+        if (fp == NULL) {
+            g_free (filename);
+            return;
+        } else {
+            print_results (fp);
+            g_free (filename);
+        }
+    }
+
+    gtk_widget_destroy (dialog);
+
+    return;
 }
 
 

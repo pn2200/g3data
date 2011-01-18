@@ -755,7 +755,6 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
     /* text entries to enter axis points x_1, x_2, etc. */
 	xyentry[TabNum][i] = gtk_entry_new();  						/* Create text entry */
 	gtk_entry_set_max_length (GTK_ENTRY (xyentry[TabNum][i]), 20);
-	gtk_editable_set_editable(GTK_EDITABLE(xyentry[TabNum][i]),FALSE);
 	gtk_widget_set_sensitive(xyentry[TabNum][i],FALSE);				/* Inactivate it */
 	g_signal_connect (G_OBJECT (xyentry[TabNum][i]), "changed",			/* Init the entry to call */
 			  G_CALLBACK (read_xy_entry), GINT_TO_POINTER (i));		/* read_x1_entry whenever */

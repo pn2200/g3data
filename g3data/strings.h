@@ -99,8 +99,6 @@ gchar xy_label_text[4][32] = {"X<sub>1</sub> value : ",
                               "Y<sub>1</sub> value : ",
                               "Y<sub>2</sub> value : "};
 
-gchar PrintBLabel[] = 	"Export point _data";
-
 gchar RemLastBLabel[] = "_Remove last point";
 
 gchar RemAllBLabel[] = 	"Remove _all points";
@@ -111,8 +109,6 @@ gchar pm_string[] = 	" ± ";
 
 gchar x_string[] = " X : ";
 gchar y_string[] = " Y : ";
-
-gchar filen_string[] = "Filename : ";
 
 gchar nump_string[] = "Number of points : ";
 

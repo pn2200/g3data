@@ -1286,7 +1286,7 @@ int main (int argc, char **argv)
   gint 		FileIndex[MAXNUMTABS], NumFiles = 0, i, maxX, maxY;
   gdouble 	Scale;
   gboolean	UsePreSetCoords, UseError, Uselogxy[2];
-  gdouble	TempCoords[4];
+  gdouble	TempCoords[4] = {0.0, 0.0, 0.0, 0.0};
 
   GtkWidget	*mainvbox;
 

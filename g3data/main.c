@@ -682,7 +682,7 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
   GtkWidget	*dialog;
 
     gchar buf[20];
-    gchar *buffer, *buffer2;
+    gchar *buffer;
   gint 		i, TabNum;
   static gint	NumberOfTabs=0;
 

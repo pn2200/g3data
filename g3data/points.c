@@ -34,14 +34,14 @@ Authors email : jonas.frantz@welho.com
 
 /* Extern variables */
 
-extern	gint		axiscoords[MAXNUMTABS][4][2];
-extern	gint		**points[MAXNUMTABS];
-extern	gint		numpoints[MAXNUMTABS];
-extern	gint		ordering[MAXNUMTABS];
-extern	gdouble		realcoords[MAXNUMTABS][4];
-extern	gboolean	UseErrors[MAXNUMTABS];
-extern	gboolean	logxy[MAXNUMTABS][2];
-extern  gchar		*file_name[MAXNUMTABS];
+extern	gint		axiscoords[4][2];
+extern	gint		**points;
+extern	gint		numpoints;
+extern	gint		ordering;
+extern	gdouble		realcoords[4];
+extern	gboolean	UseErrors;
+extern	gboolean	logxy[2];
+extern  gchar		*file_name;
 extern	gint		ViewedTabNum;
 
 /****************************************************************/
@@ -61,65 +61,65 @@ void SetNumPointsEntry(GtkWidget *np_entry, gint np)
 /* This function calculates the true value of the point based	*/
 /* on the coordinates of the point on the bitmap.		*/
 /****************************************************************/
-struct PointValue CalcPointValue(gint Xpos, gint Ypos, gint TabNum)
+struct PointValue CalcPointValue(gint Xpos, gint Ypos)
 {
   double alpha,beta,x21,x43,y21,y43,rlc[4];				/* Declare help variables */
   struct PointValue PV;
 
-    x21=(double) axiscoords[TabNum][1][0]-axiscoords[TabNum][0][0];			/* Calculate deltax of x axis points */
-    y21=(double) axiscoords[TabNum][1][1]-axiscoords[TabNum][0][1];			/* Calculate deltay of x axis points */
-    x43=(double) axiscoords[TabNum][3][0]-axiscoords[TabNum][2][0];			/* Calculate deltax of y axis points */
-    y43=(double) axiscoords[TabNum][3][1]-axiscoords[TabNum][2][1];			/* Calculate deltay of y axis points */
+    x21=(double) axiscoords[1][0]-axiscoords[0][0];			/* Calculate deltax of x axis points */
+    y21=(double) axiscoords[1][1]-axiscoords[0][1];			/* Calculate deltay of x axis points */
+    x43=(double) axiscoords[3][0]-axiscoords[2][0];			/* Calculate deltax of y axis points */
+    y43=(double) axiscoords[3][1]-axiscoords[2][1];			/* Calculate deltay of y axis points */
 
-    if (logxy[TabNum][0]) {							/* If x axis is logarithmic, store	*/
-	rlc[0]=log(realcoords[TabNum][0]);					/* recalculated values in rlc.		*/ 
-	rlc[1]=log(realcoords[TabNum][1]);
+    if (logxy[0]) {							/* If x axis is logarithmic, store	*/
+	rlc[0]=log(realcoords[0]);					/* recalculated values in rlc.		*/ 
+	rlc[1]=log(realcoords[1]);
     }
     else {
-	rlc[0]=realcoords[TabNum][0];						/* Else store old values in rlc.	*/
-	rlc[1]=realcoords[TabNum][1];
+	rlc[0]=realcoords[0];						/* Else store old values in rlc.	*/
+	rlc[1]=realcoords[1];
     }
 
-    if (logxy[TabNum][1]) {
-	rlc[2]=log(realcoords[TabNum][2]);					/* If y axis is logarithmic, store      */
-	rlc[3]=log(realcoords[TabNum][3]);					/* recalculated values in rlc.          */
+    if (logxy[1]) {
+	rlc[2]=log(realcoords[2]);					/* If y axis is logarithmic, store      */
+	rlc[3]=log(realcoords[3]);					/* recalculated values in rlc.          */
     }
     else {
-	rlc[2]=realcoords[TabNum][2];						/* Else store old values in rlc.        */
-	rlc[3]=realcoords[TabNum][3];
+	rlc[2]=realcoords[2];						/* Else store old values in rlc.        */
+	rlc[3]=realcoords[3];
     }
 
-	alpha=((axiscoords[TabNum][0][0]-(double) Xpos)
-              -(axiscoords[TabNum][0][1]-(double)  Ypos)*(x43/y43))/(x21-((y21*x43)/y43));
-        beta=((axiscoords[TabNum][2][1]-(double) Ypos)
-              -(axiscoords[TabNum][2][0]-(double) Xpos)*(y21/x21))/(y43-((x43*y21)/x21));
+	alpha=((axiscoords[0][0]-(double) Xpos)
+              -(axiscoords[0][1]-(double)  Ypos)*(x43/y43))/(x21-((y21*x43)/y43));
+        beta=((axiscoords[2][1]-(double) Ypos)
+              -(axiscoords[2][0]-(double) Xpos)*(y21/x21))/(y43-((x43*y21)/x21));
 
-	if (logxy[TabNum][0]) PV.Xv = exp(-alpha*(rlc[1]-rlc[0])+rlc[0]);
+	if (logxy[0]) PV.Xv = exp(-alpha*(rlc[1]-rlc[0])+rlc[0]);
 	else PV.Xv = -alpha*(rlc[1]-rlc[0])+rlc[0];
 
-	if (logxy[TabNum][1]) PV.Yv = exp(-beta*(rlc[3]-rlc[2])+rlc[2]);
+	if (logxy[1]) PV.Yv = exp(-beta*(rlc[3]-rlc[2])+rlc[2]);
 	else PV.Yv = -beta*(rlc[3]-rlc[2])+rlc[2];
 
-	alpha=((axiscoords[TabNum][0][0]-(double) (Xpos+1))
-              -(axiscoords[TabNum][0][1]-(double) (Ypos+1))*(x43/y43))/(x21-((y21*x43)/y43));
-        beta=((axiscoords[TabNum][2][1]-(double) (Ypos+1))
-              -(axiscoords[TabNum][2][0]-(double) (Xpos+1))*(y21/x21))/(y43-((x43*y21)/x21));
+	alpha=((axiscoords[0][0]-(double) (Xpos+1))
+              -(axiscoords[0][1]-(double) (Ypos+1))*(x43/y43))/(x21-((y21*x43)/y43));
+        beta=((axiscoords[2][1]-(double) (Ypos+1))
+              -(axiscoords[2][0]-(double) (Xpos+1))*(y21/x21))/(y43-((x43*y21)/x21));
 
-	if (logxy[TabNum][0]) PV.Xerr = exp(-alpha*(rlc[1]-rlc[0])+rlc[0]);
+	if (logxy[0]) PV.Xerr = exp(-alpha*(rlc[1]-rlc[0])+rlc[0]);
 	else PV.Xerr = -alpha*(rlc[1]-rlc[0])+rlc[0];
 
-	if (logxy[TabNum][1]) PV.Yerr = exp(-beta*(rlc[3]-rlc[2])+rlc[2]);
+	if (logxy[1]) PV.Yerr = exp(-beta*(rlc[3]-rlc[2])+rlc[2]);
 	else PV.Yerr = -beta*(rlc[3]-rlc[2])+rlc[2];
 
-	alpha=((axiscoords[TabNum][0][0]-(double) (Xpos-1))
-              -(axiscoords[TabNum][0][1]-(double) (Ypos-1))*(x43/y43))/(x21-((y21*x43)/y43));
-        beta=((axiscoords[TabNum][2][1]-(double) (Ypos-1))
-              -(axiscoords[TabNum][2][0]-(double) (Xpos-1))*(y21/x21))/(y43-((x43*y21)/x21));
+	alpha=((axiscoords[0][0]-(double) (Xpos-1))
+              -(axiscoords[0][1]-(double) (Ypos-1))*(x43/y43))/(x21-((y21*x43)/y43));
+        beta=((axiscoords[2][1]-(double) (Ypos-1))
+              -(axiscoords[2][0]-(double) (Xpos-1))*(y21/x21))/(y43-((x43*y21)/x21));
 
-	if (logxy[TabNum][0]) PV.Xerr -= exp(-alpha*(rlc[1]-rlc[0])+rlc[0]);
+	if (logxy[0]) PV.Xerr -= exp(-alpha*(rlc[1]-rlc[0])+rlc[0]);
 	else PV.Xerr -= -alpha*(rlc[1]-rlc[0])+rlc[0];
 
-	if (logxy[TabNum][1]) PV.Yerr -= exp(-beta*(rlc[3]-rlc[2])+rlc[2]);
+	if (logxy[1]) PV.Yerr -= exp(-beta*(rlc[3]-rlc[2])+rlc[2]);
 	else PV.Yerr -= -beta*(rlc[3]-rlc[2])+rlc[2];
 
 	PV.Xerr = fabs(PV.Xerr/4.0);
@@ -139,25 +139,25 @@ void print_results(FILE *fp)
   gint i;
   struct PointValue *RealPos, CalcVal;
 
-    RealPos = (struct PointValue *) malloc(sizeof(struct PointValue) * numpoints[ViewedTabNum]);
+    RealPos = (struct PointValue *) malloc(sizeof(struct PointValue) * numpoints);
 
 /* Next up is recalculating the positions of the points by solving a 2*2 matrix */
 
-    for (i=0;i<numpoints[ViewedTabNum];i++) {
-        CalcVal = CalcPointValue(points[ViewedTabNum][i][0], points[ViewedTabNum][i][1], ViewedTabNum);
+    for (i=0;i<numpoints;i++) {
+        CalcVal = CalcPointValue(points[i][0], points[i][1]);
 	RealPos[i].Xv = CalcVal.Xv;
 	RealPos[i].Yv = CalcVal.Yv;
 	RealPos[i].Xerr = CalcVal.Xerr;
 	RealPos[i].Yerr = CalcVal.Yerr;
     }
 
-    if (ordering[ViewedTabNum] != 0) {
-	Order(RealPos, numpoints[ViewedTabNum], ordering[ViewedTabNum]);
+    if (ordering != 0) {
+	Order(RealPos, numpoints, ordering);
     }
 
-    for (i=0;i<numpoints[ViewedTabNum];i++) {
+    for (i=0;i<numpoints;i++) {
 	    fprintf(fp, "%.12g  %.12g", RealPos[i].Xv, RealPos[i].Yv);
-	    if (UseErrors[ViewedTabNum]) {
+	    if (UseErrors) {
 		fprintf(fp, "\t%.12g  %.12g\n", RealPos[i].Xerr, RealPos[i].Yerr);
 	    } else fprintf(fp, "\n");
     }

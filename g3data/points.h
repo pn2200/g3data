@@ -22,5 +22,5 @@ Authors email : pnovak@alumni.caltech.edu
 */
 
 void SetNumPointsEntry(GtkWidget *np_entry, gint np);
-struct PointValue CalcPointValue(gint Xpos, gint Ypos, gint TabNum);
+struct PointValue CalcPointValue(gint Xpos, gint Ypos);
 void print_results(FILE *fp);

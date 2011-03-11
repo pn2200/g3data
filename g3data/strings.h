@@ -35,44 +35,6 @@ Authors email : jonas.frantz@welho.com
 #define AUTHORS {"Jonas Frantz", "Paul Novak", NULL}
 
 /************************************************************************************************/
-/* 					COMMANDLINE HELP 					*/
-/************************************************************************************************/
-
-gchar HelpText[] =	"\n"
-                        "g3data version "VERSION", Copyright (C) 2000 Jonas Frantz\n"
-                        " g3data comes with ABSOLUTELY NO WARRANTY; for details\n"
-                        " check out the documentation.  This is free software, and\n"
-                        " you are welcome to redistribute it under all conditions.\n"
-                        "\n"
-                        " Usage : g3data [options] [file1.ext [file2.ext [...]]]\n"
-                        "\n"
-                        "  Options :\n"
-                        "      -max <x> <y>                    : If picture is larger x-wise than x or y-wise than y,\n"
-                        "                                        the picture is scaled down accordingly otherwise this\n"
-                        "                                        parameter has no effect.\n"
-                        "      -scale <factor>                 : Scales the picture size according to the factor. This\n"
-                        "                                        parameter nullifies effect of the -max parameter.\n"
-                        "      -coords <llx> <lly> <rux> <ruy> : Preset the coordinates of the left lower (ll) corner\n"
-                        "                                        and the right upper (ru) corner.\n"
-                        "      -errors                         : Print out the error of the x value in column 3 and the\n"
-                        "                                        error of y value in column 4 of the output.\n"
-                        "      -lnx                            : Use logarithmic scale for x coordinates.\n"
-                        "      -lny                            : Use logarithmic scale for y coordinates.\n"
-                        "      -h or --help                    : Print this help.\n"
-                        "\n"
-                        "  Supported image formats : PNG, XPM, JPEG, TIFF, PNM, RAS, BMP and GIF\n"
-			"\n"
-			" Hints and remarks for usage :\n"
-			"  - The options given on the commandline only is applied to the images\n"
-			"    opened from the commandline.\n"
-			"  - To access fullscreen mode use the F11 key.\n"
-                        "  - For increased data accuracy use the -scale option with a large parameter\n"
-			"    to achieve finer granularity and thus smaller errors.\n"
-                        "\n"
-                        " Report bugs to jonas.frantz@welho.com\n"
-                        "\n";
-                                                                                                                                                                    
-/************************************************************************************************/
 /* 					BUTTON/CHECKBUTTON/LABELS 				*/
 /************************************************************************************************/
 

@@ -81,15 +81,18 @@ gint 		MaxPoints = {MAXPOINTS};
 gint		NoteBookNumPages = 0;
 gint xpointer = -1;
 gint ypointer = -1;
+static gint width = -1;
+static gint height = -1;
+gboolean UseErrors = FALSE;
+gboolean logxy[2] = {FALSE, FALSE};
+static gdouble scale = -1;
 gdouble		realcoords[4];						/* X,Y coords on graph */
-gboolean	UseErrors;
 gboolean	setxypressed[4];
 gboolean	bpressed[4];						/* What axispoints have been set out ? */
 gboolean	valueset[4];
-gboolean	logxy[2] = {FALSE,FALSE};
 gboolean        ShowLog = FALSE, ShowZoomArea = FALSE, ShowOpProp = FALSE;
-const gchar *file_name;
 gchar		*FileNames;
+static const gchar **filenames;
 FILE		*FP;									/* File pointer */
 
 GtkWidget 	*drawing_area_alignment;
@@ -125,6 +128,22 @@ static GCallback full_screen_action_callback(GtkWidget *widget, gpointer func_da
 static GCallback hide_zoom_area_callback(GtkWidget *widget, gpointer func_data);
 static GCallback hide_axis_settings_callback(GtkWidget *widget, gpointer func_data);
 static GCallback hide_output_prop_callback(GtkWidget *widget, gpointer func_data);
+
+static const GOptionEntry goption_options[] =
+{
+	{ "height", 'h', 0, G_OPTION_ARG_INT, &height, "The maximum height of image. Larger images will be scaled to this height.", "H"},
+	{ "width", 'w', 0, G_OPTION_ARG_INT, &width, "The maximum width of image. Larger images will be scaled to this width.", "W"},
+	{ "scale", 's', 0, G_OPTION_ARG_DOUBLE, &scale, "Scale image by scale factor.", "S"},
+	{ "error", 'e', 0, G_OPTION_ARG_NONE, &UseErrors, "Output estimates of error", NULL },
+	{ "lnx", 0, 0, G_OPTION_ARG_NONE, &logxy[0], "Use logarithmic scale for x coordinates", NULL },
+	{ "lny", 0, 0, G_OPTION_ARG_NONE, &logxy[1], "Use logarithmic scale for y coordinates", NULL},
+	{ "x0", 0, 0, G_OPTION_ARG_DOUBLE, &realcoords[0], "Preset the x-coordinate for the lower left corner", "x0" },
+	{ "x1", 0, 0, G_OPTION_ARG_DOUBLE, &realcoords[1], "Preset the x-coordinate for the upper right corner", "x1" },
+	{ "y0", 0, 0, G_OPTION_ARG_DOUBLE, &realcoords[2], "Preset the y-coordinate for the lower left corner", "y0" },
+	{ "y1", 0, 0, G_OPTION_ARG_DOUBLE, &realcoords[3], "Preset the y-coordinate for the upper right corner", "y1" },
+	{ G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &filenames, NULL, "[FILE...]" },
+	{ NULL }
+};
 
 /****************************************************************/
 /* This function closes the window when the application is 	*/
@@ -545,7 +564,7 @@ static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer poin
 /****************************************************************/
 static gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble maxY) {
     gboolean has_alpha;
-    gint width, height;
+    gint w, h;
     GdkPixbuf *loadgpbimage;
     GdkCursor *cursor;
     GtkWidget *dialog;
@@ -564,29 +583,29 @@ static gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble max
 	return -1;									/* exit */
     }
 
-    width = gdk_pixbuf_get_width(loadgpbimage);
-    height = gdk_pixbuf_get_height(loadgpbimage);
+    w = gdk_pixbuf_get_width(loadgpbimage);
+    h = gdk_pixbuf_get_height(loadgpbimage);
     has_alpha = gdk_pixbuf_get_has_alpha(loadgpbimage);
 
-    if (maxX != -1 && maxY != -1 && Scale == -1) {
-        if (width > maxX || height > maxY) {
-            Scale = fmin((double) (maxX/width), (double) (maxY/height));
+    if (width != -1 && height != -1 && scale == -1) {
+        if (w > width || h > height) {
+            scale = fmin((double) (width/w), (double) (height/h));
         }
     }
 
-    if (Scale != -1) {
-        width = width * Scale;
-        height = height * Scale;
-        gpbimage = gdk_pixbuf_new (GDK_COLORSPACE_RGB, has_alpha, 8, width, height);
-        gdk_pixbuf_composite(loadgpbimage, gpbimage, 0, 0, width, height,
-    	         0, 0, Scale, Scale, GDK_INTERP_BILINEAR, 255);
+    if (scale != -1) {
+        w = w * scale;
+        h = h * scale;
+        gpbimage = gdk_pixbuf_new (GDK_COLORSPACE_RGB, has_alpha, 8, w, h);
+        gdk_pixbuf_composite(loadgpbimage, gpbimage, 0, 0, w, h,
+    	         0, 0, scale, scale, GDK_INTERP_BILINEAR, 255);
         g_object_unref(loadgpbimage);
     } else {
         gpbimage = loadgpbimage;
     }
 
-    XSize = width;
-    YSize = height;
+    XSize = w;
+    YSize = h;
 
     drawing_area = gtk_drawing_area_new ();					/* Create new drawing area */
     gtk_widget_set_size_request (drawing_area, XSize, YSize);
@@ -1188,108 +1207,25 @@ static GCallback hide_output_prop_callback(GtkWidget *widget, gpointer func_data
 /****************************************************************/
 int main (int argc, char **argv)
 {
-  gint 		FileIndex, i, maxX, maxY;
-  gdouble 	Scale;
-  gboolean	UsePreSetCoords, UseError, Uselogxy[2];
-  gdouble	TempCoords[4] = {0.0, 0.0, 0.0, 0.0};
-
   GtkWidget *menubar;
   GtkActionGroup *action_group;
   GtkUIManager *ui_manager;
   GtkAccelGroup *accel_group;
-  GError *error;
+  GError *error = NULL;
+    GOptionContext *context;
 
 #include "vardefs.h"
 
-    gtk_init (&argc, &argv);								/* Init GTK */
+    gtk_init (&argc, &argv);
 
-    if (argc > 1) if (strcmp(argv[1],"-h")==0 ||					/* If no parameters given, -h or --help */
-	strcmp(argv[1],"--help")==0) {
-	printf("%s",HelpText);								/* Print help */
-	exit(0);									/* and exit */
+    context = g_option_context_new ("- grab graph data");
+    g_option_context_add_main_entries (context, goption_options, NULL);
+    g_option_context_add_group (context, gtk_get_option_group (TRUE));
+    if (!g_option_context_parse (context, &argc, &argv, &error))
+    {
+        g_print ("option parsing failed: %s\n", error->message);
+        exit (1);
     }
-
-    maxX = -1;
-    maxY = -1;
-    Scale = -1;
-   UseError = FALSE;
-    UsePreSetCoords = FALSE;
-    Uselogxy[0] = FALSE;
-    Uselogxy[1] = FALSE;
-    for (i=1;i<argc;i++) {
-	if (*(argv[i])=='-') {
-	    if (strcmp(argv[i],"-scale")==0) {
-		if (argc-i < 2) {
-		    printf("Too few parameters for -scale\n");
-		    exit(0);
-		}
-		if (sscanf(argv[i+1],"%lf",&Scale)!=1) {
-		    printf("-scale parameter in invalid form !\n");
-		    exit(0);
-		}
-		i++;
-		if (i >= argc) break;
-	    } else if (strcmp(argv[i],"-errors")==0) {
-		UseError = TRUE;
-	    } else if (strcmp(argv[i],"-lnx")==0) {
-		Uselogxy[0] = TRUE;
-	    } else if (strcmp(argv[i],"-lny")==0) {
-		Uselogxy[1] = TRUE;
-	    } else if (strcmp(argv[i],"-max")==0) {
-		if (argc-i < 3) {
-		    printf("Too few parameters for -max\n");
-		    exit(0);
-		}
-		if (sscanf(argv[i+1],"%d", &maxX)!=1) {
-		    printf("-max first parameter in invalid form !\n");
-		    exit(0);
-		}
-		if (sscanf(argv[i+2],"%d", &maxY)!=1) {
-		    printf("-max second parameter in invalid form !\n");
-		    exit(0);
-		}
-		i+=2;
-		if (i >= argc) break;
-	    } else if (strcmp(argv[i],"-coords")==0) {
-		UsePreSetCoords = TRUE;
-		if (argc-i < 5) {
-		    printf("Too few parameters for -coords\n");
-		    exit(0);
-		}
-		if (sscanf(argv[i+1],"%lf", &TempCoords[0])!=1) {
-		    printf("-max first parameter in invalid form !\n");
-		    exit(0);
-		}
-		if (sscanf(argv[i+2],"%lf", &TempCoords[1])!=1) {
-		    printf("-max second parameter in invalid form !\n");
-		    exit(0);
-		} 
-		if (sscanf(argv[i+3],"%lf", &TempCoords[2])!=1) {
-		    printf("-max third parameter in invalid form !\n");
-		    exit(0);
-		} 
-		if (sscanf(argv[i+4],"%lf", &TempCoords[3])!=1) {
-		    printf("-max fourth parameter in invalid form !\n");
-		    exit(0);
-		}
-		i+=4;
-		if (i >= argc) break;
-/*	    } else if (strcmp(argv[i],"-hidelog")==0) {
-		HideLog = TRUE;
-	    } else if (strcmp(argv[i],"-hideza")==0) {
-		HideZoomArea = TRUE;
-	    } else if (strcmp(argv[i],"-hideop")==0) {
-		HideOpProp = TRUE; */
-	    } else {
-		printf("Unknown parameter : %s\n", argv[i]);
-		exit(0);
-	    }
-	    continue;
-	} else {
-	    FileIndex = i;
-	}
-    }
-
 
     window = gtk_window_new(GTK_WINDOW_TOPLEVEL);					/* Create window */
     gtk_window_set_default_size(GTK_WINDOW(window), 640, 480);
@@ -1332,14 +1268,7 @@ int main (int argc, char **argv)
     menubar = gtk_ui_manager_get_widget(ui_manager, "/MainMenu");
     gtk_box_pack_start(GTK_BOX (mainvbox), menubar, FALSE, FALSE, 0);
 
-    realcoords[0] = TempCoords[0];
-    realcoords[2] = TempCoords[1];
-    realcoords[1] = TempCoords[2];
-    realcoords[3] = TempCoords[3];
-    logxy[0] = Uselogxy[0];
-    logxy[1] = Uselogxy[1];
-    UseErrors = UseError;
-    SetupNewTab(argv[FileIndex], Scale, maxX, maxY, UsePreSetCoords);
+    SetupNewTab(filenames[0], scale, width, height, FALSE);
 
     g_signal_connect_swapped (G_OBJECT (window), "key_press_event",
 			          G_CALLBACK (key_press_event), NULL);

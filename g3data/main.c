@@ -33,6 +33,7 @@ Authors email : jonas.frantz@welho.com
 #include <math.h>									/* Include math library */
 #include <libgen.h>
 #include "main.h"
+#include "g3data-application.h"
 #include "drawing.h"
 #include "strings.h"
 #include "points.h"
@@ -1207,14 +1208,8 @@ static GCallback hide_output_prop_callback(GtkWidget *widget, gpointer func_data
 /****************************************************************/
 int main (int argc, char **argv)
 {
-  GtkWidget *menubar;
-  GtkActionGroup *action_group;
-  GtkUIManager *ui_manager;
-  GtkAccelGroup *accel_group;
-  GError *error = NULL;
+    GError *error = NULL;
     GOptionContext *context;
-
-#include "vardefs.h"
 
     gtk_init (&argc, &argv);
 
@@ -1224,60 +1219,16 @@ int main (int argc, char **argv)
     if (!g_option_context_parse (context, &argc, &argv, &error))
     {
         g_print ("option parsing failed: %s\n", error->message);
-        exit (1);
+        g_error_free (error);
+        g_option_context_free (context);
+        exit (EXIT_FAILURE);
     }
+    g_option_context_free (context);
 
-    window = gtk_window_new(GTK_WINDOW_TOPLEVEL);					/* Create window */
-    gtk_window_set_default_size(GTK_WINDOW(window), 640, 480);
-    gtk_window_set_title(GTK_WINDOW (window), Window_Title_NoneOpen);			/* Set window title */
-    gtk_window_set_resizable(GTK_WINDOW (window), TRUE);
-    gtk_container_set_border_width(GTK_CONTAINER (window), 0);				/* Set borders in window */
-    mainvbox = gtk_vbox_new(FALSE, 0);
-    gtk_container_add( GTK_CONTAINER(window), mainvbox);
+    g_set_application_name ("Grab graph data");
+    gtk_window_set_default_icon_name ("g3data-icon");
 
-    g_signal_connect(G_OBJECT (window), "delete_event",					/* Init delete event of window */
-                        G_CALLBACK (close_application), NULL);
+    load_files (filenames);
 
-    gtk_drag_dest_set(window, GTK_DEST_DEFAULT_ALL, ui_drop_target_entries, NUM_IMAGE_DATA, (GDK_ACTION_COPY | GDK_ACTION_MOVE));
-    g_signal_connect(G_OBJECT (window), "drag-data-received",				/* Drag and drop catch */
-                        G_CALLBACK (drag_data_received), NULL);
-
-/* Create menues */
-    action_group = gtk_action_group_new("MenuActions");
-    gtk_action_group_add_actions(action_group, entries, G_N_ELEMENTS (entries), window);
-    gtk_action_group_add_toggle_actions(action_group, full_screen, G_N_ELEMENTS (full_screen), window);
-
-    tab_action_group = gtk_action_group_new("TabActions");
-    gtk_action_group_add_toggle_actions(tab_action_group, toggle_entries, G_N_ELEMENTS (toggle_entries), window);
-    gtk_action_group_set_sensitive(tab_action_group, FALSE);
-
-    ui_manager = gtk_ui_manager_new();
-    gtk_ui_manager_insert_action_group(ui_manager, action_group, 0);
-    gtk_ui_manager_insert_action_group(ui_manager, tab_action_group, 0);
- 
-    accel_group = gtk_ui_manager_get_accel_group(ui_manager);
-    gtk_window_add_accel_group(GTK_WINDOW (window), accel_group);
- 
-    error = NULL;
-    if (!gtk_ui_manager_add_ui_from_string(ui_manager, ui_description, -1, &error)) {
-        g_message("building menus failed: %s", error->message);
-        g_error_free(error);
-        exit(EXIT_FAILURE);
-    }
- 
-    menubar = gtk_ui_manager_get_widget(ui_manager, "/MainMenu");
-    gtk_box_pack_start(GTK_BOX (mainvbox), menubar, FALSE, FALSE, 0);
-
-    SetupNewTab(filenames[0], scale, width, height, FALSE);
-
-    g_signal_connect_swapped (G_OBJECT (window), "key_press_event",
-			          G_CALLBACK (key_press_event), NULL);
-
-    gtk_widget_show_all(window);							/* Show all widgets */
-
-    gtk_main();										/* This is where it all starts */
-              
-    free(colors);									/* Deallocate memory */
-
-    return(0);										/* Exit. */
+    return (EXIT_SUCCESS);
 }

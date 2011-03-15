@@ -92,7 +92,7 @@ static void g3data_create_window (G3dataApplication *application)
     application->windows = g_slist_prepend (application->windows, window);
     application->current_window = G3DATA_WINDOW (window);
 
-    gtk_widget_show (GTK_WIDGET (window));
+    gtk_widget_show_all (GTK_WIDGET (window));
 }
 
 

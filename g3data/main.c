@@ -98,7 +98,6 @@ FILE		*FP;									/* File pointer */
 
 GtkWidget 	*drawing_area_alignment;
 
-static gint close_application(GtkWidget *widget, GdkEvent *event, gpointer data);
 static void SetButtonSensitivity(void);
 static gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data);
 static gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data);
@@ -123,8 +122,6 @@ static void drag_data_received(GtkWidget *widget,
                               guint info,
                               guint event_time,
                               gpointer user_data);
-static GCallback menu_file_open(void);
-static GCallback menu_help_about(void);
 static GCallback full_screen_action_callback(GtkWidget *widget, gpointer func_data);
 static GCallback hide_zoom_area_callback(GtkWidget *widget, gpointer func_data);
 static GCallback hide_axis_settings_callback(GtkWidget *widget, gpointer func_data);
@@ -145,16 +142,6 @@ static const GOptionEntry goption_options[] =
 	{ G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &filenames, NULL, "[FILE...]" },
 	{ NULL }
 };
-
-/****************************************************************/
-/* This function closes the window when the application is 	*/
-/* killed.							*/
-/****************************************************************/
-static gint close_application(GtkWidget *widget, GdkEvent *event, gpointer data)
-{
-    gtk_main_quit();									/* Quit gtk */
-    return FALSE;
-}
 
 
 /****************************************************************/
@@ -1021,118 +1008,6 @@ static void drag_data_received(GtkWidget *widget,
         g_strfreev(uri_list);
     }
     gtk_drag_finish (drag_context, TRUE, FALSE, event_time);
-}
-
-
-/****************************************************************/
-/* This callback handles the file - open dialog.		*/
-/****************************************************************/
-static GCallback menu_file_open(void)
-{
-  GtkWidget *dialog, *scalespinbutton, *hboxextra, *scalelabel;
-  GtkImage *preview;
-  GtkAdjustment *scaleadj;
-  GtkFileFilter *filefilter;
-
-    dialog = gtk_file_chooser_dialog_new ("Open File",
-				          GTK_WINDOW (window),
-				          GTK_FILE_CHOOSER_ACTION_OPEN,
-				          GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-				          GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
-				          NULL);
-    
-// Set filtering of files to open to filetypes gdk_pixbuf can handle
-    filefilter = gtk_file_filter_new();
-    gtk_file_filter_add_pixbuf_formats(filefilter);
-    gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(dialog), GTK_FILE_FILTER(filefilter));
-
-
-    hboxextra = gtk_hbox_new(FALSE, ELEM_SEP);
-
-    scalelabel = gtk_label_new(scale_string);
-
-    scaleadj = (GtkAdjustment *) gtk_adjustment_new(1, 0.1, 100, 0.1, 0.1, 0);
-    scalespinbutton = gtk_spin_button_new(GTK_ADJUSTMENT(scaleadj), 0.1, 1);
-
-    gtk_box_pack_start (GTK_BOX (hboxextra), scalelabel, FALSE, FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (hboxextra), scalespinbutton, FALSE, FALSE, 0);
-
-    gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(dialog), hboxextra);
-
-    gtk_widget_show(hboxextra);
-    gtk_widget_show(scalelabel);
-    gtk_widget_show(scalespinbutton);
-
-    preview = (GtkImage *) gtk_image_new ();
-    gtk_file_chooser_set_preview_widget (GTK_FILE_CHOOSER(dialog), GTK_WIDGET(preview));
-    g_signal_connect (dialog, "update-preview",
-		      G_CALLBACK (update_preview_cb), preview);
-
-    if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
-	char *filename;
-
-    	filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
-	SetupNewTab(filename, gtk_spin_button_get_value(GTK_SPIN_BUTTON(scalespinbutton)), -1, -1, FALSE);
-
-    	g_free (filename);
-    }
-
-    gtk_widget_destroy (dialog);
-
-    return NULL;
-}
-
-/* The File -> Save As... dialog.		*/
-static void file_save_as_dialog (GtkAction *action, gpointer data)
-{
-    GtkWidget *dialog;
-    gchar *filename;
-    FILE *fp;
-
-    dialog = gtk_file_chooser_dialog_new ("Save As...",
-                                          GTK_WINDOW (window),
-                                          GTK_FILE_CHOOSER_ACTION_OPEN,
-                                          GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-                                          GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
-                                          NULL);
-
-    if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
-        filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
-        fp = fopen (filename, "w");
-        if (fp == NULL) {
-            g_free (filename);
-            return;
-        } else {
-            print_results (fp);
-            g_free (filename);
-        }
-    }
-
-    gtk_widget_destroy (dialog);
-
-    return;
-}
-
-
-/****************************************************************/
-/* This Callback generates the help - about dialog.		*/
-/****************************************************************/
-static GCallback menu_help_about(void)
-{
-    const gchar *authors[] = AUTHORS;
-
-    gtk_show_about_dialog(GTK_WINDOW(window), 
-	"authors", authors, 
-	"comments", COMMENTS,
-	"copyright", COPYRIGHT,
-	"license", LICENSE,
-	"program-name", PROGNAME,
-	"version", VERSION,
-	"website", HOMEPAGEURL,
-	"website-label", HOMEPAGELABEL,
-	NULL);
-
-  return NULL;
 }
 
 

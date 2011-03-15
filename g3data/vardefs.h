@@ -25,16 +25,6 @@ Authors email : jonas.frantz@welho.com
 */
 
 /* Actions definitions */
-  GtkActionEntry entries[] = {
-        { "FileMenu", NULL, "_File", NULL, NULL, NULL },
-        { "ViewMenu", NULL, "_View", NULL, NULL, NULL },
-        { "HelpMenu", NULL, "_Help", NULL, NULL, NULL },
-        { "Open", GTK_STOCK_OPEN, "_Open", "<control>O", "Open an image in a new tab", G_CALLBACK( menu_file_open ) },
-        { "Save As", GTK_STOCK_SAVE_AS, "Save _As...", "<control><shift>S", "Save data", G_CALLBACK( file_save_as_dialog ) },
-        { "Close", GTK_STOCK_CLOSE, "_Close", "<control>W", "Close window", G_CALLBACK( close_application ) },
-        { "About", GTK_STOCK_HELP, "_About", "", "About g3data", G_CALLBACK( menu_help_about ) }
-  };
-
   GtkToggleActionEntry toggle_entries[] = {
 	{ "Zoom area", NULL, "Zoom area", "F5", "Zoom area", G_CALLBACK( hide_zoom_area_callback ), TRUE },
 	{ "Axis settings", NULL, "Axis settings", "F6", "Axis settings", G_CALLBACK( hide_axis_settings_callback ), TRUE },
@@ -48,21 +38,12 @@ Authors email : jonas.frantz@welho.com
 const gchar *ui_description =
         "<ui>"
         "  <menubar name='MainMenu'>"
-        "    <menu action='FileMenu'>"
-        "      <menuitem action='Open'/>"
-        "      <menuitem action='Save As'/>"
-	"      <separator />"
-        "      <menuitem action='Close'/>"
-        "    </menu>"
         "    <menu action='ViewMenu'>"
         "      <menuitem action='Zoom area'/>"
         "      <menuitem action='Axis settings'/>"
         "      <menuitem action='Output properties'/>"
 	"      <separator />"
         "      <menuitem action='FullScreen'/>"
-        "    </menu>"
-        "    <menu action='HelpMenu'>"
-        "      <menuitem action='About'/>"
         "    </menu>"
         "  </menubar>"
         "</ui>";

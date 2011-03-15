@@ -24,13 +24,14 @@ Authors email : pnovak@alumni.caltech.edu
 #include <stdlib.h>
 #include "g3data-application.h"
 #include "g3data-window.h"
+#include "g3data-about.h"
 
 G_DEFINE_TYPE (G3dataWindow, g3data_window, GTK_TYPE_WINDOW);
 
 static void g3data_window_file_open (GtkAction *action, gpointer data);
 static void g3data_window_file_save_as (GtkAction *action, gpointer data);
 static void g3data_window_file_close (GtkAction *action, G3dataWindow *window);
-static void g3data_window_help_about (GtkAction *action, gpointer data);
+static void g3data_window_help_about (GtkAction *action, G3dataWindow *window);
 
 static const GtkActionEntry entries[] = {
     { "FileMenu", NULL, "_File", NULL, NULL, NULL },
@@ -79,8 +80,9 @@ static void g3data_window_file_close (GtkAction *action, G3dataWindow *window)
 }
 
 
-static void g3data_window_help_about (GtkAction *action, gpointer data)
+static void g3data_window_help_about (GtkAction *action, G3dataWindow *window)
 {
+    g3data_about (GTK_WIDGET (window));
 }
 
 

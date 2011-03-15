@@ -25,11 +25,13 @@ Authors email : pnovak@alumni.caltech.edu
 #include "g3data-application.h"
 #include "g3data-window.h"
 #include "g3data-about.h"
+#include "points.h"
+
 
 G_DEFINE_TYPE (G3dataWindow, g3data_window, GTK_TYPE_WINDOW);
 
 static void g3data_window_file_open (GtkAction *action, gpointer data);
-static void g3data_window_file_save_as (GtkAction *action, gpointer data);
+static void g3data_window_file_save_as (GtkAction *action, G3dataWindow *window);
 static void g3data_window_file_close (GtkAction *action, G3dataWindow *window);
 static void g3data_window_help_about (GtkAction *action, G3dataWindow *window);
 
@@ -64,8 +66,34 @@ static void g3data_window_file_open (GtkAction *action, gpointer data)
 }
 
 
-static void g3data_window_file_save_as (GtkAction *action, gpointer data)
+static void g3data_window_file_save_as (GtkAction *action, G3dataWindow *window)
 {
+    GtkWidget *dialog;
+    gchar *filename;
+    FILE *fp;
+
+    dialog = gtk_file_chooser_dialog_new ("Save As...",
+                                          GTK_WINDOW (window),
+                                          GTK_FILE_CHOOSER_ACTION_OPEN,
+                                          GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+                                          GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+                                          NULL);
+
+    if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
+        filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+        fp = fopen (filename, "w");
+        if (fp == NULL) {
+            g_free (filename);
+            return;
+        } else {
+            print_results (fp);
+            g_free (filename);
+        }
+    }
+
+    gtk_widget_destroy (dialog);
+
+    return;
 }
 
 

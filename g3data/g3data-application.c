@@ -33,6 +33,16 @@ static G3dataApplication *instance;
 G_DEFINE_TYPE (G3dataApplication, g3data_application, G_TYPE_OBJECT);
 
 
+G3dataApplication *g3data_application_get_instance (void)
+{
+    if (!instance) {
+        instance = G3DATA_APPLICATION (g_object_new (G3DATA_TYPE_APPLICATION, NULL));
+    }
+
+    return instance;
+}
+
+
 static void g3data_application_finalize (GObject *object)
 {
     G3dataApplication *application = G3DATA_APPLICATION (object);
@@ -81,7 +91,7 @@ static void g3data_window_destroy_cb (GtkWidget *widget,
 }
 
 
-static void g3data_create_window (G3dataApplication *application)
+void g3data_create_window (G3dataApplication *application)
 {
     G3dataWindow *window;
 
@@ -107,14 +117,11 @@ void load_files (const char **files)
     if (files != NULL) {
         for (i = 0; files[i]; i++) {
             const gchar *filename;
-            GFile       *file;
 
             filename = files[i];
 
-            file = g_file_new_for_commandline_arg (filename);
-
             g3data_create_window (instance);
-            g3data_window_insert_image (instance->current_window, file);
+            g3data_window_insert_image (instance->current_window, filename);
         }
     } else {
         g3data_create_window (instance);

@@ -113,7 +113,6 @@ static void remove_last(GtkWidget *widget, gpointer data);
 static void remove_all(GtkWidget *widget, gpointer data) ;
 static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer);
 static gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble maxY);
-static void update_preview_cb (GtkFileChooser *file_chooser, gpointer data);
 static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboolean UsePreSetCoords);
 static void drag_data_received(GtkWidget *widget,
                               GdkDragContext *drag_context,
@@ -624,31 +623,6 @@ static gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble max
     gdk_window_set_cursor (gtk_widget_get_window(drawing_area), cursor);
  
     return 0;
-}
-
-
-/****************************************************************/
-/* This callback sets up the thumbnail in the Fileopen dialog.	*/
-/****************************************************************/
-static void update_preview_cb (GtkFileChooser *file_chooser, gpointer data) {
-  GtkWidget *preview;
-  gchar *filename;
-  GdkPixbuf *pixbuf;
-  gboolean have_preview;
-
-    preview = GTK_WIDGET (data);
-    filename = gtk_file_chooser_get_preview_filename (file_chooser);
-    if (filename != NULL) {
-        pixbuf = gdk_pixbuf_new_from_file_at_size (filename, 128, 128, NULL);
-        have_preview = (pixbuf != NULL);
-        g_free (filename);
-
-        gtk_image_set_from_pixbuf (GTK_IMAGE (preview), pixbuf);
-        if (pixbuf)
-            g_object_unref (pixbuf);
-
-        gtk_file_chooser_set_preview_widget_active (file_chooser, have_preview);
-    }
 }
 
 

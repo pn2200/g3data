@@ -24,13 +24,18 @@ Authors email : pnovak@alumni.caltech.edu
 #include <stdlib.h>
 #include "g3data-application.h"
 #include "g3data-window.h"
+#include "g3data-image.h"
 #include "g3data-about.h"
 #include "points.h"
 
 
 G_DEFINE_TYPE (G3dataWindow, g3data_window, GTK_TYPE_WINDOW);
 
-static void g3data_window_file_open (GtkAction *action, gpointer data);
+static void update_preview_cb (GtkFileChooser *chooser, gpointer data);
+static void file_open_dialog_response_cb (GtkWidget *chooser,
+                                          gint response_id,
+                                          G3dataWindow *window);
+static void g3data_window_file_open (GtkAction *action, G3dataWindow *window);
 static void g3data_window_file_save_as (GtkAction *action, G3dataWindow *window);
 static void g3data_window_file_close (GtkAction *action, G3dataWindow *window);
 static void g3data_window_help_about (GtkAction *action, G3dataWindow *window);
@@ -61,8 +66,102 @@ static const gchar *ui_description =
     "</ui>";
 
 
-static void g3data_window_file_open (GtkAction *action, gpointer data)
+static void update_preview_cb (GtkFileChooser *chooser, gpointer data) {
+    GtkWidget *preview;
+    GdkPixbuf *pixbuf;
+    gchar *filename;
+    gboolean have_preview;
+
+    preview = GTK_WIDGET (data);
+    filename = gtk_file_chooser_get_preview_filename (chooser);
+
+    if (filename != NULL) {
+        pixbuf = gdk_pixbuf_new_from_file_at_size (filename, 128, 128, NULL);
+        have_preview = (pixbuf != NULL);
+        g_free (filename);
+
+        gtk_image_set_from_pixbuf (GTK_IMAGE (preview), pixbuf);
+
+        if (pixbuf)
+            g_object_unref (pixbuf);
+
+        gtk_file_chooser_set_preview_widget_active (chooser, have_preview);
+    }
+}
+
+
+static void file_open_dialog_response_cb (GtkWidget *chooser,
+                                          gint response_id,
+                                          G3dataWindow *window)
 {
+    if (response_id == GTK_RESPONSE_ACCEPT) {
+        gchar *filename;
+        G3dataApplication *instance;
+
+        filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (chooser));
+        instance = g3data_application_get_instance ();
+        if (instance->current_window == NULL) {
+            g3data_create_window (instance);
+        }
+        g3data_window_insert_image (instance->current_window, filename);
+
+        g_free (filename);
+    }
+
+    gtk_widget_destroy (chooser);
+}
+
+
+static void g3data_window_file_open (GtkAction *action, G3dataWindow *window)
+{
+    GtkWidget *dialog, *scalespinbutton, *hboxextra, *scalelabel;
+    GtkImage *preview;
+    GtkAdjustment *scaleadj;
+    GtkFileFilter *filefilter;
+    const gchar scale_string[] = "Scale image : ";
+
+    dialog = gtk_file_chooser_dialog_new ("Open Image",
+                                          GTK_WINDOW (window),
+                                          GTK_FILE_CHOOSER_ACTION_OPEN,
+                                          GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+                                          GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+                                          NULL);
+
+    /* Set filtering of files to open to filetypes gdk_pixbuf can handle */
+    filefilter = gtk_file_filter_new ();
+    gtk_file_filter_add_pixbuf_formats (filefilter);
+    gtk_file_chooser_set_filter (GTK_FILE_CHOOSER (dialog),
+                                 GTK_FILE_FILTER (filefilter));
+
+    hboxextra = gtk_hbox_new (FALSE, 0);
+
+    scalelabel = gtk_label_new (scale_string);
+
+    scaleadj = GTK_ADJUSTMENT (gtk_adjustment_new (1, 0.1, 100, 0.1, 0.1, 0));
+    scalespinbutton = gtk_spin_button_new (GTK_ADJUSTMENT (scaleadj), 0.1, 1);
+
+    gtk_box_pack_start (GTK_BOX (hboxextra), scalelabel, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (hboxextra), scalespinbutton, FALSE, FALSE, 0);
+
+    gtk_file_chooser_set_extra_widget (GTK_FILE_CHOOSER(dialog), hboxextra);
+
+    gtk_widget_show (hboxextra);
+    gtk_widget_show (scalelabel);
+    gtk_widget_show (scalespinbutton);
+
+    preview = GTK_IMAGE (gtk_image_new ());
+    gtk_file_chooser_set_preview_widget (GTK_FILE_CHOOSER (dialog), GTK_WIDGET (preview));
+    g_signal_connect (dialog,
+                      "update-preview",
+                      G_CALLBACK (update_preview_cb),
+                      preview);
+
+    g_signal_connect (dialog,
+                      "response",
+                      G_CALLBACK (file_open_dialog_response_cb),
+                      window);
+
+    gtk_widget_show (dialog);
 }
 
 

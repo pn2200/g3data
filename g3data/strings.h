@@ -62,8 +62,6 @@ gchar y_string[] = " Y : ";
 
 gchar nump_string[] = "Number of points : ";
 
-gchar scale_string[] = "Scale image : ";
-
 gchar APheader[] = "<b>Axis points</b>";
 gchar PIheader[] = "<b>Processing information</b>";
 gchar ZAheader[] = "<b>Zoom area</b>";

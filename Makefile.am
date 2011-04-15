@@ -10,6 +10,8 @@ g3data_source_files = \
 	g3data/g3data-about.h \
 	g3data/g3data-application.c \
 	g3data/g3data-application.h \
+	g3data/g3data-image.c \
+	g3data/g3data-image.h \
 	g3data/g3data-window.c \
 	g3data/g3data-window.h \
 	g3data/main.c \

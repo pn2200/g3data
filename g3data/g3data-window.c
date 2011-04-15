@@ -215,7 +215,7 @@ static void g3data_window_help_about (GtkAction *action, G3dataWindow *window)
 
 static void g3data_window_init (G3dataWindow *g3data_window)
 {
-    GtkWidget *mainvbox, *menubar;
+    GtkWidget *menubar;
     GtkActionGroup *action_group;
     GtkUIManager *ui_manager;
     GtkAccelGroup *accel_group;
@@ -226,8 +226,8 @@ static void g3data_window_init (G3dataWindow *g3data_window)
     gtk_window_set_resizable (GTK_WINDOW (g3data_window), TRUE);
     gtk_container_set_border_width (GTK_CONTAINER (g3data_window), 0);
 
-    mainvbox = gtk_vbox_new (FALSE, 0);
-    gtk_container_add (GTK_CONTAINER (g3data_window), mainvbox);
+    g3data_window->main_vbox = gtk_vbox_new (FALSE, 0);
+    gtk_container_add (GTK_CONTAINER (g3data_window), g3data_window->main_vbox);
 
     /* Create menu */
     action_group = gtk_action_group_new ("MenuActions");
@@ -247,7 +247,7 @@ static void g3data_window_init (G3dataWindow *g3data_window)
      }
  
     menubar = gtk_ui_manager_get_widget (ui_manager, "/MainMenu");
-    gtk_box_pack_start (GTK_BOX (mainvbox), menubar, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (g3data_window->main_vbox), menubar, FALSE, FALSE, 0);
 }
 
 

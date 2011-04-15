@@ -23,6 +23,7 @@ Authors email : pnovak@alumni.caltech.edu
 
 #include "g3data-application.h"
 #include "g3data-window.h"
+#include "g3data-image.h"
 
 struct _G3dataApplicationClass {
     GObjectClass base_class;

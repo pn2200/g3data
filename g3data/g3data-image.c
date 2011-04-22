@@ -25,8 +25,10 @@ Authors email : pnovak@alumni.caltech.edu
 #include "g3data-image.h"
 
 static GtkWidget *g3data_window_control_points_add (void);
+static GtkWidget *g3data_window_status_area_add (void);
 
 static const gchar control_point_header_text[] = "<b>Axis points</b>";
+static const gchar status_area_header[] = "<b>Processing information</b>";
 
 static const gchar control_point_button_text[4][40] = {
         "Set point X<sub>1</sub> on X axis (_1)",
@@ -52,11 +54,16 @@ static const gchar control_point_entry_tooltip[4][37] = {
         "Value of the first point on y axis",
         "Value of the second point on y axis"};
 
+static const gchar x_string[] = " X : ";
+static const gchar y_string[] = " Y : ";
+static const gchar pm_string[] = " ± ";
+static const gchar nump_string[] = "Number of points : ";
+
 
 void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
 {
     GtkWidget *table, *tophbox, *alignment;
-    GtkWidget *control_point_vbox;
+    GtkWidget *control_point_vbox, *status_area_vbox;
 
     table = gtk_table_new (1, 2, FALSE);
     gtk_container_set_border_width (GTK_CONTAINER (table), 0);
@@ -71,6 +78,10 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
 
     control_point_vbox = g3data_window_control_points_add ();
     gtk_box_pack_start (GTK_BOX (tophbox), control_point_vbox, FALSE, FALSE, 0);
+
+    status_area_vbox = g3data_window_status_area_add ();
+    gtk_box_pack_start (GTK_BOX (tophbox), status_area_vbox, FALSE, FALSE, 0);
+
     gtk_widget_show_all (window->main_vbox);
 }
 
@@ -125,3 +136,73 @@ static GtkWidget *g3data_window_control_points_add (void) {
     return vbox;
 }
 
+
+/* Add status area. */
+static GtkWidget *g3data_window_status_area_add (void) {
+    GtkWidget *x_label, *y_label, *xc_entry, *yc_entry;
+    GtkWidget *pm_label, *pm_label2;
+    GtkWidget *xerr_entry, *yerr_entry, *nump_label, *nump_entry;
+    GtkWidget *status_area_label;
+    GtkWidget *vbox, *alignment, *table;
+
+    x_label = gtk_label_new (x_string);
+    y_label = gtk_label_new (y_string);
+    xc_entry = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (xc_entry), 16);
+    gtk_editable_set_editable (GTK_EDITABLE (xc_entry), FALSE);
+    yc_entry = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (yc_entry), 16);
+    gtk_editable_set_editable (GTK_EDITABLE (yc_entry), FALSE);
+
+    /* plus/minus (+/-) symbol labels */
+    pm_label = gtk_label_new (pm_string);
+    pm_label2 = gtk_label_new (pm_string);
+    /* labels and error text entries */
+    xerr_entry = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (xerr_entry), 16);
+    gtk_editable_set_editable (GTK_EDITABLE (xerr_entry), FALSE);
+    yerr_entry = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (yerr_entry), 16);
+    gtk_editable_set_editable (GTK_EDITABLE (yerr_entry), FALSE);
+
+    /* Number of points label and entry */
+    nump_label = gtk_label_new (nump_string);
+    nump_entry = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (nump_entry), 10);
+    gtk_editable_set_editable (GTK_EDITABLE (nump_entry),FALSE);
+    gtk_entry_set_text (GTK_ENTRY (nump_entry), "0");
+
+    /* Packing the status area */
+    vbox = gtk_vbox_new (FALSE, 0);
+
+    status_area_label = gtk_label_new (NULL);
+    gtk_label_set_markup (GTK_LABEL (status_area_label), status_area_header);
+    alignment = gtk_alignment_new (0, 1, 0, 0);
+    gtk_container_add (GTK_CONTAINER (alignment), status_area_label);
+    gtk_box_pack_start (GTK_BOX (vbox), alignment, FALSE, FALSE, 0);
+
+    table = gtk_table_new (4, 2 ,FALSE);
+    gtk_table_set_row_spacings (GTK_TABLE (table), 0);
+    gtk_table_set_col_spacings (GTK_TABLE (table), 0);
+    gtk_box_pack_start (GTK_BOX (vbox), table, FALSE, FALSE, 0);
+    gtk_table_attach_defaults (GTK_TABLE (table), x_label, 0, 1, 0, 1);
+    gtk_table_attach_defaults (GTK_TABLE (table), xc_entry, 1, 2, 0, 1);
+    gtk_table_attach_defaults (GTK_TABLE (table), pm_label, 2, 3, 0, 1);
+    gtk_table_attach_defaults (GTK_TABLE (table), xerr_entry, 3, 4, 0, 1);
+    gtk_table_attach_defaults (GTK_TABLE (table), y_label, 0, 1, 1, 2);
+    gtk_table_attach_defaults (GTK_TABLE (table), yc_entry, 1, 2, 1, 2);
+    gtk_table_attach_defaults (GTK_TABLE (table), pm_label2, 2, 3, 1, 2);
+    gtk_table_attach_defaults (GTK_TABLE (table), yerr_entry, 3, 4, 1, 2);
+
+    /* Pack number of points boxes */
+    table = gtk_table_new (3, 1 ,FALSE);
+    gtk_table_set_row_spacings (GTK_TABLE (table), 6);
+    gtk_table_set_col_spacings (GTK_TABLE (table), 6);
+    gtk_box_pack_start (GTK_BOX (vbox), table, FALSE, FALSE, 0);
+    alignment = gtk_alignment_new (0, 1, 0, 0);
+    gtk_container_add (GTK_CONTAINER (alignment), nump_label);
+    gtk_table_attach (GTK_TABLE (table), alignment, 0, 1, 0, 1, 0, 0, 0, 0);
+    gtk_table_attach (GTK_TABLE (table), nump_entry, 1, 2, 0, 1, 0, 0, 0, 0);
+
+    return vbox;
+}

@@ -24,11 +24,15 @@ Authors email : pnovak@alumni.caltech.edu
 #include "g3data-window.h"
 #include "g3data-image.h"
 
+#define ZOOMPIXSIZE 200
+
 static GtkWidget *g3data_window_control_points_add (void);
 static GtkWidget *g3data_window_status_area_add (void);
+static GtkWidget *g3data_window_zoom_area_add (void);
 
 static const gchar control_point_header_text[] = "<b>Axis points</b>";
 static const gchar status_area_header[] = "<b>Processing information</b>";
+static const gchar zoom_area_header[] = "<b>Zoom area</b>";
 
 static const gchar control_point_button_text[4][40] = {
         "Set point X<sub>1</sub> on X axis (_1)",
@@ -62,10 +66,10 @@ static const gchar nump_string[] = "Number of points : ";
 
 void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
 {
-    GtkWidget *table, *tophbox, *alignment;
-    GtkWidget *control_point_vbox, *status_area_vbox;
+    GtkWidget *table, *tophbox, *bottomhbox, *bottomvbox, *alignment;
+    GtkWidget *control_point_vbox, *status_area_vbox, *zoom_area_vbox;
 
-    table = gtk_table_new (1, 2, FALSE);
+    table = gtk_table_new (2, 2, FALSE);
     gtk_container_set_border_width (GTK_CONTAINER (table), 0);
     gtk_table_set_row_spacings (GTK_TABLE (table), 0);
     gtk_table_set_col_spacings (GTK_TABLE (table), 0);
@@ -76,11 +80,22 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
     gtk_table_attach(GTK_TABLE(table), alignment, 0, 1, 0, 1, 5, 0, 0, 0);
     gtk_container_add(GTK_CONTAINER(alignment), tophbox);
 
+    bottomhbox = gtk_hbox_new (FALSE, 0);
+    alignment = gtk_alignment_new (0, 0, 1, 1);
+    gtk_table_attach (GTK_TABLE (table), alignment, 0, 1, 1, 2, 5, 5, 0, 0);
+    gtk_container_add (GTK_CONTAINER (alignment), bottomhbox);
+
+    bottomvbox = gtk_vbox_new (FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (bottomhbox), bottomvbox, FALSE, FALSE, 0);
+
     control_point_vbox = g3data_window_control_points_add ();
     gtk_box_pack_start (GTK_BOX (tophbox), control_point_vbox, FALSE, FALSE, 0);
 
     status_area_vbox = g3data_window_status_area_add ();
     gtk_box_pack_start (GTK_BOX (tophbox), status_area_vbox, FALSE, FALSE, 0);
+
+    zoom_area_vbox = g3data_window_zoom_area_add ();
+    gtk_box_pack_start (GTK_BOX (bottomvbox), zoom_area_vbox, FALSE, FALSE, 0);
 
     gtk_widget_show_all (window->main_vbox);
 }
@@ -203,6 +218,28 @@ static GtkWidget *g3data_window_status_area_add (void) {
     gtk_container_add (GTK_CONTAINER (alignment), nump_label);
     gtk_table_attach (GTK_TABLE (table), alignment, 0, 1, 0, 1, 0, 0, 0, 0);
     gtk_table_attach (GTK_TABLE (table), nump_entry, 1, 2, 0, 1, 0, 0, 0, 0);
+
+    return vbox;
+}
+
+
+/* Add zoom area */
+static GtkWidget *g3data_window_zoom_area_add (void) {
+    GtkWidget *zoom_area;
+    GtkWidget *vbox, *label, *alignment;
+
+    vbox = gtk_vbox_new (FALSE, 0);
+
+    label = gtk_label_new (NULL);
+    gtk_label_set_markup (GTK_LABEL (label), zoom_area_header);
+
+    alignment = gtk_alignment_new (0, 1, 0, 0);
+    gtk_container_add (GTK_CONTAINER (alignment), label);
+    gtk_box_pack_start (GTK_BOX (vbox), alignment, FALSE, FALSE, 0);
+
+    zoom_area = gtk_drawing_area_new ();
+    gtk_widget_set_size_request (zoom_area, ZOOMPIXSIZE, ZOOMPIXSIZE);
+    gtk_box_pack_start (GTK_BOX (vbox), zoom_area, FALSE, FALSE, 0);
 
     return vbox;
 }

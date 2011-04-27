@@ -66,7 +66,8 @@ static const gchar nump_string[] = "Number of points : ";
 
 void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
 {
-    GtkWidget *table, *tophbox, *bottomhbox, *bottomvbox, *alignment;
+    GtkWidget *table, *tophbox, *bottomhbox, *bottomvbox, *alignment,
+              *scrolled_window, *viewport, *drawing_area_alignment;
     GtkWidget *control_point_vbox, *status_area_vbox, *zoom_area_vbox;
 
     table = gtk_table_new (2, 2, FALSE);
@@ -96,6 +97,15 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
 
     zoom_area_vbox = g3data_window_zoom_area_add ();
     gtk_box_pack_start (GTK_BOX (bottomvbox), zoom_area_vbox, FALSE, FALSE, 0);
+
+    /* Create a scrolled window to hold image */
+    scrolled_window = gtk_scrolled_window_new (NULL, NULL);
+    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    viewport = gtk_viewport_new (NULL, NULL);
+    gtk_box_pack_start (GTK_BOX (bottomhbox), scrolled_window, TRUE, TRUE, 0);
+    drawing_area_alignment = gtk_alignment_new (0, 0, 0, 0);
+    gtk_container_add (GTK_CONTAINER (viewport), drawing_area_alignment);
+    gtk_container_add (GTK_CONTAINER (scrolled_window), viewport);
 
     gtk_widget_show_all (window->main_vbox);
 }

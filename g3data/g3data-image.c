@@ -21,6 +21,7 @@ Copyright (C) 2011 Paul Novak
 Authors email : pnovak@alumni.caltech.edu
 */
 
+#include <math.h>
 #include "g3data-window.h"
 #include "g3data-image.h"
 
@@ -29,6 +30,8 @@ Authors email : pnovak@alumni.caltech.edu
 static GtkWidget *g3data_window_control_points_add (void);
 static GtkWidget *g3data_window_status_area_add (void);
 static GtkWidget *g3data_window_zoom_area_add (void);
+static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, GtkWidget *drawing_area_alignment);
+static gboolean image_area_expose_event (GtkWidget *widget, GdkEventExpose *event, gpointer data);
 
 static const gchar control_point_header_text[] = "<b>Axis points</b>";
 static const gchar status_area_header[] = "<b>Processing information</b>";
@@ -106,6 +109,8 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
     drawing_area_alignment = gtk_alignment_new (0, 0, 0, 0);
     gtk_container_add (GTK_CONTAINER (viewport), drawing_area_alignment);
     gtk_container_add (GTK_CONTAINER (scrolled_window), viewport);
+
+    g3data_image_insert (window, filename, drawing_area_alignment);
 
     gtk_widget_show_all (window->main_vbox);
 }
@@ -253,3 +258,82 @@ static GtkWidget *g3data_window_zoom_area_add (void) {
 
     return vbox;
 }
+
+
+/* Insert image into g3data_window */
+static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, GtkWidget *drawing_area_alignment) {
+    gboolean has_alpha;
+    gint w, h;
+    gint width = -1;
+    gint height = -1;
+    gdouble scale = -1;
+    GdkPixbuf *temp_pixbuf, *gpbimage;
+    GtkWidget *dialog, *drawing_area;
+
+    temp_pixbuf = gdk_pixbuf_new_from_file (filename, NULL);
+    /* If unable to load image, notify user with dialog */
+    if (temp_pixbuf == NULL) {
+        dialog = gtk_message_dialog_new (GTK_WINDOW (window),
+                        GTK_DIALOG_DESTROY_WITH_PARENT,
+                        GTK_MESSAGE_ERROR,
+                        GTK_BUTTONS_CLOSE,
+                        "Error loading file '%s'",
+                        filename);
+        gtk_dialog_run (GTK_DIALOG (dialog));
+        gtk_widget_destroy (dialog);
+        return -1;
+    }
+
+    w = gdk_pixbuf_get_width (temp_pixbuf);
+    h = gdk_pixbuf_get_height (temp_pixbuf);
+    has_alpha = gdk_pixbuf_get_has_alpha (temp_pixbuf);
+
+    if (width != -1 && height != -1 && scale == -1) {
+        if (w > width || h > height) {
+            scale = fmin((double) (width/w), (double) (height/h));
+        }
+    }
+
+    if (scale != -1) {
+        w = w * scale;
+        h = h * scale;
+        gpbimage = gdk_pixbuf_new (GDK_COLORSPACE_RGB, has_alpha, 8, w, h);
+        gdk_pixbuf_composite (temp_pixbuf, gpbimage, 0, 0, w, h,
+                             0, 0, scale, scale, GDK_INTERP_BILINEAR, 255);
+        g_object_unref (temp_pixbuf);
+    } else {
+        gpbimage = temp_pixbuf;
+    }
+
+    drawing_area = gtk_drawing_area_new ();
+    gtk_widget_set_size_request (drawing_area, w, h);
+
+    g_signal_connect (G_OBJECT (drawing_area), "expose_event",
+                      G_CALLBACK (image_area_expose_event), (gpointer) gpbimage);
+
+    gtk_widget_set_events (drawing_area, GDK_EXPOSURE_MASK |
+                                         GDK_BUTTON_PRESS_MASK | 
+                                         GDK_BUTTON_RELEASE_MASK |
+                                         GDK_POINTER_MOTION_MASK | 
+                                         GDK_POINTER_MOTION_HINT_MASK);
+
+    gtk_container_add (GTK_CONTAINER (drawing_area_alignment), drawing_area);
+
+    gtk_widget_show (drawing_area);
+
+    return 0;
+}
+
+
+/* Expose event callback for image area. */
+static gboolean image_area_expose_event (GtkWidget *widget, GdkEventExpose *event, gpointer data) {
+    GdkPixbuf *gpbimage = GDK_PIXBUF (data);
+    cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
+
+    gdk_cairo_set_source_pixbuf (cr, gpbimage, 0, 0);
+    cairo_paint (cr);
+
+    cairo_destroy (cr);
+    return FALSE;
+}   
+

@@ -248,6 +248,8 @@ static void g3data_window_init (G3dataWindow *g3data_window)
  
     menubar = gtk_ui_manager_get_widget (ui_manager, "/MainMenu");
     gtk_box_pack_start (GTK_BOX (g3data_window->main_vbox), menubar, FALSE, FALSE, 0);
+
+    g3data_window->image = NULL;
 }
 
 

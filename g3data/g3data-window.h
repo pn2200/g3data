@@ -47,6 +47,7 @@ typedef struct _G3dataWindowPrivate G3dataWindowPrivate;
 struct _G3dataWindow {
     GtkWindow base_instance;
     GtkWidget *main_vbox;
+    GdkPixbuf *image;
 };
 
 struct _G3dataWindowClass {

@@ -267,7 +267,7 @@ static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, Gt
     gint width = -1;
     gint height = -1;
     gdouble scale = -1;
-    GdkPixbuf *temp_pixbuf, *gpbimage;
+    GdkPixbuf *temp_pixbuf;
     GtkWidget *dialog, *drawing_area;
 
     temp_pixbuf = gdk_pixbuf_new_from_file (filename, NULL);
@@ -297,19 +297,19 @@ static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, Gt
     if (scale != -1) {
         w = w * scale;
         h = h * scale;
-        gpbimage = gdk_pixbuf_new (GDK_COLORSPACE_RGB, has_alpha, 8, w, h);
-        gdk_pixbuf_composite (temp_pixbuf, gpbimage, 0, 0, w, h,
+        window->image = gdk_pixbuf_new (GDK_COLORSPACE_RGB, has_alpha, 8, w, h);
+        gdk_pixbuf_composite (temp_pixbuf, window->image, 0, 0, w, h,
                              0, 0, scale, scale, GDK_INTERP_BILINEAR, 255);
         g_object_unref (temp_pixbuf);
     } else {
-        gpbimage = temp_pixbuf;
+        window->image = temp_pixbuf;
     }
 
     drawing_area = gtk_drawing_area_new ();
     gtk_widget_set_size_request (drawing_area, w, h);
 
     g_signal_connect (G_OBJECT (drawing_area), "expose_event",
-                      G_CALLBACK (image_area_expose_event), (gpointer) gpbimage);
+                      G_CALLBACK (image_area_expose_event), (gpointer) window);
 
     gtk_widget_set_events (drawing_area, GDK_EXPOSURE_MASK |
                                          GDK_BUTTON_PRESS_MASK | 
@@ -327,10 +327,10 @@ static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, Gt
 
 /* Expose event callback for image area. */
 static gboolean image_area_expose_event (GtkWidget *widget, GdkEventExpose *event, gpointer data) {
-    GdkPixbuf *gpbimage = GDK_PIXBUF (data);
+    G3dataWindow *window = G3DATA_WINDOW (data);
     cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
 
-    gdk_cairo_set_source_pixbuf (cr, gpbimage, 0, 0);
+    gdk_cairo_set_source_pixbuf (cr, window->image, 0, 0);
     cairo_paint (cr);
 
     cairo_destroy (cr);

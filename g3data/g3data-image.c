@@ -26,12 +26,17 @@ Authors email : pnovak@alumni.caltech.edu
 #include "g3data-image.h"
 
 #define ZOOMPIXSIZE 200
+#define ZOOMFACTOR 4
 
 static GtkWidget *g3data_window_control_points_add (void);
 static GtkWidget *g3data_window_status_area_add (void);
-static GtkWidget *g3data_window_zoom_area_add (void);
+static GtkWidget *g3data_window_zoom_area_add (G3dataWindow *window);
 static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, GtkWidget *drawing_area_alignment);
+
+/* Callbacks */
 static gboolean image_area_expose_event (GtkWidget *widget, GdkEventExpose *event, gpointer data);
+static gboolean expose_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data);
+static gboolean motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data);
 
 static const gchar control_point_header_text[] = "<b>Axis points</b>";
 static const gchar status_area_header[] = "<b>Processing information</b>";
@@ -98,7 +103,7 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
     status_area_vbox = g3data_window_status_area_add ();
     gtk_box_pack_start (GTK_BOX (tophbox), status_area_vbox, FALSE, FALSE, 0);
 
-    zoom_area_vbox = g3data_window_zoom_area_add ();
+    zoom_area_vbox = g3data_window_zoom_area_add (window);
     gtk_box_pack_start (GTK_BOX (bottomvbox), zoom_area_vbox, FALSE, FALSE, 0);
 
     /* Create a scrolled window to hold image */
@@ -239,8 +244,7 @@ static GtkWidget *g3data_window_status_area_add (void) {
 
 
 /* Add zoom area */
-static GtkWidget *g3data_window_zoom_area_add (void) {
-    GtkWidget *zoom_area;
+static GtkWidget *g3data_window_zoom_area_add (G3dataWindow *window) {
     GtkWidget *vbox, *label, *alignment;
 
     vbox = gtk_vbox_new (FALSE, 0);
@@ -252,9 +256,11 @@ static GtkWidget *g3data_window_zoom_area_add (void) {
     gtk_container_add (GTK_CONTAINER (alignment), label);
     gtk_box_pack_start (GTK_BOX (vbox), alignment, FALSE, FALSE, 0);
 
-    zoom_area = gtk_drawing_area_new ();
-    gtk_widget_set_size_request (zoom_area, ZOOMPIXSIZE, ZOOMPIXSIZE);
-    gtk_box_pack_start (GTK_BOX (vbox), zoom_area, FALSE, FALSE, 0);
+    window->zoom_area = gtk_drawing_area_new ();
+    gtk_widget_set_size_request (window->zoom_area, ZOOMPIXSIZE, ZOOMPIXSIZE);
+    g_signal_connect (G_OBJECT (window->zoom_area), "expose_event", G_CALLBACK (expose_event_callback), (gpointer) window);
+
+    gtk_box_pack_start (GTK_BOX (vbox), window->zoom_area, FALSE, FALSE, 0);
 
     return vbox;
 }
@@ -308,6 +314,9 @@ static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, Gt
     drawing_area = gtk_drawing_area_new ();
     gtk_widget_set_size_request (drawing_area, w, h);
 
+    g_signal_connect (G_OBJECT (drawing_area), "motion_notify_event",
+                      G_CALLBACK (motion_notify_event), (gpointer) window);
+
     g_signal_connect (G_OBJECT (drawing_area), "expose_event",
                       G_CALLBACK (image_area_expose_event), (gpointer) window);
 
@@ -336,4 +345,46 @@ static gboolean image_area_expose_event (GtkWidget *widget, GdkEventExpose *even
     cairo_destroy (cr);
     return FALSE;
 }   
+
+
+/* Expose event callback for the zoom area. */
+static gboolean expose_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data) {
+    gint x, y, width, height;
+    cairo_t *cr;
+    G3dataWindow *window = G3DATA_WINDOW (data);
+
+    x = window->x;
+    y = window->y;
+    width = gdk_pixbuf_get_width (window->image);
+    height = gdk_pixbuf_get_height (window->image);
+
+    cr = gdk_cairo_create (gtk_widget_get_window (widget));
+
+    if (x >= 0 && y >= 0 && x < width && y < height) {
+        cairo_save(cr);
+        cairo_translate(cr, -x*ZOOMFACTOR + ZOOMPIXSIZE/2, -y*ZOOMFACTOR + ZOOMPIXSIZE/2);
+        cairo_scale(cr, 1.0*ZOOMFACTOR, 1.0*ZOOMFACTOR);
+        gdk_cairo_set_source_pixbuf (cr, window->image, 0, 0);
+        cairo_paint(cr);
+        cairo_restore(cr);
+    }
+
+    cairo_destroy (cr);
+    return TRUE;
+}
+
+
+/* Motion notify callback, for motion over drawing_area */
+static gboolean motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data) {
+    gint x, y;
+    G3dataWindow *window = G3DATA_WINDOW (data);
+
+    gdk_window_get_pointer (event->window, &x, &y, NULL);
+    window->x = x;
+    window->y = y;
+
+    gtk_widget_queue_draw (window->zoom_area);
+
+    return TRUE;
+}
 

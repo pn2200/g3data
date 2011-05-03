@@ -31,6 +31,7 @@ Authors email : pnovak@alumni.caltech.edu
 static GtkWidget *g3data_window_control_points_add (void);
 static GtkWidget *g3data_window_status_area_add (void);
 static GtkWidget *g3data_window_zoom_area_add (G3dataWindow *window);
+static GtkWidget *g3data_window_log_buttons_add (G3dataWindow *window);
 static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, GtkWidget *drawing_area_alignment);
 
 /* Callbacks */
@@ -41,6 +42,7 @@ static gboolean motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gp
 static const gchar control_point_header_text[] = "<b>Axis points</b>";
 static const gchar status_area_header[] = "<b>Processing information</b>";
 static const gchar zoom_area_header[] = "<b>Zoom area</b>";
+static const gchar log_header[] = "<b>Logarithmic scales</b>";
 
 static const gchar control_point_button_text[4][40] = {
         "Set point X<sub>1</sub> on X axis (_1)",
@@ -71,12 +73,18 @@ static const gchar y_string[] = " Y : ";
 static const gchar pm_string[] = " ± ";
 static const gchar nump_string[] = "Number of points : ";
 
+static const gchar x_log_text[] = "_X axis is logarithmic";
+static const gchar y_log_text[] = "_Y axis is logarithmic";
+static const gchar x_log_tooltip[] = "X axis is logarithmic";
+static const gchar y_log_tooltip[] = "Y axis is logarithmic";
+
 
 void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
 {
     GtkWidget *table, *tophbox, *bottomhbox, *bottomvbox, *alignment,
               *scrolled_window, *viewport, *drawing_area_alignment;
-    GtkWidget *control_point_vbox, *status_area_vbox, *zoom_area_vbox;
+    GtkWidget *control_point_vbox, *status_area_vbox, *zoom_area_vbox,
+              *log_buttons_vbox;
 
     table = gtk_table_new (2, 2, FALSE);
     gtk_container_set_border_width (GTK_CONTAINER (table), 0);
@@ -105,6 +113,9 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
 
     zoom_area_vbox = g3data_window_zoom_area_add (window);
     gtk_box_pack_start (GTK_BOX (bottomvbox), zoom_area_vbox, FALSE, FALSE, 0);
+
+    log_buttons_vbox = g3data_window_log_buttons_add (window);
+    gtk_box_pack_start (GTK_BOX (bottomvbox), log_buttons_vbox, FALSE, FALSE, 0);
 
     /* Create a scrolled window to hold image */
     scrolled_window = gtk_scrolled_window_new (NULL, NULL);
@@ -261,6 +272,34 @@ static GtkWidget *g3data_window_zoom_area_add (G3dataWindow *window) {
     g_signal_connect (G_OBJECT (window->zoom_area), "expose_event", G_CALLBACK (expose_event_callback), (gpointer) window);
 
     gtk_box_pack_start (GTK_BOX (vbox), window->zoom_area, FALSE, FALSE, 0);
+
+    return vbox;
+}
+
+
+/* Add buttons to toggle if x or y axis is logarithmic. */
+static GtkWidget *g3data_window_log_buttons_add (G3dataWindow *window) {
+    GtkWidget *vbox, *label, *alignment;
+    GtkWidget *x_log, *y_log;
+
+    /* Logarithmic axes */
+    x_log = gtk_check_button_new_with_mnemonic(x_log_text);
+    gtk_widget_set_tooltip_text (x_log, x_log_tooltip);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (x_log), FALSE);
+
+    y_log = gtk_check_button_new_with_mnemonic(y_log_text);
+    gtk_widget_set_tooltip_text (y_log, y_log_tooltip);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (y_log), FALSE);
+
+    /* Pack logarithmic axes */
+    vbox = gtk_vbox_new (FALSE, 0);
+    label = gtk_label_new (NULL);
+    gtk_label_set_markup (GTK_LABEL (label), log_header);
+    alignment = gtk_alignment_new (0, 1, 0, 0);
+    gtk_container_add ( GTK_CONTAINER(alignment), label);
+    gtk_box_pack_start (GTK_BOX (vbox), alignment, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox), x_log, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox), y_log, FALSE, FALSE, 0);
 
     return vbox;
 }

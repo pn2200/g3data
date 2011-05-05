@@ -30,6 +30,7 @@ Authors email : pnovak@alumni.caltech.edu
 
 static GtkWidget *g3data_window_control_points_add (void);
 static GtkWidget *g3data_window_status_area_add (void);
+static GtkWidget *g3data_window_remove_buttons_add (void);
 static GtkWidget *g3data_window_zoom_area_add (G3dataWindow *window);
 static GtkWidget *g3data_window_log_buttons_add (G3dataWindow *window);
 static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, GtkWidget *drawing_area_alignment);
@@ -73,6 +74,11 @@ static const gchar y_string[] = " Y : ";
 static const gchar pm_string[] = " ± ";
 static const gchar nump_string[] = "Number of points : ";
 
+static const gchar remove_last_button_text[] = "_Remove last point";
+static const gchar remove_all_button_text[] = "Remove _all points";
+static const gchar remove_last_tooltip[] = "Remove last point";
+static const gchar remove_all_tooltip[] = "Remove all points";
+
 static const gchar x_log_text[] = "_X axis is logarithmic";
 static const gchar y_log_text[] = "_Y axis is logarithmic";
 static const gchar x_log_tooltip[] = "X axis is logarithmic";
@@ -83,8 +89,8 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
 {
     GtkWidget *table, *tophbox, *bottomhbox, *bottomvbox, *alignment,
               *scrolled_window, *viewport, *drawing_area_alignment;
-    GtkWidget *control_point_vbox, *status_area_vbox, *zoom_area_vbox,
-              *log_buttons_vbox;
+    GtkWidget *control_point_vbox, *status_area_vbox, *remove_buttons_vbox,
+              *zoom_area_vbox, *log_buttons_vbox;
 
     table = gtk_table_new (2, 2, FALSE);
     gtk_container_set_border_width (GTK_CONTAINER (table), 0);
@@ -110,6 +116,9 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
 
     status_area_vbox = g3data_window_status_area_add ();
     gtk_box_pack_start (GTK_BOX (tophbox), status_area_vbox, FALSE, FALSE, 0);
+
+    remove_buttons_vbox = g3data_window_remove_buttons_add ();
+    gtk_box_pack_start (GTK_BOX (bottomvbox), remove_buttons_vbox, FALSE, FALSE, 0);
 
     zoom_area_vbox = g3data_window_zoom_area_add (window);
     gtk_box_pack_start (GTK_BOX (bottomvbox), zoom_area_vbox, FALSE, FALSE, 0);
@@ -249,6 +258,31 @@ static GtkWidget *g3data_window_status_area_add (void) {
     gtk_container_add (GTK_CONTAINER (alignment), nump_label);
     gtk_table_attach (GTK_TABLE (table), alignment, 0, 1, 0, 1, 0, 0, 0, 0);
     gtk_table_attach (GTK_TABLE (table), nump_entry, 1, 2, 0, 1, 0, 0, 0, 0);
+
+    return vbox;
+}
+
+
+/* Add remove point and remove all buttons. */
+static GtkWidget *g3data_window_remove_buttons_add (void) {
+    GtkWidget *vbox, *subvbox;
+    GtkWidget *remove_last_button, *remove_all_button;
+
+    remove_last_button = gtk_button_new_with_mnemonic (remove_last_button_text);
+    gtk_widget_set_sensitive (remove_last_button, FALSE);
+    gtk_widget_set_tooltip_text (remove_last_button, remove_last_tooltip);
+
+    remove_all_button = gtk_button_new_with_mnemonic (remove_all_button_text);
+    gtk_widget_set_sensitive (remove_all_button, FALSE);
+    gtk_widget_set_tooltip_text (remove_all_button, remove_last_tooltip);
+
+    /* Pack remove points buttons */
+    vbox = gtk_vbox_new (FALSE, 0);
+
+    subvbox = gtk_vbox_new (FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox), subvbox, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (subvbox), remove_last_button, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (subvbox), remove_all_button, FALSE, FALSE, 0);
 
     return vbox;
 }

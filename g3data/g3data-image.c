@@ -33,6 +33,7 @@ static GtkWidget *g3data_window_status_area_add (void);
 static GtkWidget *g3data_window_remove_buttons_add (void);
 static GtkWidget *g3data_window_zoom_area_add (G3dataWindow *window);
 static GtkWidget *g3data_window_log_buttons_add (G3dataWindow *window);
+static GtkWidget *g3data_window_sort_buttons_add (void);
 static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, GtkWidget *drawing_area_alignment);
 
 /* Callbacks */
@@ -44,6 +45,7 @@ static const gchar control_point_header_text[] = "<b>Axis points</b>";
 static const gchar status_area_header[] = "<b>Processing information</b>";
 static const gchar zoom_area_header[] = "<b>Zoom area</b>";
 static const gchar log_header[] = "<b>Logarithmic scales</b>";
+static const gchar sort_header[] = "<b>Point ordering</b>";
 
 static const gchar control_point_button_text[4][40] = {
         "Set point X<sub>1</sub> on X axis (_1)",
@@ -84,13 +86,18 @@ static const gchar y_log_text[] = "_Y axis is logarithmic";
 static const gchar x_log_tooltip[] = "X axis is logarithmic";
 static const gchar y_log_tooltip[] = "Y axis is logarithmic";
 
+static const gchar sort_button_text[3][20] = {
+        "No ordering",
+        "Based on X value",
+        "Based on Y value"};
+
 
 void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
 {
     GtkWidget *table, *tophbox, *bottomhbox, *bottomvbox, *alignment,
               *scrolled_window, *viewport, *drawing_area_alignment;
     GtkWidget *control_point_vbox, *status_area_vbox, *remove_buttons_vbox,
-              *zoom_area_vbox, *log_buttons_vbox;
+              *zoom_area_vbox, *log_buttons_vbox, *sort_buttons_vbox;
 
     table = gtk_table_new (2, 2, FALSE);
     gtk_container_set_border_width (GTK_CONTAINER (table), 0);
@@ -125,6 +132,9 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
 
     log_buttons_vbox = g3data_window_log_buttons_add (window);
     gtk_box_pack_start (GTK_BOX (bottomvbox), log_buttons_vbox, FALSE, FALSE, 0);
+
+    sort_buttons_vbox = g3data_window_sort_buttons_add ();
+    gtk_box_pack_start (GTK_BOX (bottomvbox), sort_buttons_vbox, FALSE, FALSE, 0);
 
     /* Create a scrolled window to hold image */
     scrolled_window = gtk_scrolled_window_new (NULL, NULL);
@@ -334,6 +344,34 @@ static GtkWidget *g3data_window_log_buttons_add (G3dataWindow *window) {
     gtk_box_pack_start (GTK_BOX (vbox), alignment, FALSE, FALSE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), x_log, FALSE, FALSE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), y_log, FALSE, FALSE, 0);
+
+    return vbox;
+}
+
+
+/* Add radio buttons for sorting output. */
+static GtkWidget *g3data_window_sort_buttons_add (void) {
+    int i;
+    GtkWidget *vbox, *label, *alignment;
+    GtkWidget *sort_button[3];
+    GSList *group = NULL;
+
+    for (i = 0; i < 3; i++) {
+        sort_button[i] = gtk_radio_button_new_with_label (group, sort_button_text[i]);
+        group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (sort_button[i]));
+    }
+    /* Set no ordering button active */
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (sort_button[0]), TRUE);
+
+    vbox = gtk_vbox_new (FALSE, 0);
+    label = gtk_label_new (NULL);
+    gtk_label_set_markup (GTK_LABEL (label), sort_header);
+    alignment = gtk_alignment_new (0, 1, 0, 0);
+    gtk_container_add (GTK_CONTAINER(alignment), label);
+    gtk_box_pack_start (GTK_BOX (vbox), alignment, FALSE, FALSE, 0);
+    for (i = 0; i < 3; i++) {
+        gtk_box_pack_start (GTK_BOX (vbox), sort_button[i], FALSE, FALSE, 0);
+    }
 
     return vbox;
 }

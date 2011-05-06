@@ -21,6 +21,7 @@ Copyright (C) 2011 Paul Novak
 Authors email : pnovak@alumni.caltech.edu
 */
 
+#include <glib.h>
 #include <math.h>
 #include "g3data-window.h"
 #include "g3data-image.h"
@@ -96,6 +97,8 @@ static const gchar sort_button_text[3][20] = {
 static const gchar error_button_text[] = "Include _errors";
 static const gchar error_tooltip[] = "Export errors of the x and y values";
 
+static gchar g3data_window_title[] = "%s - g3data";
+
 
 void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
 {
@@ -104,6 +107,7 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
     GtkWidget *control_point_vbox, *status_area_vbox, *remove_buttons_vbox,
               *zoom_area_vbox, *log_buttons_vbox, *sort_buttons_vbox,
               *error_button_vbox;
+    gchar *buffer;
 
     table = gtk_table_new (2, 2, FALSE);
     gtk_container_set_border_width (GTK_CONTAINER (table), 0);
@@ -155,6 +159,11 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
     gtk_container_add (GTK_CONTAINER (scrolled_window), viewport);
 
     g3data_image_insert (window, filename, drawing_area_alignment);
+
+    /* Print current image name in title bar*/
+    buffer = g_strdup_printf (g3data_window_title, g_path_get_basename (filename));
+    gtk_window_set_title (GTK_WINDOW (window), buffer);
+    g_free (buffer);
 
     gtk_widget_show_all (window->main_vbox);
 }

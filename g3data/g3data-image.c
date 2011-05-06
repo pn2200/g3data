@@ -34,6 +34,7 @@ static GtkWidget *g3data_window_remove_buttons_add (void);
 static GtkWidget *g3data_window_zoom_area_add (G3dataWindow *window);
 static GtkWidget *g3data_window_log_buttons_add (G3dataWindow *window);
 static GtkWidget *g3data_window_sort_buttons_add (void);
+static GtkWidget *g3data_window_error_buttons_add (void);
 static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, GtkWidget *drawing_area_alignment);
 
 /* Callbacks */
@@ -46,6 +47,7 @@ static const gchar status_area_header[] = "<b>Processing information</b>";
 static const gchar zoom_area_header[] = "<b>Zoom area</b>";
 static const gchar log_header[] = "<b>Logarithmic scales</b>";
 static const gchar sort_header[] = "<b>Point ordering</b>";
+static const gchar error_header[] = "<b>Value errors</b>";
 
 static const gchar control_point_button_text[4][40] = {
         "Set point X<sub>1</sub> on X axis (_1)",
@@ -91,13 +93,17 @@ static const gchar sort_button_text[3][20] = {
         "Based on X value",
         "Based on Y value"};
 
+static const gchar error_button_text[] = "Include _errors";
+static const gchar error_tooltip[] = "Export errors of the x and y values";
+
 
 void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
 {
     GtkWidget *table, *tophbox, *bottomhbox, *bottomvbox, *alignment,
               *scrolled_window, *viewport, *drawing_area_alignment;
     GtkWidget *control_point_vbox, *status_area_vbox, *remove_buttons_vbox,
-              *zoom_area_vbox, *log_buttons_vbox, *sort_buttons_vbox;
+              *zoom_area_vbox, *log_buttons_vbox, *sort_buttons_vbox,
+              *error_button_vbox;
 
     table = gtk_table_new (2, 2, FALSE);
     gtk_container_set_border_width (GTK_CONTAINER (table), 0);
@@ -135,6 +141,9 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
 
     sort_buttons_vbox = g3data_window_sort_buttons_add ();
     gtk_box_pack_start (GTK_BOX (bottomvbox), sort_buttons_vbox, FALSE, FALSE, 0);
+
+    error_button_vbox = g3data_window_error_buttons_add ();
+    gtk_box_pack_start (GTK_BOX (bottomvbox), error_button_vbox, FALSE, FALSE, 0);
 
     /* Create a scrolled window to hold image */
     scrolled_window = gtk_scrolled_window_new (NULL, NULL);
@@ -372,6 +381,28 @@ static GtkWidget *g3data_window_sort_buttons_add (void) {
     for (i = 0; i < 3; i++) {
         gtk_box_pack_start (GTK_BOX (vbox), sort_button[i], FALSE, FALSE, 0);
     }
+
+    return vbox;
+}
+
+
+/* Add check buttons for including errors in output. */
+static GtkWidget *g3data_window_error_buttons_add (void) {
+    GtkWidget *vbox, *label, *alignment;
+    GtkWidget *error_button;
+
+    /* Create and pack value errors button */
+    error_button = gtk_check_button_new_with_mnemonic (error_button_text);
+    gtk_widget_set_tooltip_text (error_button, error_tooltip);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (error_button), FALSE);
+
+    vbox = gtk_vbox_new (FALSE, 0);
+    label = gtk_label_new (NULL);
+    gtk_label_set_markup (GTK_LABEL (label), error_header);
+    alignment = gtk_alignment_new (0, 1, 0, 0);
+    gtk_container_add (GTK_CONTAINER (alignment), label);
+    gtk_box_pack_start (GTK_BOX (vbox), alignment, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox), error_button, FALSE, FALSE, 0);
 
     return vbox;
 }

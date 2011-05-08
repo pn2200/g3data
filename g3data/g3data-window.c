@@ -100,7 +100,7 @@ static void file_open_dialog_response_cb (GtkWidget *chooser,
 
         filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (chooser));
         instance = g3data_application_get_instance ();
-        if (instance->current_window == NULL) {
+        if (instance->current_window == NULL || instance->current_window->image != NULL) {
             g3data_create_window (instance);
         }
         g3data_window_insert_image (instance->current_window, filename);

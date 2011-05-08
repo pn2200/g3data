@@ -39,6 +39,10 @@ static void g3data_window_file_open (GtkAction *action, G3dataWindow *window);
 static void g3data_window_file_save_as (GtkAction *action, G3dataWindow *window);
 static void g3data_window_file_close (GtkAction *action, G3dataWindow *window);
 static void g3data_window_help_about (GtkAction *action, G3dataWindow *window);
+static void full_screen_action_callback(GtkWidget *widget, gpointer func_data);
+static void hide_zoom_area_callback(GtkWidget *widget, gpointer func_data);
+static void hide_log_buttons_callback(GtkWidget *widget, gpointer func_data);
+static void hide_sort_buttons_callback(GtkWidget *widget, gpointer func_data);
 
 static const GtkActionEntry entries[] = {
     { "FileMenu", NULL, "_File", NULL, NULL, NULL },
@@ -50,6 +54,16 @@ static const GtkActionEntry entries[] = {
     { "About", GTK_STOCK_HELP, "_About", "", "About g3data", G_CALLBACK( g3data_window_help_about ) }
 };
 
+static const GtkToggleActionEntry toggle_entries[] = {
+    { "Zoom area", NULL, "Zoom area", "F5", "Zoom area", G_CALLBACK( hide_zoom_area_callback ), TRUE },
+    { "Axis settings", NULL, "Axis settings", "F6", "Axis settings", G_CALLBACK( hide_log_buttons_callback ), TRUE },
+    { "Output properties", NULL, "Output properties", "F7", "Output properties", G_CALLBACK( hide_sort_buttons_callback ), TRUE }
+};
+
+static const GtkToggleActionEntry full_screen[] = {
+    { "FullScreen", NULL, "_Full Screen", "F11", "Switch between full screen and windowed mode", G_CALLBACK( full_screen_action_callback ), FALSE }
+};
+
 static const gchar *ui_description =
     "<ui>"
     "  <menubar name='MainMenu'>"
@@ -58,6 +72,13 @@ static const gchar *ui_description =
     "      <menuitem action='Save As'/>"
     "      <separator />"
     "      <menuitem action='Close'/>"
+    "    </menu>"
+    "    <menu action='ViewMenu'>"
+    "      <menuitem action='Zoom area'/>"
+    "      <menuitem action='Axis settings'/>"
+    "      <menuitem action='Output properties'/>"
+    "      <separator />"
+    "      <menuitem action='FullScreen'/>"
     "    </menu>"
     "    <menu action='HelpMenu'>"
     "      <menuitem action='About'/>"
@@ -207,6 +228,53 @@ static void g3data_window_file_close (GtkAction *action, G3dataWindow *window)
 }
 
 
+static void full_screen_action_callback(GtkWidget *widget, gpointer func_data) {
+    G3dataWindow *window = G3DATA_WINDOW (func_data);
+
+    if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (widget))) {
+        gtk_window_fullscreen (GTK_WINDOW (window));
+    } else {
+        gtk_window_unfullscreen (GTK_WINDOW (window));
+    }
+}
+
+
+/* Hide or show zoom area. */
+static void hide_zoom_area_callback(GtkWidget *widget, gpointer func_data) {
+    G3dataWindow *window = G3DATA_WINDOW (func_data);
+
+    if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (widget))) {
+        gtk_widget_show (window->zoom_area_vbox);
+    } else {
+        gtk_widget_hide (window->zoom_area_vbox);
+    }
+}
+
+
+/* Hide or show logarithmic axes buttons. */
+static void hide_log_buttons_callback(GtkWidget *widget, gpointer func_data) {
+    G3dataWindow *window = G3DATA_WINDOW (func_data);
+
+    if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (widget))) {
+        gtk_widget_show (window->log_buttons_vbox);
+    } else {
+        gtk_widget_hide (window->log_buttons_vbox);
+    }
+}
+
+
+/* Hide or show output sorting buttons. */
+static void hide_sort_buttons_callback(GtkWidget *widget, gpointer func_data) {
+    G3dataWindow *window = G3DATA_WINDOW (func_data);
+
+    if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (widget))) {
+        gtk_widget_show (window->sort_buttons_vbox);
+    } else {
+        gtk_widget_hide (window->sort_buttons_vbox);
+    }
+}
+
+
 static void g3data_window_help_about (GtkAction *action, G3dataWindow *window)
 {
     g3data_about (GTK_WIDGET (window));
@@ -232,9 +300,18 @@ static void g3data_window_init (G3dataWindow *g3data_window)
     /* Create menu */
     action_group = gtk_action_group_new ("MenuActions");
     gtk_action_group_add_actions (action_group, entries, G_N_ELEMENTS (entries), g3data_window);
+    gtk_action_group_add_toggle_actions (action_group, full_screen, G_N_ELEMENTS (full_screen), g3data_window);
 
-    ui_manager = gtk_ui_manager_new();
-    gtk_ui_manager_insert_action_group(ui_manager, action_group, 0);
+    g3data_window->action_group = gtk_action_group_new ("WindowActions");
+    gtk_action_group_add_toggle_actions (g3data_window->action_group,
+                                         toggle_entries,
+                                         G_N_ELEMENTS (toggle_entries),
+                                         g3data_window);
+    gtk_action_group_set_sensitive (g3data_window->action_group, FALSE);
+
+    ui_manager = gtk_ui_manager_new ();
+    gtk_ui_manager_insert_action_group (ui_manager, action_group, 0);
+    gtk_ui_manager_insert_action_group (ui_manager, g3data_window->action_group, 0);
 
     accel_group = gtk_ui_manager_get_accel_group (ui_manager);
     gtk_window_add_accel_group (GTK_WINDOW (g3data_window), accel_group);

@@ -47,7 +47,10 @@ typedef struct _G3dataWindowPrivate G3dataWindowPrivate;
 struct _G3dataWindow {
     GtkWindow base_instance;
     GtkWidget *main_vbox;
-    GtkWidget *zoom_area;
+    GtkWidget *zoom_area, *zoom_area_vbox;
+    GtkWidget *log_buttons_vbox;
+    GtkWidget *sort_buttons_vbox;
+    GtkActionGroup *action_group;
     GdkPixbuf *image;
     gint x, y;
 };

@@ -108,7 +108,6 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
     GtkWidget *table, *tophbox, *bottomhbox, *bottomvbox, *alignment,
               *scrolled_window, *viewport, *drawing_area_alignment;
     GtkWidget *control_point_vbox, *status_area_vbox, *remove_buttons_vbox,
-              *zoom_area_vbox, *log_buttons_vbox, *sort_buttons_vbox,
               *error_button_vbox;
     gchar *buffer;
 
@@ -140,14 +139,14 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
     remove_buttons_vbox = g3data_window_remove_buttons_add ();
     gtk_box_pack_start (GTK_BOX (bottomvbox), remove_buttons_vbox, FALSE, FALSE, 0);
 
-    zoom_area_vbox = g3data_window_zoom_area_add (window);
-    gtk_box_pack_start (GTK_BOX (bottomvbox), zoom_area_vbox, FALSE, FALSE, 0);
+    window->zoom_area_vbox = g3data_window_zoom_area_add (window);
+    gtk_box_pack_start (GTK_BOX (bottomvbox), window->zoom_area_vbox, FALSE, FALSE, 0);
 
-    log_buttons_vbox = g3data_window_log_buttons_add (window);
-    gtk_box_pack_start (GTK_BOX (bottomvbox), log_buttons_vbox, FALSE, FALSE, 0);
+    window->log_buttons_vbox = g3data_window_log_buttons_add (window);
+    gtk_box_pack_start (GTK_BOX (bottomvbox), window->log_buttons_vbox, FALSE, FALSE, 0);
 
-    sort_buttons_vbox = g3data_window_sort_buttons_add ();
-    gtk_box_pack_start (GTK_BOX (bottomvbox), sort_buttons_vbox, FALSE, FALSE, 0);
+    window->sort_buttons_vbox = g3data_window_sort_buttons_add ();
+    gtk_box_pack_start (GTK_BOX (bottomvbox), window->sort_buttons_vbox, FALSE, FALSE, 0);
 
     error_button_vbox = g3data_window_error_buttons_add ();
     gtk_box_pack_start (GTK_BOX (bottomvbox), error_button_vbox, FALSE, FALSE, 0);
@@ -169,6 +168,7 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
     g_free (buffer);
 
     setcolors (&colors);
+    gtk_action_group_set_sensitive (window->action_group, TRUE);
 
     gtk_widget_show_all (window->main_vbox);
 }

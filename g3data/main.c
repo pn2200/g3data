@@ -68,7 +68,6 @@ GtkWidget	*ViewPort = NULL;
 GdkColor        *colors;								/* Pointer to colors */
 GdkPixbuf       *gpbimage;
 GtkWidget *mainvbox;
-GtkActionGroup	*tab_action_group;
 
 /* Declaration of global variables */
 /* axiscoords[][][0] will be set to -1 when not used */
@@ -120,10 +119,6 @@ static void drag_data_received(GtkWidget *widget,
                               guint info,
                               guint event_time,
                               gpointer user_data);
-static GCallback full_screen_action_callback(GtkWidget *widget, gpointer func_data);
-static GCallback hide_zoom_area_callback(GtkWidget *widget, gpointer func_data);
-static GCallback hide_axis_settings_callback(GtkWidget *widget, gpointer func_data);
-static GCallback hide_output_prop_callback(GtkWidget *widget, gpointer func_data);
 
 static const GOptionEntry goption_options[] =
 {
@@ -904,8 +899,6 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
 	}
     }
 
-    gtk_action_group_set_sensitive(tab_action_group, TRUE);
-
     if (ShowZoomArea)
         if (zoomareabox != NULL)
             gtk_widget_show(zoomareabox);
@@ -952,71 +945,6 @@ static void drag_data_received(GtkWidget *widget,
         g_strfreev(uri_list);
     }
     gtk_drag_finish (drag_context, TRUE, FALSE, event_time);
-}
-
-
-/****************************************************************/
-/* This callback handles the fullscreen toggling.		*/
-/****************************************************************/
-static GCallback full_screen_action_callback(GtkWidget *widget, gpointer func_data)
-{
-    if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(widget))) {
-	gtk_window_fullscreen(GTK_WINDOW (window));
-    } else {
-	gtk_window_unfullscreen(GTK_WINDOW (window));
-    }
-  return NULL;
-}
-
-/****************************************************************/
-/* This callback handles the hide zoom area toggling.		*/
-/****************************************************************/
-static GCallback hide_zoom_area_callback(GtkWidget *widget, gpointer func_data)
-{
-    if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(widget))) {
-        if (zoomareabox != NULL)
-            gtk_widget_show(zoomareabox);
-    	ShowZoomArea = TRUE;
-    } else {
-        if (zoomareabox != NULL)
-            gtk_widget_hide(zoomareabox);
-    	ShowZoomArea = FALSE;
-    }
-    return NULL;
-}
-
-/****************************************************************/
-/* This callback handles the hide axis settings toggling.	*/
-/****************************************************************/
-static GCallback hide_axis_settings_callback(GtkWidget *widget, gpointer func_data)
-{
-    if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(widget))) {
-        if (logbox != NULL)
-            gtk_widget_show(logbox);
-    	ShowLog = TRUE;
-    } else {
-        if (logbox != NULL)
-            gtk_widget_hide(logbox);
-	    ShowLog = FALSE;
-    }
-    return NULL;
-}
-
-/****************************************************************/
-/* This callback handles the hide output properties toggling.	*/
-/****************************************************************/
-static GCallback hide_output_prop_callback(GtkWidget *widget, gpointer func_data)
-{
-    if (gtk_toggle_action_get_active(GTK_TOGGLE_ACTION(widget))) {
-        if (oppropbox != NULL)
-            gtk_widget_show(oppropbox);
-    	ShowOpProp = TRUE;
-    } else {
-        if (oppropbox != NULL)
-            gtk_widget_hide(oppropbox);
-    	ShowOpProp = FALSE;
-    }
-    return NULL;
 }
 
 

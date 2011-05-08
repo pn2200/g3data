@@ -24,31 +24,6 @@ Authors email : jonas.frantz@welho.com
 
 */
 
-/* Actions definitions */
-  GtkToggleActionEntry toggle_entries[] = {
-	{ "Zoom area", NULL, "Zoom area", "F5", "Zoom area", G_CALLBACK( hide_zoom_area_callback ), TRUE },
-	{ "Axis settings", NULL, "Axis settings", "F6", "Axis settings", G_CALLBACK( hide_axis_settings_callback ), TRUE },
-	{ "Output properties", NULL, "Output properties", "F7", "Output properties", G_CALLBACK( hide_output_prop_callback ), TRUE }
-  };
-
-  GtkToggleActionEntry full_screen[] = {
-	{ "FullScreen", NULL, "_Full Screen", "F11", "Switch between full screen and windowed mode", G_CALLBACK( full_screen_action_callback ), FALSE }
-  };
-/* Menu definitions */
-const gchar *ui_description =
-        "<ui>"
-        "  <menubar name='MainMenu'>"
-        "    <menu action='ViewMenu'>"
-        "      <menuitem action='Zoom area'/>"
-        "      <menuitem action='Axis settings'/>"
-        "      <menuitem action='Output properties'/>"
-	"      <separator />"
-        "      <menuitem action='FullScreen'/>"
-        "    </menu>"
-        "  </menubar>"
-        "</ui>";
-
-
 /* Drag and drop definitions */
 
 const GtkTargetEntry ui_drop_target_entries[] = {

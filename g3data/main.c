@@ -54,7 +54,7 @@ Authors email : jonas.frantz@welho.com
 
 /* Declaration of gtk variables */
 GtkWidget	*window;								/* Window */
-GtkWidget	*drawing_area, *zoom_area;			/* Drawing areas */
+GtkWidget	*drawing_area;			/* Drawing areas */
 GtkWidget	*xyentry[4];
 GtkWidget	*remlastbutton;
 GtkWidget	*setxybutton[4];
@@ -101,7 +101,6 @@ GtkWidget 	*drawing_area_alignment;
 static void SetButtonSensitivity(void);
 static gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data);
 static gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data);
-static gboolean expose_event_callback(GtkWidget *widget, GdkEventExpose *event, gpointer data);
 static gint expose_event(GtkWidget *widget, GdkEventExpose *event, gpointer data);
 static gint configure_event(GtkWidget *widget, GdkEventConfigure *event,gpointer data);
 static void toggle_xy(GtkWidget *widget, gpointer func_data);
@@ -302,30 +301,7 @@ static gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpoint
         gtk_entry_set_text(GTK_ENTRY(xerr_entry),"");
         gtk_entry_set_text(GTK_ENTRY(yerr_entry),"");
     }
-    gtk_widget_queue_draw(zoom_area);
 
-    return TRUE;
-}
-
-
-/* expose_event_callback for the zoom area. */
-static gboolean expose_event_callback(GtkWidget *widget, GdkEventExpose *event, gpointer data) {
-    cairo_t *cr;
-
-    cr = gdk_cairo_create (gtk_widget_get_window(widget));
-
-    if (xpointer >= 0 && ypointer >= 0 && xpointer < XSize && ypointer < YSize) {
-        cairo_save(cr);
-        cairo_translate(cr, -xpointer*ZOOMFACTOR + ZOOMPIXSIZE/2, -ypointer*ZOOMFACTOR + ZOOMPIXSIZE/2);
-        cairo_scale(cr, 1.0*ZOOMFACTOR, 1.0*ZOOMFACTOR);
-        gdk_cairo_set_source_pixbuf (cr, gpbimage, 0, 0);
-        cairo_paint(cr);
-        cairo_restore(cr);
-    }
-
-    /* Then draw the square in the middle of the zoom area */
-    DrawMarker(cr, ZOOMPIXSIZE/2, ZOOMPIXSIZE/2, 2, colors);
-    cairo_destroy (cr);
     return TRUE;
 }
 
@@ -733,11 +709,6 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
     gtk_editable_set_editable(GTK_EDITABLE(nump_entry),FALSE);
     SetNumPointsEntry(nump_entry, numpoints);
 
-    /* Zoom area */
-    zoom_area = gtk_drawing_area_new ();					/* Create new drawing area */
-    gtk_widget_set_size_request (zoom_area, ZOOMPIXSIZE, ZOOMPIXSIZE);
-    g_signal_connect(G_OBJECT(zoom_area), "expose_event", G_CALLBACK(expose_event_callback), NULL);
-
     setcolors(&colors);
 
     /* Remove points buttons and labels */
@@ -841,7 +812,6 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
     alignment = gtk_alignment_new (0, 1, 0, 0);
     gtk_container_add((GtkContainer *) alignment, ZAlabel);
     gtk_box_pack_start (GTK_BOX (subvbox), alignment, FALSE, FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (subvbox), zoom_area, FALSE, FALSE, 0);
 
     /* Pack logarithmic axes */
     subvbox = gtk_vbox_new (FALSE, ELEM_SEP);

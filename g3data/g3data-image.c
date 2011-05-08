@@ -25,9 +25,12 @@ Authors email : pnovak@alumni.caltech.edu
 #include <math.h>
 #include "g3data-window.h"
 #include "g3data-image.h"
+#include "drawing.h"
 
 #define ZOOMPIXSIZE 200
 #define ZOOMFACTOR 4
+
+static GdkColor *colors;
 
 static GtkWidget *g3data_window_control_points_add (void);
 static GtkWidget *g3data_window_status_area_add (void);
@@ -164,6 +167,8 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
     buffer = g_strdup_printf (g3data_window_title, g_path_get_basename (filename));
     gtk_window_set_title (GTK_WINDOW (window), buffer);
     g_free (buffer);
+
+    setcolors (&colors);
 
     gtk_widget_show_all (window->main_vbox);
 }
@@ -520,6 +525,8 @@ static gboolean expose_event_callback (GtkWidget *widget, GdkEventExpose *event,
         cairo_restore(cr);
     }
 
+    /* Then draw the square in the middle of the zoom area */
+    DrawMarker (cr, ZOOMPIXSIZE/2, ZOOMPIXSIZE/2, 2, colors);
     cairo_destroy (cr);
     return TRUE;
 }

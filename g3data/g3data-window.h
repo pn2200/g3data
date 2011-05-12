@@ -47,6 +47,7 @@ typedef struct _G3dataWindowPrivate G3dataWindowPrivate;
 struct _G3dataWindow {
     GtkWindow base_instance;
     GtkWidget *main_vbox;
+    GtkWidget *control_point_button[4], *control_point_entry[4];
     GtkWidget *zoom_area, *zoom_area_vbox;
     GtkWidget *log_buttons_vbox;
     GtkWidget *sort_buttons_vbox;

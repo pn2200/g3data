@@ -32,7 +32,7 @@ Authors email : pnovak@alumni.caltech.edu
 
 static GdkColor *colors;
 
-static GtkWidget *g3data_window_control_points_add (void);
+static GtkWidget *g3data_window_control_points_add (G3dataWindow *window);
 static GtkWidget *g3data_window_status_area_add (void);
 static GtkWidget *g3data_window_remove_buttons_add (void);
 static GtkWidget *g3data_window_zoom_area_add (G3dataWindow *window);
@@ -130,7 +130,7 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
     bottomvbox = gtk_vbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (bottomhbox), bottomvbox, FALSE, FALSE, 0);
 
-    control_point_vbox = g3data_window_control_points_add ();
+    control_point_vbox = g3data_window_control_points_add (window);
     gtk_box_pack_start (GTK_BOX (tophbox), control_point_vbox, FALSE, FALSE, 0);
 
     status_area_vbox = g3data_window_status_area_add ();
@@ -175,10 +175,9 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
 
 
 /* Add control points area. */
-static GtkWidget *g3data_window_control_points_add (void) {
+static GtkWidget *g3data_window_control_points_add (G3dataWindow *window) {
     GtkWidget *control_point_header, *control_point_label;
     GtkWidget *vbox, *hbox, *alignment, *table, *label;
-    GtkWidget *control_point_button[4], *control_point_entry[4];
     int i;
 
     vbox = gtk_vbox_new (FALSE, 0);
@@ -202,24 +201,24 @@ static GtkWidget *g3data_window_control_points_add (void) {
         /* buttons for setting control points x_1, x_2, etc. */
         label = gtk_label_new (NULL);
         gtk_label_set_markup_with_mnemonic (GTK_LABEL (label), control_point_button_text[i]);
-        control_point_button[i] = gtk_toggle_button_new();
-        gtk_container_add (GTK_CONTAINER (control_point_button[i]), label);
-        gtk_widget_set_tooltip_text (control_point_button[i], control_point_tooltip[i]);
+        window->control_point_button[i] = gtk_toggle_button_new();
+        gtk_container_add (GTK_CONTAINER (window->control_point_button[i]), label);
+        gtk_widget_set_tooltip_text (window->control_point_button[i], control_point_tooltip[i]);
 
         /* labels for control points x_1, x_2, etc. */
         control_point_label = gtk_label_new (NULL);
         gtk_label_set_markup (GTK_LABEL (control_point_label), control_point_label_text[i]);
 
         /* text entries to enter control points x_1, x_2, etc. */
-        control_point_entry[i] = gtk_entry_new();
-        gtk_entry_set_max_length (GTK_ENTRY (control_point_entry[i]), 20);
-        gtk_widget_set_sensitive (control_point_entry[i], FALSE);
-        gtk_widget_set_tooltip_text (control_point_entry[i], control_point_entry_tooltip[i]);
+        window->control_point_entry[i] = gtk_entry_new();
+        gtk_entry_set_max_length (GTK_ENTRY (window->control_point_entry[i]), 20);
+        gtk_widget_set_sensitive (window->control_point_entry[i], FALSE);
+        gtk_widget_set_tooltip_text (window->control_point_entry[i], control_point_entry_tooltip[i]);
 
         /* Packing the control points labels and entries */
-	    gtk_table_attach_defaults (GTK_TABLE (table), control_point_button[i], 0, 1, i, i+1);
+	    gtk_table_attach_defaults (GTK_TABLE (table), window->control_point_button[i], 0, 1, i, i+1);
 	    gtk_table_attach_defaults (GTK_TABLE (table), control_point_label, 1, 2, i, i+1);
-	    gtk_table_attach_defaults (GTK_TABLE (table), control_point_entry[i], 2, 3, i, i+1);
+	    gtk_table_attach_defaults (GTK_TABLE (table), window->control_point_entry[i], 2, 3, i, i+1);
     }
     return vbox;
 }

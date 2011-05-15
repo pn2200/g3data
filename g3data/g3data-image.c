@@ -45,6 +45,8 @@ static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, Gt
 static gboolean image_area_expose_event (GtkWidget *widget, GdkEventExpose *event, gpointer data);
 static gboolean expose_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data);
 static gboolean motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data);
+static void control_point_button_toggled (GtkWidget *widget, gpointer data);
+static void control_point_entry_read (GtkWidget *entry, gpointer func_data);
 
 static const gchar control_point_header_text[] = "<b>Axis points</b>";
 static const gchar status_area_header[] = "<b>Processing information</b>";
@@ -203,6 +205,10 @@ static GtkWidget *g3data_window_control_points_add (G3dataWindow *window) {
         gtk_label_set_markup_with_mnemonic (GTK_LABEL (label), control_point_button_text[i]);
         window->control_point_button[i] = gtk_toggle_button_new();
         gtk_container_add (GTK_CONTAINER (window->control_point_button[i]), label);
+        g_signal_connect (G_OBJECT (window->control_point_button[i]),
+                          "toggled",
+                          G_CALLBACK (control_point_button_toggled),
+                          (gpointer) window);
         gtk_widget_set_tooltip_text (window->control_point_button[i], control_point_tooltip[i]);
 
         /* labels for control points x_1, x_2, etc. */
@@ -213,6 +219,10 @@ static GtkWidget *g3data_window_control_points_add (G3dataWindow *window) {
         window->control_point_entry[i] = gtk_entry_new();
         gtk_entry_set_max_length (GTK_ENTRY (window->control_point_entry[i]), 20);
         gtk_widget_set_sensitive (window->control_point_entry[i], FALSE);
+    	g_signal_connect (G_OBJECT (window->control_point_entry[i]),
+                          "changed",
+                          G_CALLBACK (control_point_entry_read),
+                          (gpointer) window);
         gtk_widget_set_tooltip_text (window->control_point_entry[i], control_point_entry_tooltip[i]);
 
         /* Packing the control points labels and entries */
@@ -545,3 +555,36 @@ static gboolean motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gp
     return TRUE;
 }
 
+
+/* When a control point toggle button is toggled active, make it insensitive,
+   and make sensitive the corresponding text entry. */
+static void control_point_button_toggled (GtkWidget *widget, gpointer data)
+{
+    gint i, j;
+    G3dataWindow *window = G3DATA_WINDOW (data);
+
+    if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {
+        for (i = 0; i < 4; i++) {
+            gtk_widget_set_sensitive (window->control_point_button[i], FALSE);
+            if (widget == window->control_point_button[i]) {
+                gtk_widget_set_sensitive (window->control_point_entry[i], TRUE);
+            }
+        }
+    }
+}
+
+
+/* Read text in control_point_entry when it changes. */
+static void control_point_entry_read (GtkWidget *entry, gpointer func_data)
+{
+    G3dataWindow *window = G3DATA_WINDOW (func_data);
+    const gchar *text;
+    gint i;
+    
+    text = gtk_entry_get_text (GTK_ENTRY (entry));
+    for (i = 0; i < 4; i++) {
+        if (entry == window->control_point_entry[i]) {
+            sscanf (text, "%lf", &window->control_point_coords[i]);
+        }
+    }
+}

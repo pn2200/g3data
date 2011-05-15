@@ -54,6 +54,7 @@ struct _G3dataWindow {
     GtkActionGroup *action_group;
     GdkPixbuf *image;
     gint x, y;
+    gdouble control_point_coords[4];
 };
 
 struct _G3dataWindowClass {

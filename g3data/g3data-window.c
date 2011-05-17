@@ -283,6 +283,7 @@ static void g3data_window_help_about (GtkAction *action, G3dataWindow *window)
 
 static void g3data_window_init (G3dataWindow *g3data_window)
 {
+    int i;
     GtkWidget *menubar;
     GtkActionGroup *action_group;
     GtkUIManager *ui_manager;
@@ -327,6 +328,10 @@ static void g3data_window_init (G3dataWindow *g3data_window)
     gtk_box_pack_start (GTK_BOX (g3data_window->main_vbox), menubar, FALSE, FALSE, 0);
 
     g3data_window->image = NULL;
+    for (i = 0; i < 4; i++) {
+        g3data_window->control_point_image_coords[i][0] = -1;
+        g3data_window->control_point_image_coords[i][1] = -1;
+    }
 }
 
 

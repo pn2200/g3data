@@ -53,7 +53,9 @@ struct _G3dataWindow {
     GtkWidget *sort_buttons_vbox;
     GtkActionGroup *action_group;
     GdkPixbuf *image;
-    gint x, y;
+    gint x, y, size, numpoints;
+    gint **points;
+    gint control_point_image_coords[4][2];
     gdouble control_point_coords[4];
 };
 

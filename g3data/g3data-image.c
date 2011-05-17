@@ -29,6 +29,7 @@ Authors email : pnovak@alumni.caltech.edu
 
 #define ZOOMPIXSIZE 200
 #define ZOOMFACTOR 4
+#define MAXPOINTS 256
 
 static GdkColor *colors;
 
@@ -47,6 +48,7 @@ static gboolean expose_event_callback (GtkWidget *widget, GdkEventExpose *event,
 static gboolean motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data);
 static void control_point_button_toggled (GtkWidget *widget, gpointer data);
 static void control_point_entry_read (GtkWidget *entry, gpointer func_data);
+static void button_press_event (GtkWidget *widget, GdkEventButton *event, gpointer data);
 
 static const gchar control_point_header_text[] = "<b>Axis points</b>";
 static const gchar status_area_header[] = "<b>Processing information</b>";
@@ -111,6 +113,7 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
               *scrolled_window, *viewport, *drawing_area_alignment;
     GtkWidget *control_point_vbox, *status_area_vbox, *remove_buttons_vbox,
               *error_button_vbox;
+    gint i;
     gchar *buffer;
 
     table = gtk_table_new (2, 2, FALSE);
@@ -171,6 +174,14 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
 
     setcolors (&colors);
     gtk_action_group_set_sensitive (window->action_group, TRUE);
+
+    /* Allocate memory to store the point coordinates */
+    window->points = (gint **) g_malloc (sizeof (gint *) * MAXPOINTS);
+    for (i = 0; i < MAXPOINTS; i++) {
+        window->points[i] = (gint *) g_malloc (sizeof (gint) * 2);
+    }
+    window->numpoints = 0;
+    window->size = MAXPOINTS;
 
     gtk_widget_show_all (window->main_vbox);
 }
@@ -485,6 +496,9 @@ static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, Gt
     g_signal_connect (G_OBJECT (drawing_area), "expose_event",
                       G_CALLBACK (image_area_expose_event), (gpointer) window);
 
+    g_signal_connect (G_OBJECT (drawing_area), "button_press_event",
+                      G_CALLBACK (button_press_event), (gpointer) window);
+
     gtk_widget_set_events (drawing_area, GDK_EXPOSURE_MASK |
                                          GDK_BUTTON_PRESS_MASK | 
                                          GDK_BUTTON_RELEASE_MASK |
@@ -588,3 +602,88 @@ static void control_point_entry_read (GtkWidget *entry, gpointer func_data)
         }
     }
 }
+
+
+static void button_press_event (GtkWidget *widget, GdkEventButton *event, gpointer data)
+{
+    gint x, y, i, j;
+    G3dataWindow *window = G3DATA_WINDOW (data);
+
+    gdk_window_get_pointer (event->window, &x, &y, NULL);
+
+    if (event->button == 1) {
+        /* If none of the control point buttons have been pressed */
+        if (!gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (window->control_point_button[0])) &&
+            !gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (window->control_point_button[1])) &&
+            !gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (window->control_point_button[2])) &&
+            !gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (window->control_point_button[3])) ) {
+
+            if (window->numpoints >= window->size) {
+                window->points = (gint **) g_realloc (window->points, sizeof (gint *) * (window->size + MAXPOINTS));
+                window->size += MAXPOINTS;
+                for (i = window->numpoints; i < window->size; i++) {
+                    window->points[i] = g_malloc (sizeof (gint) * 2);
+                }
+            }
+            window->points[window->numpoints][0] = x;
+            window->points[window->numpoints][1] = y;
+            window->numpoints++;
+        } else {
+            for (i = 0; i < 4; i++) {
+                /* If any of the control point buttons have been pressed */
+                if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (window->control_point_button[i]))) {
+                    window->control_point_image_coords[i][0] = x;
+                    window->control_point_image_coords[i][1] = y;
+                    for (j = 0; j < 4; j++) {
+                        gtk_widget_set_sensitive (window->control_point_button[j], TRUE);
+                    }
+                    gtk_widget_set_sensitive (window->control_point_entry[i], TRUE);
+                    gtk_editable_set_editable (GTK_EDITABLE (window->control_point_entry[i]), TRUE);
+                    gtk_widget_grab_focus (window->control_point_entry[i]);
+                    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(window->control_point_button[i]), FALSE);
+                }
+            }
+        }
+    } else if (event->button == 2) {
+        for (i = 0; i < 2; i++) {
+            /* If mouse button 2 pressed, and the control points have not been set, set control points for x-axis */
+            if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (window->control_point_button[i])) == FALSE &&
+                window->control_point_image_coords[i][0] == -1 &&
+                window->control_point_image_coords[i][1] == -1) {
+
+                window->control_point_image_coords[i][0] = x;
+                window->control_point_image_coords[i][1] = y;
+                for (j = 0; j < 4; j++) {
+                    gtk_widget_set_sensitive(window->control_point_button[j], TRUE);
+                }
+                gtk_widget_set_sensitive (window->control_point_entry[i], TRUE);
+                gtk_editable_set_editable (GTK_EDITABLE (window->control_point_entry[i]), TRUE);
+                gtk_widget_grab_focus (window->control_point_entry[i]);
+                gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(window->control_point_button[i]), FALSE);
+
+                break;
+            }
+        }
+    } else if (event->button == 3) {
+        for (i = 2; i < 4; i++) {
+            /* If mouse button 3 pressed, and the control points have not been set, set control points for y-axis */
+            if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (window->control_point_button[i])) == FALSE &&
+                window->control_point_image_coords[i][0] == -1 &&
+                window->control_point_image_coords[i][1] == -1) {
+
+                window->control_point_image_coords[i][0] = x;
+                window->control_point_image_coords[i][1] = y;
+                for (j = 0; j < 4; j++) {
+                    gtk_widget_set_sensitive(window->control_point_button[j], TRUE);
+                }
+                gtk_widget_set_sensitive (window->control_point_entry[i], TRUE);
+                gtk_editable_set_editable (GTK_EDITABLE (window->control_point_entry[i]), TRUE);
+                gtk_widget_grab_focus (window->control_point_entry[i]);
+                gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(window->control_point_button[i]), FALSE);
+
+                break;
+            }
+        }
+    }
+}
+

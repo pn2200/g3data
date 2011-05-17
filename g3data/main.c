@@ -98,7 +98,6 @@ FILE		*FP;									/* File pointer */
 GtkWidget 	*drawing_area_alignment;
 
 static void SetButtonSensitivity(void);
-static gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data);
 static gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data);
 static gint expose_event(GtkWidget *widget, GdkEventExpose *event, gpointer data);
 static gint configure_event(GtkWidget *widget, GdkEventConfigure *event,gpointer data);
@@ -161,108 +160,6 @@ static void SetButtonSensitivity(void)
         gtk_widget_set_sensitive(remlastbutton,TRUE);
         gtk_widget_set_sensitive(remallbutton,TRUE);
     }
-}
-
-
-/****************************************************************/
-/* When a button is pressed inside the drawing area this 	*/
-/* function is called, it handles axispoints and graphpoints	*/
-/* and paints a square in that position.			*/
-/****************************************************************/
-static gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
-{
-    gint x, y, i, j;
-
-    gdk_window_get_pointer (event->window, &x, &y, NULL);
-
-    if (event->button == 1) {
-        /* If none of the set axispoint buttons been pressed */
-        if (!setxypressed[0] && !setxypressed[1] && !setxypressed[2] && !setxypressed[3]) {
-            if (numpoints > MaxPoints-1) {
-                i = MaxPoints;
-                MaxPoints += MAXPOINTS;
-                points = realloc(points,sizeof(gint *) * MaxPoints);
-                if (points==NULL) {
-                    printf("Error reallocating memory for points. Exiting.\n");
-                    exit(-1);
-                }
-                for (;i<MaxPoints;i++) {
-                    points[i] = malloc(sizeof(gint) * 2);
-                    if (points[i]==NULL) {
-                        printf("Error allocating memory for points[%d]. Exiting.\n",i);
-                        exit(-1);
-                    }
-                }
-            }
-            points[numpoints][0]=x;
-            points[numpoints][1]=y;
-            numpoints++;
-            SetNumPointsEntry(nump_entry, numpoints);
-        } else {
-            for (i=0;i<4;i++) {
-                /* If any of the set axispoint buttons are pressed */
-                if (setxypressed[i]) {
-                    axiscoords[i][0]=x;
-                    axiscoords[i][1]=y;
-                    for (j=0;j<4;j++) {
-                        if (i!=j) {
-                            gtk_widget_set_sensitive(setxybutton[j],TRUE);
-                        }
-                    }
-                    gtk_widget_set_sensitive(xyentry[i],TRUE);
-                    gtk_editable_set_editable(GTK_EDITABLE(xyentry[i]),TRUE);
-                    gtk_widget_grab_focus(xyentry[i]);
-                    setxypressed[i]=FALSE;
-                    bpressed[i]=TRUE;
-                    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(setxybutton[i]),FALSE);
-                }
-            }
-        }
-    } else if (event->button == 2) {
-        for (i=0;i<2;i++) {
-            if (!bpressed[i]) {
-                axiscoords[i][0]=x;
-                axiscoords[i][1]=y;
-                for (j=0;j<4;j++) {
-                    if (i!=j) {
-                        gtk_widget_set_sensitive(setxybutton[j],TRUE);
-                    }
-                }
-                gtk_widget_set_sensitive(xyentry[i],TRUE);
-                gtk_editable_set_editable(GTK_EDITABLE(xyentry[i]),TRUE);
-                gtk_widget_grab_focus(xyentry[i]);
-                setxypressed[i]=FALSE;
-                bpressed[i]=TRUE;
-                gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(setxybutton[i]),FALSE);
-
-                break;
-            }
-        }
-    } else if (event->button == 3) {
-        for (i=2;i<4;i++) {
-            if (!bpressed[i]) {
-                axiscoords[i][0]=x;
-                axiscoords[i][1]=y;
-                for (j=0;j<4;j++) {
-                    if (i!=j) {
-                        gtk_widget_set_sensitive(setxybutton[j],TRUE);
-                    }
-                }
-                gtk_widget_set_sensitive(xyentry[i],TRUE);
-                gtk_editable_set_editable(GTK_EDITABLE(xyentry[i]),TRUE);
-                gtk_widget_grab_focus(xyentry[i]);
-                setxypressed[i]=FALSE;
-                bpressed[i]=TRUE;
-                gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(setxybutton[i]),FALSE);
-
-                break;
-            }
-        }
-    }
-    SetButtonSensitivity();
-    gtk_widget_queue_draw(drawing_area);
-
-    return TRUE;
 }
 
 
@@ -573,9 +470,6 @@ static gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble max
 
     g_signal_connect (G_OBJECT (drawing_area), "configure_event",		/* Connect drawing area to */
               G_CALLBACK (configure_event), NULL);			/* configure_event. */
-
-    g_signal_connect (G_OBJECT (drawing_area), "button_press_event",		/* Connect drawing area to */
-              G_CALLBACK (button_press_event), NULL);		/* button_press_event. */
 
     g_signal_connect (G_OBJECT (drawing_area), "motion_notify_event",		/* Connect drawing area to */
               G_CALLBACK (motion_notify_event), NULL);		/* motion_notify_event. */

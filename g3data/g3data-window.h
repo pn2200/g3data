@@ -51,6 +51,7 @@ struct _G3dataWindow {
     GtkWidget *zoom_area, *zoom_area_vbox;
     GtkWidget *log_buttons_vbox;
     GtkWidget *sort_buttons_vbox;
+    GtkWidget *drawing_area;
     GtkActionGroup *action_group;
     GdkPixbuf *image;
     gint x, y, size, numpoints;

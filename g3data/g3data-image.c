@@ -487,27 +487,27 @@ static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, Gt
         window->image = temp_pixbuf;
     }
 
-    drawing_area = gtk_drawing_area_new ();
-    gtk_widget_set_size_request (drawing_area, w, h);
+    window->drawing_area = gtk_drawing_area_new ();
+    gtk_widget_set_size_request (window->drawing_area, w, h);
 
-    g_signal_connect (G_OBJECT (drawing_area), "motion_notify_event",
+    g_signal_connect (G_OBJECT (window->drawing_area), "motion_notify_event",
                       G_CALLBACK (motion_notify_event), (gpointer) window);
 
-    g_signal_connect (G_OBJECT (drawing_area), "expose_event",
+    g_signal_connect (G_OBJECT (window->drawing_area), "expose_event",
                       G_CALLBACK (image_area_expose_event), (gpointer) window);
 
-    g_signal_connect (G_OBJECT (drawing_area), "button_press_event",
+    g_signal_connect (G_OBJECT (window->drawing_area), "button_press_event",
                       G_CALLBACK (button_press_event), (gpointer) window);
 
-    gtk_widget_set_events (drawing_area, GDK_EXPOSURE_MASK |
+    gtk_widget_set_events (window->drawing_area, GDK_EXPOSURE_MASK |
                                          GDK_BUTTON_PRESS_MASK | 
                                          GDK_BUTTON_RELEASE_MASK |
                                          GDK_POINTER_MOTION_MASK | 
                                          GDK_POINTER_MOTION_HINT_MASK);
 
-    gtk_container_add (GTK_CONTAINER (drawing_area_alignment), drawing_area);
+    gtk_container_add (GTK_CONTAINER (drawing_area_alignment), window->drawing_area);
 
-    gtk_widget_show (drawing_area);
+    gtk_widget_show (window->drawing_area);
 
     return 0;
 }
@@ -515,11 +515,22 @@ static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, Gt
 
 /* Expose event callback for image area. */
 static gboolean image_area_expose_event (GtkWidget *widget, GdkEventExpose *event, gpointer data) {
+    gint i;
     G3dataWindow *window = G3DATA_WINDOW (data);
     cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
 
     gdk_cairo_set_source_pixbuf (cr, window->image, 0, 0);
     cairo_paint (cr);
+
+    for (i = 0; i < 4; i++) {
+        if (window->control_point_image_coords[i][0] != -1 &&
+            window->control_point_image_coords[i][1] != -1) {
+            DrawMarker (cr, window->control_point_image_coords[i][0], window->control_point_image_coords[i][1], i/2, colors);
+        }
+    }
+    for (i = 0; i < window->numpoints; i++) {
+        DrawMarker(cr, window->points[i][0], window->points[i][1], 2, colors);
+    }
 
     cairo_destroy (cr);
     return FALSE;
@@ -685,5 +696,6 @@ static void button_press_event (GtkWidget *widget, GdkEventButton *event, gpoint
             }
         }
     }
+    gtk_widget_queue_draw (window->drawing_area);
 }
 

@@ -99,7 +99,6 @@ GtkWidget 	*drawing_area_alignment;
 
 static void SetButtonSensitivity(void);
 static gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data);
-static gint expose_event(GtkWidget *widget, GdkEventExpose *event, gpointer data);
 static gint configure_event(GtkWidget *widget, GdkEventConfigure *event,gpointer data);
 static void toggle_xy(GtkWidget *widget, gpointer func_data);
 static void SetOrdering(GtkWidget *widget, gpointer func_data);
@@ -196,26 +195,6 @@ static gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpoint
 
     return TRUE;
 }
-
-
-/****************************************************************/
-/* This function is called when the drawing area is exposed, it	*/
-/* simply redraws the pixmap on it.				*/
-/****************************************************************/
-static gint expose_event(GtkWidget *widget, GdkEventExpose *event, gpointer data)
-{
-    gint i;
-    cairo_t *cr = gdk_cairo_create (gtk_widget_get_window(widget));
-
-    gdk_cairo_set_source_pixbuf (cr, gpbimage, 0, 0);
-    cairo_paint (cr);
-
-    for (i=0;i<4;i++) if (bpressed[i]) DrawMarker(cr, axiscoords[i][0], axiscoords[i][1], i/2, colors);
-    for (i=0;i<numpoints;i++) DrawMarker(cr, points[i][0], points[i][1], 2, colors);
-
-    cairo_destroy (cr);
-    return FALSE;
-}   
 
 
 /****************************************************************/
@@ -464,9 +443,6 @@ static gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble max
 
     drawing_area = gtk_drawing_area_new ();					/* Create new drawing area */
     gtk_widget_set_size_request (drawing_area, XSize, YSize);
-
-    g_signal_connect (G_OBJECT (drawing_area), "expose_event",			/* Connect drawing area to */
-              G_CALLBACK (expose_event), NULL);			/* expose_event. */
 
     g_signal_connect (G_OBJECT (drawing_area), "configure_event",		/* Connect drawing area to */
               G_CALLBACK (configure_event), NULL);			/* configure_event. */

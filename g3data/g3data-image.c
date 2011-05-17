@@ -26,6 +26,7 @@ Authors email : pnovak@alumni.caltech.edu
 #include "g3data-window.h"
 #include "g3data-image.h"
 #include "drawing.h"
+#include "points.h"
 
 #define ZOOMPIXSIZE 200
 #define ZOOMFACTOR 4
@@ -34,7 +35,7 @@ Authors email : pnovak@alumni.caltech.edu
 static GdkColor *colors;
 
 static GtkWidget *g3data_window_control_points_add (G3dataWindow *window);
-static GtkWidget *g3data_window_status_area_add (void);
+static GtkWidget *g3data_window_status_area_add (G3dataWindow *window);
 static GtkWidget *g3data_window_remove_buttons_add (void);
 static GtkWidget *g3data_window_zoom_area_add (G3dataWindow *window);
 static GtkWidget *g3data_window_log_buttons_add (G3dataWindow *window);
@@ -138,7 +139,7 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
     control_point_vbox = g3data_window_control_points_add (window);
     gtk_box_pack_start (GTK_BOX (tophbox), control_point_vbox, FALSE, FALSE, 0);
 
-    status_area_vbox = g3data_window_status_area_add ();
+    status_area_vbox = g3data_window_status_area_add (window);
     gtk_box_pack_start (GTK_BOX (tophbox), status_area_vbox, FALSE, FALSE, 0);
 
     remove_buttons_vbox = g3data_window_remove_buttons_add ();
@@ -246,10 +247,10 @@ static GtkWidget *g3data_window_control_points_add (G3dataWindow *window) {
 
 
 /* Add status area. */
-static GtkWidget *g3data_window_status_area_add (void) {
+static GtkWidget *g3data_window_status_area_add (G3dataWindow *window) {
     GtkWidget *x_label, *y_label, *xc_entry, *yc_entry;
     GtkWidget *pm_label, *pm_label2;
-    GtkWidget *xerr_entry, *yerr_entry, *nump_label, *nump_entry;
+    GtkWidget *xerr_entry, *yerr_entry, *nump_label;
     GtkWidget *status_area_label;
     GtkWidget *vbox, *alignment, *table;
 
@@ -275,10 +276,10 @@ static GtkWidget *g3data_window_status_area_add (void) {
 
     /* Number of points label and entry */
     nump_label = gtk_label_new (nump_string);
-    nump_entry = gtk_entry_new ();
-    gtk_entry_set_max_length (GTK_ENTRY (nump_entry), 10);
-    gtk_editable_set_editable (GTK_EDITABLE (nump_entry),FALSE);
-    gtk_entry_set_text (GTK_ENTRY (nump_entry), "0");
+    window->nump_entry = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (window->nump_entry), 10);
+    gtk_editable_set_editable (GTK_EDITABLE (window->nump_entry),FALSE);
+    gtk_entry_set_text (GTK_ENTRY (window->nump_entry), "0");
 
     /* Packing the status area */
     vbox = gtk_vbox_new (FALSE, 0);
@@ -310,7 +311,7 @@ static GtkWidget *g3data_window_status_area_add (void) {
     alignment = gtk_alignment_new (0, 1, 0, 0);
     gtk_container_add (GTK_CONTAINER (alignment), nump_label);
     gtk_table_attach (GTK_TABLE (table), alignment, 0, 1, 0, 1, 0, 0, 0, 0);
-    gtk_table_attach (GTK_TABLE (table), nump_entry, 1, 2, 0, 1, 0, 0, 0, 0);
+    gtk_table_attach (GTK_TABLE (table), window->nump_entry, 1, 2, 0, 1, 0, 0, 0, 0);
 
     return vbox;
 }
@@ -639,6 +640,7 @@ static void button_press_event (GtkWidget *widget, GdkEventButton *event, gpoint
             window->points[window->numpoints][0] = x;
             window->points[window->numpoints][1] = y;
             window->numpoints++;
+            SetNumPointsEntry (window->nump_entry, window->numpoints);
         } else {
             for (i = 0; i < 4; i++) {
                 /* If any of the control point buttons have been pressed */

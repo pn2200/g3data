@@ -56,9 +56,7 @@ Authors email : jonas.frantz@welho.com
 GtkWidget	*window;								/* Window */
 GtkWidget	*drawing_area;			/* Drawing areas */
 GtkWidget	*xyentry[4];
-GtkWidget	*remlastbutton;
 GtkWidget	*setxybutton[4];
-GtkWidget	*remallbutton;						/* Even more various buttons */
 GtkWidget	*xc_entry,*yc_entry;
 GtkWidget	*nump_entry;
 GtkWidget	*xerr_entry,*yerr_entry;			/* Coordinate and filename entries */
@@ -97,15 +95,12 @@ FILE		*FP;									/* File pointer */
 
 GtkWidget 	*drawing_area_alignment;
 
-static void SetButtonSensitivity(void);
 static gint configure_event(GtkWidget *widget, GdkEventConfigure *event,gpointer data);
 static void toggle_xy(GtkWidget *widget, gpointer func_data);
 static void SetOrdering(GtkWidget *widget, gpointer func_data);
 static void UseErrCB(GtkWidget *widget, gpointer func_data);
 static void read_xy_entry(GtkWidget *entry, gpointer func_data);
 static void islogxy(GtkWidget *widget, gpointer func_data);
-static void remove_last(GtkWidget *widget, gpointer data);
-static void remove_all(GtkWidget *widget, gpointer data) ;
 static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer);
 static gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble maxY);
 static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboolean UsePreSetCoords);
@@ -132,33 +127,6 @@ static const GOptionEntry goption_options[] =
 	{ G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &filenames, NULL, "[FILE...]" },
 	{ NULL }
 };
-
-
-/****************************************************************/
-/* This function sets the sensitivity of the buttons depending	*/
-/* the control variables.					*/
-/****************************************************************/
-static void SetButtonSensitivity(void)
-{
-    if (numpoints==0 &&
-        axiscoords[0][0] == -1 &&
-        axiscoords[1][0] == -1 &&
-        axiscoords[2][0] == -1 &&
-        axiscoords[3][0] == -1) {
-        gtk_widget_set_sensitive(remlastbutton,FALSE);
-        gtk_widget_set_sensitive(remallbutton,FALSE);
-    } else if (numpoints==0 &&
-              (axiscoords[0][0] != -1 ||
-               axiscoords[1][0] != -1 ||
-               axiscoords[2][0] != -1 ||
-               axiscoords[3][0] != -1)) {
-        gtk_widget_set_sensitive(remlastbutton,FALSE);
-        gtk_widget_set_sensitive(remallbutton,TRUE);
-    } else {
-        gtk_widget_set_sensitive(remlastbutton,TRUE);
-        gtk_widget_set_sensitive(remallbutton,TRUE);
-    }
-}
 
 
 /****************************************************************/
@@ -237,7 +205,6 @@ static void read_xy_entry(GtkWidget *entry, gpointer func_data)
     else if (logxy[i/2]) valueset[i]=FALSE;
     else valueset[i] = TRUE;
 
-    SetButtonSensitivity();
 }
 
 
@@ -264,48 +231,6 @@ static void islogxy(GtkWidget *widget, gpointer func_data)
 	    gtk_entry_set_text(GTK_ENTRY(xyentry[i*2+1]),"");		/* Zero it */
         }
     }
-}
-
-
-/* Removes the last data point inserted */
-static void remove_last(GtkWidget *widget, gpointer data)
-{
-    /* If there are any points, remove one. */
-    if (numpoints > 0) {
-        points[numpoints][0] = -1;
-        points[numpoints][1] = -1;
-        numpoints--;
-        SetNumPointsEntry(nump_entry, numpoints);
-    }
-
-    SetButtonSensitivity();
-    gtk_widget_queue_draw(drawing_area);
-}
-
-
-/****************************************************************/
-/* This function sets the proper variables and then calls 	*/
-/* remove_last, to remove all points except the axis points.	*/
-/****************************************************************/
-static void remove_all(GtkWidget *widget, gpointer data) 
-{
-    gint i;
-
-    /* set axiscoords to -1, so the axis points do not get drawn*/
-    for (i = 0; i < 4; i++) {
-        axiscoords[i][0] = -1;
-        axiscoords[i][1] = -1;
-        /* Clear axis points text entries, make buttons insensitive */
-	    valueset[i] = FALSE;
-	    bpressed[i] = FALSE;
-	    gtk_entry_set_text(GTK_ENTRY(xyentry[i]), "");
-        gtk_widget_set_sensitive(xyentry[i], FALSE);
-    }
-
-    numpoints = 0;
-    SetNumPointsEntry(nump_entry, numpoints);
-
-    remove_last(widget, data);
 }
 
 
@@ -537,19 +462,6 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
 
     setcolors(&colors);
 
-    /* Remove points buttons and labels */
-    remlastbutton = gtk_button_new_with_mnemonic (RemLastBLabel);		/* Create button */
-    g_signal_connect (G_OBJECT (remlastbutton), "clicked",			/* Connect button */
-                  G_CALLBACK (remove_last), NULL);
-    gtk_widget_set_sensitive(remlastbutton,FALSE);
-    gtk_widget_set_tooltip_text(remlastbutton,removeltt);
-
-    remallbutton = gtk_button_new_with_mnemonic (RemAllBLabel);			/* Create button */
-    g_signal_connect (G_OBJECT (remallbutton), "clicked",			/* Connect button */
-                  G_CALLBACK (remove_all), NULL);
-    gtk_widget_set_sensitive(remallbutton,FALSE);
-        gtk_widget_set_tooltip_text(remallbutton,removeatts);
-
     /* Logarithmic axes */
     for (i=0;i<2;i++) {
 	logcheckb[i] = gtk_check_button_new_with_mnemonic(loglabel[i]);			/* Create check button */
@@ -620,14 +532,8 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
     gtk_table_attach(GTK_TABLE(table), alignment, 0, 1, 0, 1, 0, 0, 0, 0);
     gtk_table_attach(GTK_TABLE(table), nump_entry, 1, 2, 0, 1, 0, 0, 0, 0);
 
-    /* Pack remove points buttons */
     blvbox = gtk_vbox_new (FALSE, GROUP_SEP);
     gtk_box_pack_start (GTK_BOX (bottomhbox), blvbox, FALSE, FALSE, ELEM_SEP);
-
-    subvbox = gtk_vbox_new (FALSE, ELEM_SEP);
-    gtk_box_pack_start (GTK_BOX (blvbox), subvbox, FALSE, FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (subvbox), remlastbutton, FALSE, FALSE, 0);	/* Pack button in vert. box */
-    gtk_box_pack_start (GTK_BOX (subvbox), remallbutton, FALSE, FALSE, 0);		/* Pack button in vert. box */
 
     /* Pack zoom area */
     subvbox = gtk_vbox_new (FALSE, ELEM_SEP);

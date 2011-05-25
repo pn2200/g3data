@@ -50,6 +50,7 @@ struct _G3dataWindow {
     GtkWidget *control_point_button[4], *control_point_entry[4];
     GtkWidget *nump_entry;
     GtkWidget *xc_entry, *yc_entry, *xerr_entry, *yerr_entry;
+    GtkWidget *remove_last_button, *remove_all_button;
     GtkWidget *zoom_area, *zoom_area_vbox;
     GtkWidget *log_buttons_vbox;
     GtkWidget *sort_buttons_vbox;

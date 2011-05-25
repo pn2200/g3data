@@ -37,12 +37,13 @@ static GdkColor *colors;
 
 static GtkWidget *g3data_window_control_points_add (G3dataWindow *window);
 static GtkWidget *g3data_window_status_area_add (G3dataWindow *window);
-static GtkWidget *g3data_window_remove_buttons_add (void);
+static GtkWidget *g3data_window_remove_buttons_add (G3dataWindow *window);
 static GtkWidget *g3data_window_zoom_area_add (G3dataWindow *window);
 static GtkWidget *g3data_window_log_buttons_add (G3dataWindow *window);
 static GtkWidget *g3data_window_sort_buttons_add (void);
 static GtkWidget *g3data_window_error_buttons_add (void);
 static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, GtkWidget *drawing_area_alignment);
+static void SetButtonSensitivity (G3dataWindow *window);
 
 /* Callbacks */
 static gboolean image_area_expose_event (GtkWidget *widget, GdkEventExpose *event, gpointer data);
@@ -51,6 +52,8 @@ static gboolean motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gp
 static void control_point_button_toggled (GtkWidget *widget, gpointer data);
 static void control_point_entry_read (GtkWidget *entry, gpointer func_data);
 static void button_press_event (GtkWidget *widget, GdkEventButton *event, gpointer data);
+static void remove_last (GtkWidget *widget, gpointer data);
+static void remove_all (GtkWidget *widget, gpointer data);
 
 static const gchar control_point_header_text[] = "<b>Axis points</b>";
 static const gchar status_area_header[] = "<b>Processing information</b>";
@@ -143,7 +146,7 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
     status_area_vbox = g3data_window_status_area_add (window);
     gtk_box_pack_start (GTK_BOX (tophbox), status_area_vbox, FALSE, FALSE, 0);
 
-    remove_buttons_vbox = g3data_window_remove_buttons_add ();
+    remove_buttons_vbox = g3data_window_remove_buttons_add (window);
     gtk_box_pack_start (GTK_BOX (bottomvbox), remove_buttons_vbox, FALSE, FALSE, 0);
 
     window->zoom_area_vbox = g3data_window_zoom_area_add (window);
@@ -319,25 +322,29 @@ static GtkWidget *g3data_window_status_area_add (G3dataWindow *window) {
 
 
 /* Add remove point and remove all buttons. */
-static GtkWidget *g3data_window_remove_buttons_add (void) {
+static GtkWidget *g3data_window_remove_buttons_add (G3dataWindow *window) {
     GtkWidget *vbox, *subvbox;
-    GtkWidget *remove_last_button, *remove_all_button;
 
-    remove_last_button = gtk_button_new_with_mnemonic (remove_last_button_text);
-    gtk_widget_set_sensitive (remove_last_button, FALSE);
-    gtk_widget_set_tooltip_text (remove_last_button, remove_last_tooltip);
+    window->remove_last_button = gtk_button_new_with_mnemonic (remove_last_button_text);
+    gtk_widget_set_sensitive (window->remove_last_button, FALSE);
+    gtk_widget_set_tooltip_text (window->remove_last_button, remove_last_tooltip);
+    g_signal_connect (G_OBJECT (window->remove_last_button), "clicked",
+                  G_CALLBACK (remove_last), (gpointer) window);
 
-    remove_all_button = gtk_button_new_with_mnemonic (remove_all_button_text);
-    gtk_widget_set_sensitive (remove_all_button, FALSE);
-    gtk_widget_set_tooltip_text (remove_all_button, remove_last_tooltip);
+
+    window->remove_all_button = gtk_button_new_with_mnemonic (remove_all_button_text);
+    gtk_widget_set_sensitive (window->remove_all_button, FALSE);
+    gtk_widget_set_tooltip_text (window->remove_all_button, remove_last_tooltip);
+    g_signal_connect (G_OBJECT (window->remove_all_button), "clicked",
+                  G_CALLBACK (remove_all), (gpointer) window);
 
     /* Pack remove points buttons */
     vbox = gtk_vbox_new (FALSE, 0);
 
     subvbox = gtk_vbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), subvbox, FALSE, FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (subvbox), remove_last_button, FALSE, FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (subvbox), remove_all_button, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (subvbox), window->remove_last_button, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (subvbox), window->remove_all_button, FALSE, FALSE, 0);
 
     return vbox;
 }
@@ -736,5 +743,70 @@ static void button_press_event (GtkWidget *widget, GdkEventButton *event, gpoint
         }
     }
     gtk_widget_queue_draw (window->drawing_area);
+    SetButtonSensitivity (window);
 }
 
+
+
+/* Set sensitivity of remove buttons */
+static void SetButtonSensitivity (G3dataWindow *window)
+{
+    if (window->numpoints == 0 &&
+        window->control_point_image_coords[0][0] == -1 &&
+        window->control_point_image_coords[1][0] == -1 &&
+        window->control_point_image_coords[2][0] == -1 &&
+        window->control_point_image_coords[3][0] == -1) {
+        gtk_widget_set_sensitive (window->remove_last_button, FALSE);
+        gtk_widget_set_sensitive (window->remove_all_button, FALSE);
+    } else if (window->numpoints == 0 &&
+              (window->control_point_image_coords[0][0] != -1 ||
+               window->control_point_image_coords[1][0] != -1 ||
+               window->control_point_image_coords[2][0] != -1 ||
+               window->control_point_image_coords[3][0] != -1)) {
+        gtk_widget_set_sensitive (window->remove_last_button, FALSE);
+        gtk_widget_set_sensitive (window->remove_all_button, TRUE);
+    } else {
+        gtk_widget_set_sensitive (window->remove_last_button, TRUE);
+        gtk_widget_set_sensitive (window->remove_all_button, TRUE);
+    }
+}
+
+
+/* Removes the last data point inserted */
+static void remove_last (GtkWidget *widget, gpointer data)
+{
+    G3dataWindow *window = G3DATA_WINDOW (data);
+
+    /* If there are any points, remove one. */
+    if (window->numpoints > 0) {
+        window->points[window->numpoints][0] = -1;
+        window->points[window->numpoints][1] = -1;
+        window->numpoints--;
+        SetNumPointsEntry (window->nump_entry, window->numpoints);
+    }
+
+    SetButtonSensitivity (window);
+    gtk_widget_queue_draw (window->drawing_area);
+}
+
+
+/* Remove all data points and control points. */
+static void remove_all (GtkWidget *widget, gpointer data) 
+{
+    gint i;
+    G3dataWindow *window = G3DATA_WINDOW (data);
+
+    /* set control_point_image_coords to -1, so the axis points do not get drawn*/
+    for (i = 0; i < 4; i++) {
+        window->control_point_image_coords[i][0] = -1;
+        window->control_point_image_coords[i][1] = -1;
+        /* Clear control points text entries, make buttons insensitive */
+	    gtk_entry_set_text (GTK_ENTRY(window->control_point_entry[i]), "");
+        gtk_widget_set_sensitive (window->control_point_entry[i], FALSE);
+    }
+
+    window->numpoints = 0;
+    SetNumPointsEntry (window->nump_entry, window->numpoints);
+
+    remove_last (widget, data);
+}

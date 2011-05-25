@@ -25,6 +25,22 @@ Authors email : pnovak@alumni.caltech.edu
 #include "g3data-window.h"
 #include "g3data-image.h"
 
+typedef enum {
+    URI_LIST,
+    PNG_DATA,
+    JPEG_DATA,
+    APP_X_COLOR,
+    NUM_IMAGE_DATA,
+} UI_DROP_TARGET_INFO;
+
+static const GtkTargetEntry ui_drop_target_entries[] = {
+  {"text/uri-list", 0, URI_LIST},
+  {"image/png",     0, PNG_DATA},
+  {"image/jpeg",    0, JPEG_DATA},
+  {"application/x-color",    0, APP_X_COLOR}
+};
+
+
 struct _G3dataApplicationClass {
     GObjectClass base_class;
 };
@@ -92,6 +108,42 @@ static void g3data_window_destroy_cb (GtkWidget *widget,
 }
 
 
+static void drag_data_received(GtkWidget *widget,
+                              GdkDragContext *drag_context,
+                              gint x, gint y,
+                              GtkSelectionData *data,
+                              guint info,
+                              guint event_time,
+                              gpointer user_data)
+{
+    gchar *filename;
+    gchar **uri_list;
+    gint i;
+    GError *error;
+
+    if (info == URI_LIST) {
+        uri_list = gtk_selection_data_get_uris (data);
+        i = 0;
+        while (uri_list[i] != NULL) {
+            error = NULL;
+            filename = g_filename_from_uri (uri_list[i], NULL, &error);
+            if (filename == NULL) {
+                g_message ("Null filename: %s", error->message);
+                g_error_free (error);
+            } else {
+                if (instance->current_window == NULL || instance->current_window->image != NULL) {
+                    g3data_create_window (instance);
+                }
+                g3data_window_insert_image (instance->current_window, filename);
+            }
+            i++;
+        }
+        g_strfreev (uri_list);
+    }
+    gtk_drag_finish (drag_context, TRUE, FALSE, event_time);
+}
+
+
 void g3data_create_window (G3dataApplication *application)
 {
     G3dataWindow *window;
@@ -102,6 +154,10 @@ void g3data_create_window (G3dataApplication *application)
 
     application->windows = g_slist_prepend (application->windows, window);
     application->current_window = G3DATA_WINDOW (window);
+
+    gtk_drag_dest_set (GTK_WIDGET(window), GTK_DEST_DEFAULT_ALL, ui_drop_target_entries, NUM_IMAGE_DATA, (GDK_ACTION_COPY | GDK_ACTION_MOVE));
+    g_signal_connect (G_OBJECT (window), "drag-data-received",
+                        G_CALLBACK (drag_data_received), (gpointer) application);
 
     gtk_widget_show_all (GTK_WIDGET (window));
 }

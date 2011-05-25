@@ -20,8 +20,7 @@ g3data_source_files = \
 	g3data/points.h \
 	g3data/sort.c \
 	g3data/sort.h \
-	g3data/strings.h \
-	g3data/vardefs.h
+	g3data/strings.h
 
 g3data_g3data_SOURCES = $(g3data_source_files)
 

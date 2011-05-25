@@ -104,13 +104,6 @@ static void islogxy(GtkWidget *widget, gpointer func_data);
 static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer);
 static gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble maxY);
 static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboolean UsePreSetCoords);
-static void drag_data_received(GtkWidget *widget,
-                              GdkDragContext *drag_context,
-                              gint x, gint y,
-                              GtkSelectionData *data,
-                              guint info,
-                              guint event_time,
-                              gpointer user_data);
 
 static const GOptionEntry goption_options[] =
 {
@@ -647,41 +640,6 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
             gtk_widget_show(oppropbox);
 
   return 0;
-}
-
-
-/****************************************************************/
-/****************************************************************/
-static void drag_data_received(GtkWidget *widget,
-                              GdkDragContext *drag_context,
-                              gint x, gint y,
-                              GtkSelectionData *data,
-                              guint info,
-                              guint event_time,
-                              gpointer user_data)
-{
-    gchar *filename;
-    gchar **uri_list;
-    gint i;
-    GError *error;
-
-    if (info == URI_LIST) {
-        uri_list = gtk_selection_data_get_uris(data);
-        i = 0;
-        while (uri_list[i] != NULL) {
-            error = NULL;
-            filename = g_filename_from_uri(uri_list[i], NULL, &error);
-            if (filename == NULL) {
-                g_message("Null filename: %s", error->message);
-                g_error_free(error);
-            } else{
-        	    SetupNewTab(filename, 1.0, -1, -1, FALSE);
-            }
-            i++;
-        }
-        g_strfreev(uri_list);
-    }
-    gtk_drag_finish (drag_context, TRUE, FALSE, event_time);
 }
 
 

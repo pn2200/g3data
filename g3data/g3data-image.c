@@ -27,6 +27,7 @@ Authors email : pnovak@alumni.caltech.edu
 #include "g3data-image.h"
 #include "drawing.h"
 #include "points.h"
+#include "main.h"
 
 #define ZOOMPIXSIZE 200
 #define ZOOMFACTOR 4
@@ -248,31 +249,31 @@ static GtkWidget *g3data_window_control_points_add (G3dataWindow *window) {
 
 /* Add status area. */
 static GtkWidget *g3data_window_status_area_add (G3dataWindow *window) {
-    GtkWidget *x_label, *y_label, *xc_entry, *yc_entry;
+    GtkWidget *x_label, *y_label;
     GtkWidget *pm_label, *pm_label2;
-    GtkWidget *xerr_entry, *yerr_entry, *nump_label;
+    GtkWidget *nump_label;
     GtkWidget *status_area_label;
     GtkWidget *vbox, *alignment, *table;
 
     x_label = gtk_label_new (x_string);
     y_label = gtk_label_new (y_string);
-    xc_entry = gtk_entry_new ();
-    gtk_entry_set_max_length (GTK_ENTRY (xc_entry), 16);
-    gtk_editable_set_editable (GTK_EDITABLE (xc_entry), FALSE);
-    yc_entry = gtk_entry_new ();
-    gtk_entry_set_max_length (GTK_ENTRY (yc_entry), 16);
-    gtk_editable_set_editable (GTK_EDITABLE (yc_entry), FALSE);
+    window->xc_entry = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (window->xc_entry), 16);
+    gtk_editable_set_editable (GTK_EDITABLE (window->xc_entry), FALSE);
+    window->yc_entry = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (window->yc_entry), 16);
+    gtk_editable_set_editable (GTK_EDITABLE (window->yc_entry), FALSE);
 
     /* plus/minus (+/-) symbol labels */
     pm_label = gtk_label_new (pm_string);
     pm_label2 = gtk_label_new (pm_string);
     /* labels and error text entries */
-    xerr_entry = gtk_entry_new ();
-    gtk_entry_set_max_length (GTK_ENTRY (xerr_entry), 16);
-    gtk_editable_set_editable (GTK_EDITABLE (xerr_entry), FALSE);
-    yerr_entry = gtk_entry_new ();
-    gtk_entry_set_max_length (GTK_ENTRY (yerr_entry), 16);
-    gtk_editable_set_editable (GTK_EDITABLE (yerr_entry), FALSE);
+    window->xerr_entry = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (window->xerr_entry), 16);
+    gtk_editable_set_editable (GTK_EDITABLE (window->xerr_entry), FALSE);
+    window->yerr_entry = gtk_entry_new ();
+    gtk_entry_set_max_length (GTK_ENTRY (window->yerr_entry), 16);
+    gtk_editable_set_editable (GTK_EDITABLE (window->yerr_entry), FALSE);
 
     /* Number of points label and entry */
     nump_label = gtk_label_new (nump_string);
@@ -295,13 +296,13 @@ static GtkWidget *g3data_window_status_area_add (G3dataWindow *window) {
     gtk_table_set_col_spacings (GTK_TABLE (table), 0);
     gtk_box_pack_start (GTK_BOX (vbox), table, FALSE, FALSE, 0);
     gtk_table_attach_defaults (GTK_TABLE (table), x_label, 0, 1, 0, 1);
-    gtk_table_attach_defaults (GTK_TABLE (table), xc_entry, 1, 2, 0, 1);
+    gtk_table_attach_defaults (GTK_TABLE (table), window->xc_entry, 1, 2, 0, 1);
     gtk_table_attach_defaults (GTK_TABLE (table), pm_label, 2, 3, 0, 1);
-    gtk_table_attach_defaults (GTK_TABLE (table), xerr_entry, 3, 4, 0, 1);
+    gtk_table_attach_defaults (GTK_TABLE (table), window->xerr_entry, 3, 4, 0, 1);
     gtk_table_attach_defaults (GTK_TABLE (table), y_label, 0, 1, 1, 2);
-    gtk_table_attach_defaults (GTK_TABLE (table), yc_entry, 1, 2, 1, 2);
+    gtk_table_attach_defaults (GTK_TABLE (table), window->yc_entry, 1, 2, 1, 2);
     gtk_table_attach_defaults (GTK_TABLE (table), pm_label2, 2, 3, 1, 2);
-    gtk_table_attach_defaults (GTK_TABLE (table), yerr_entry, 3, 4, 1, 2);
+    gtk_table_attach_defaults (GTK_TABLE (table), window->yerr_entry, 3, 4, 1, 2);
 
     /* Pack number of points boxes */
     table = gtk_table_new (3, 1 ,FALSE);
@@ -569,12 +570,48 @@ static gboolean expose_event_callback (GtkWidget *widget, GdkEventExpose *event,
 
 /* Motion notify callback, for motion over drawing_area */
 static gboolean motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data) {
-    gint x, y;
+    gboolean control_points_set = FALSE;
+    gint x, y, width, height;
+    gchar buf[G_ASCII_DTOSTR_BUF_SIZE];
+    struct PointValue CalcVal;
     G3dataWindow *window = G3DATA_WINDOW (data);
 
     gdk_window_get_pointer (event->window, &x, &y, NULL);
     window->x = x;
     window->y = y;
+
+    width = gdk_pixbuf_get_width (window->image);
+    height = gdk_pixbuf_get_height (window->image);
+
+    /* If the control points have been set and their coordinates specified,
+       then set control_points_set to TRUE. */
+    if (gtk_entry_get_text_length (GTK_ENTRY (window->control_point_entry[0])) != 0 &&
+        gtk_entry_get_text_length (GTK_ENTRY (window->control_point_entry[1])) != 0 &&
+        gtk_entry_get_text_length (GTK_ENTRY (window->control_point_entry[2])) != 0 &&
+        gtk_entry_get_text_length (GTK_ENTRY (window->control_point_entry[3])) != 0) {
+        control_points_set = TRUE;
+    } else {
+        control_points_set = FALSE;
+    }
+
+    /* If pointer over image and control_point_set, then print the coordinates. */
+    if (x >= 0 && y >= 0 && x < width && y < height && control_points_set == TRUE) {
+        CalcVal = CalcPointValue (x, y, window->control_point_image_coords,
+                                 window->control_point_coords);
+        g_ascii_formatd (buf, G_ASCII_DTOSTR_BUF_SIZE, "%.5f", CalcVal.Xv);
+        gtk_entry_set_text (GTK_ENTRY (window->xc_entry), buf);
+        g_ascii_formatd (buf, G_ASCII_DTOSTR_BUF_SIZE, "%.5f", CalcVal.Yv);
+        gtk_entry_set_text (GTK_ENTRY (window->yc_entry), buf);
+        g_ascii_formatd (buf, G_ASCII_DTOSTR_BUF_SIZE, "%.5f", CalcVal.Xerr);
+        gtk_entry_set_text (GTK_ENTRY (window->xerr_entry), buf);
+        g_ascii_formatd (buf, G_ASCII_DTOSTR_BUF_SIZE, "%.5f", CalcVal.Yerr);
+        gtk_entry_set_text (GTK_ENTRY (window->yerr_entry), buf);
+    } else {
+        gtk_entry_set_text (GTK_ENTRY (window->xc_entry), "");
+        gtk_entry_set_text (GTK_ENTRY (window->yc_entry), "");
+        gtk_entry_set_text (GTK_ENTRY (window->xerr_entry), "");
+        gtk_entry_set_text (GTK_ENTRY (window->yerr_entry), "");
+    }
 
     gtk_widget_queue_draw (window->zoom_area);
 

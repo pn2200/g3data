@@ -98,7 +98,6 @@ FILE		*FP;									/* File pointer */
 GtkWidget 	*drawing_area_alignment;
 
 static void SetButtonSensitivity(void);
-static gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data);
 static gint configure_event(GtkWidget *widget, GdkEventConfigure *event,gpointer data);
 static void toggle_xy(GtkWidget *widget, gpointer func_data);
 static void SetOrdering(GtkWidget *widget, gpointer func_data);
@@ -159,41 +158,6 @@ static void SetButtonSensitivity(void)
         gtk_widget_set_sensitive(remlastbutton,TRUE);
         gtk_widget_set_sensitive(remallbutton,TRUE);
     }
-}
-
-
-static gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data)
-{
-    gint x, y;
-    gchar buf[32];
-    struct PointValue CalcVal;
-
-    gdk_window_get_pointer (event->window, &x, &y, NULL);
-    xpointer = x;
-    ypointer = y;
-
-    /* If pointer over image, and axis points have been set,
-       then print the coordinates. */
-    if (x >= 0 && y >= 0 && x < XSize && y < YSize &&
-       (valueset[0] && valueset[1] && valueset[2] && valueset[3])) {
-
-        CalcVal = CalcPointValue(x,y);
-        g_ascii_formatd(buf, 32, "%.5f", CalcVal.Xv);
-        gtk_entry_set_text(GTK_ENTRY(xc_entry),buf);
-        g_ascii_formatd(buf, 32, "%.5f", CalcVal.Yv);
-        gtk_entry_set_text(GTK_ENTRY(yc_entry),buf);
-        g_ascii_formatd(buf, 32, "%.5f", CalcVal.Xerr);
-        gtk_entry_set_text(GTK_ENTRY(xerr_entry),buf);
-        g_ascii_formatd(buf, 32, "%.5f", CalcVal.Yerr);
-        gtk_entry_set_text(GTK_ENTRY(yerr_entry),buf);
-    } else {
-        gtk_entry_set_text(GTK_ENTRY(xc_entry),"");
-        gtk_entry_set_text(GTK_ENTRY(yc_entry),"");
-        gtk_entry_set_text(GTK_ENTRY(xerr_entry),"");
-        gtk_entry_set_text(GTK_ENTRY(yerr_entry),"");
-    }
-
-    return TRUE;
 }
 
 
@@ -446,9 +410,6 @@ static gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble max
 
     g_signal_connect (G_OBJECT (drawing_area), "configure_event",		/* Connect drawing area to */
               G_CALLBACK (configure_event), NULL);			/* configure_event. */
-
-    g_signal_connect (G_OBJECT (drawing_area), "motion_notify_event",		/* Connect drawing area to */
-              G_CALLBACK (motion_notify_event), NULL);		/* motion_notify_event. */
 
     gtk_widget_set_events (drawing_area, GDK_EXPOSURE_MASK |			/* Set the events active */
 			   GDK_BUTTON_PRESS_MASK | 

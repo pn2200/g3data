@@ -114,28 +114,18 @@ static gchar g3data_window_title[] = "%s - g3data";
 
 void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
 {
-    GtkWidget *table, *tophbox, *bottomhbox, *bottomvbox, *alignment,
+    GtkWidget *tophbox, *bottomhbox, *bottomvbox,
               *scrolled_window, *viewport, *drawing_area_alignment;
     GtkWidget *control_point_vbox, *status_area_vbox, *remove_buttons_vbox,
               *error_button_vbox;
     gint i;
     gchar *buffer;
 
-    table = gtk_table_new (2, 2, FALSE);
-    gtk_container_set_border_width (GTK_CONTAINER (table), 0);
-    gtk_table_set_row_spacings (GTK_TABLE (table), 0);
-    gtk_table_set_col_spacings (GTK_TABLE (table), 0);
-    gtk_box_pack_start (GTK_BOX (window->main_vbox), table, FALSE, FALSE, 0);
-
     tophbox = gtk_hbox_new (FALSE, 0);
-    alignment = gtk_alignment_new (0, 0, 0, 0);
-    gtk_table_attach(GTK_TABLE(table), alignment, 0, 1, 0, 1, 5, 0, 0, 0);
-    gtk_container_add(GTK_CONTAINER(alignment), tophbox);
+    gtk_box_pack_start (GTK_BOX (window->main_vbox), tophbox, FALSE, FALSE, 0);
 
     bottomhbox = gtk_hbox_new (FALSE, 0);
-    alignment = gtk_alignment_new (0, 0, 1, 1);
-    gtk_table_attach (GTK_TABLE (table), alignment, 0, 1, 1, 2, 5, 5, 0, 0);
-    gtk_container_add (GTK_CONTAINER (alignment), bottomhbox);
+    gtk_box_pack_start (GTK_BOX (window->main_vbox), bottomhbox, FALSE, FALSE, 0);
 
     bottomvbox = gtk_vbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (bottomhbox), bottomvbox, FALSE, FALSE, 0);

@@ -95,8 +95,6 @@ FILE		*FP;									/* File pointer */
 
 GtkWidget 	*drawing_area_alignment;
 
-static gint configure_event(GtkWidget *widget, GdkEventConfigure *event,gpointer data);
-static void toggle_xy(GtkWidget *widget, gpointer func_data);
 static void SetOrdering(GtkWidget *widget, gpointer func_data);
 static void UseErrCB(GtkWidget *widget, gpointer func_data);
 static void read_xy_entry(GtkWidget *entry, gpointer func_data);
@@ -120,46 +118,6 @@ static const GOptionEntry goption_options[] =
 	{ G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &filenames, NULL, "[FILE...]" },
 	{ NULL }
 };
-
-
-/****************************************************************/
-/* This function is called when the drawing area is configured	*/
-/* for the first time, currently this function does not perform	*/
-/* any task.							*/
-/****************************************************************/
-static gint configure_event(GtkWidget *widget, GdkEventConfigure *event,gpointer data)
-{
-    return TRUE;
-}
-
-
-/****************************************************************/
-/* This function is called when the "Set point 1/2 on x/y axis"	*/
-/* button is pressed. It inactivates the other "Set" buttons	*/
-/* and makes sure the button stays down even when pressed on.	*/
-/****************************************************************/
-static void toggle_xy(GtkWidget *widget, gpointer func_data)
-{
-    gint i, j;
-
-    i = GPOINTER_TO_INT (func_data);
-
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON (widget))) {
-	setxypressed[i] = TRUE;						/* The button is pressed down */
-	for (j = 0; j < 4; j++) {
-	    if (i != j) gtk_widget_set_sensitive(setxybutton[j],FALSE);
-	}
-	if (bpressed[i]) {								/* If the x axis point is already set */
-        axiscoords[i][0] = -1;
-        axiscoords[i][1] = -1;
-	}
-	bpressed[i]=FALSE;						/* Set x axis point 1 to unset */
-    } else {										/* If button is trying to get unpressed */
-	if (setxypressed[i]) 
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(widget),TRUE); 		/* Set button down */
-    }
-    gtk_widget_queue_draw(drawing_area);
-}
 
 
 /****************************************************************/
@@ -326,9 +284,6 @@ static gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble max
     drawing_area = gtk_drawing_area_new ();					/* Create new drawing area */
     gtk_widget_set_size_request (drawing_area, XSize, YSize);
 
-    g_signal_connect (G_OBJECT (drawing_area), "configure_event",		/* Connect drawing area to */
-              G_CALLBACK (configure_event), NULL);			/* configure_event. */
-
     gtk_widget_set_events (drawing_area, GDK_EXPOSURE_MASK |			/* Set the events active */
 			   GDK_BUTTON_PRESS_MASK | 
 			   GDK_BUTTON_RELEASE_MASK |
@@ -408,8 +363,6 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
 	gtk_label_set_markup_with_mnemonic(GTK_LABEL(tmplabel), setxylabel[i]);
 	setxybutton[i] = gtk_toggle_button_new();				/* Create button */
 	gtk_container_add(GTK_CONTAINER(setxybutton[i]), tmplabel);
-	g_signal_connect (G_OBJECT (setxybutton[i]), "toggled",			/* Connect button */
-			  G_CALLBACK (toggle_xy), GINT_TO_POINTER (i));
         gtk_widget_set_tooltip_text(setxybutton[i],setxytts[i]);
 
     /* labels for axis points x_1, x_2, etc. */

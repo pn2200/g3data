@@ -114,7 +114,7 @@ static gchar g3data_window_title[] = "%s - g3data";
 
 void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
 {
-    GtkWidget *tophbox, *bottomhbox, *bottomvbox,
+    GtkWidget *tophbox, *bottomhbox, *bottomleftvbox, *bottomrightvbox,
               *scrolled_window, *viewport, *drawing_area_alignment;
     GtkWidget *control_point_vbox, *status_area_vbox, *remove_buttons_vbox,
               *error_button_vbox;
@@ -127,8 +127,11 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
     bottomhbox = gtk_hbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (window->main_vbox), bottomhbox, FALSE, FALSE, 0);
 
-    bottomvbox = gtk_vbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (bottomhbox), bottomvbox, FALSE, FALSE, 0);
+    bottomleftvbox = gtk_vbox_new (FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (bottomhbox), bottomleftvbox, FALSE, FALSE, 0);
+
+    bottomrightvbox = gtk_vbox_new (FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (bottomhbox), bottomrightvbox, TRUE, TRUE, 0);
 
     control_point_vbox = g3data_window_control_points_add (window);
     gtk_box_pack_start (GTK_BOX (tophbox), control_point_vbox, FALSE, FALSE, 0);
@@ -137,25 +140,25 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
     gtk_box_pack_start (GTK_BOX (tophbox), status_area_vbox, FALSE, FALSE, 0);
 
     remove_buttons_vbox = g3data_window_remove_buttons_add (window);
-    gtk_box_pack_start (GTK_BOX (bottomvbox), remove_buttons_vbox, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (bottomleftvbox), remove_buttons_vbox, FALSE, FALSE, 0);
 
     window->zoom_area_vbox = g3data_window_zoom_area_add (window);
-    gtk_box_pack_start (GTK_BOX (bottomvbox), window->zoom_area_vbox, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (bottomleftvbox), window->zoom_area_vbox, FALSE, FALSE, 0);
 
     window->log_buttons_vbox = g3data_window_log_buttons_add (window);
-    gtk_box_pack_start (GTK_BOX (bottomvbox), window->log_buttons_vbox, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (bottomleftvbox), window->log_buttons_vbox, FALSE, FALSE, 0);
 
     window->sort_buttons_vbox = g3data_window_sort_buttons_add ();
-    gtk_box_pack_start (GTK_BOX (bottomvbox), window->sort_buttons_vbox, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (bottomleftvbox), window->sort_buttons_vbox, FALSE, FALSE, 0);
 
     error_button_vbox = g3data_window_error_buttons_add ();
-    gtk_box_pack_start (GTK_BOX (bottomvbox), error_button_vbox, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (bottomleftvbox), error_button_vbox, FALSE, FALSE, 0);
 
     /* Create a scrolled window to hold image */
     scrolled_window = gtk_scrolled_window_new (NULL, NULL);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     viewport = gtk_viewport_new (NULL, NULL);
-    gtk_box_pack_start (GTK_BOX (bottomhbox), scrolled_window, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (bottomrightvbox), scrolled_window, TRUE, TRUE, 0);
     drawing_area_alignment = gtk_alignment_new (0, 0, 0, 0);
     gtk_container_add (GTK_CONTAINER (viewport), drawing_area_alignment);
     gtk_container_add (GTK_CONTAINER (scrolled_window), viewport);

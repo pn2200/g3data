@@ -34,7 +34,7 @@ G_DEFINE_TYPE (G3dataWindow, g3data_window, GTK_TYPE_WINDOW);
 static void update_preview_cb (GtkFileChooser *chooser, gpointer data);
 static void file_open_dialog_response_cb (GtkWidget *chooser,
                                           gint response_id,
-                                          G3dataWindow *window);
+                                          GtkAdjustment *scaleadj);
 static void g3data_window_file_open (GtkAction *action, G3dataWindow *window);
 static void g3data_window_file_save_as (GtkAction *action, G3dataWindow *window);
 static void g3data_window_file_close (GtkAction *action, G3dataWindow *window);
@@ -113,10 +113,11 @@ static void update_preview_cb (GtkFileChooser *chooser, gpointer data) {
 
 static void file_open_dialog_response_cb (GtkWidget *chooser,
                                           gint response_id,
-                                          G3dataWindow *window)
+                                          GtkAdjustment *scaleadj)
 {
     if (response_id == GTK_RESPONSE_ACCEPT) {
         gchar *filename;
+        gdouble scale;
         G3dataApplication *instance;
 
         filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (chooser));
@@ -124,7 +125,8 @@ static void file_open_dialog_response_cb (GtkWidget *chooser,
         if (instance->current_window == NULL || instance->current_window->image != NULL) {
             g3data_create_window (instance);
         }
-        g3data_window_insert_image (instance->current_window, filename);
+        scale = gtk_adjustment_get_value (scaleadj);
+        g3data_window_insert_image (instance->current_window, filename, scale);
 
         g_free (filename);
     }
@@ -180,7 +182,7 @@ static void g3data_window_file_open (GtkAction *action, G3dataWindow *window)
     g_signal_connect (dialog,
                       "response",
                       G_CALLBACK (file_open_dialog_response_cb),
-                      window);
+                      scaleadj);
 
     gtk_widget_show (dialog);
 }

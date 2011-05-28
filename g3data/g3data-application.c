@@ -134,7 +134,7 @@ static void drag_data_received(GtkWidget *widget,
                 if (instance->current_window == NULL || instance->current_window->image != NULL) {
                     g3data_create_window (instance);
                 }
-                g3data_window_insert_image (instance->current_window, filename);
+                g3data_window_insert_image (instance->current_window, filename, -1);
             }
             i++;
         }
@@ -178,7 +178,7 @@ void load_files (const char **files)
             filename = files[i];
 
             g3data_create_window (instance);
-            g3data_window_insert_image (instance->current_window, filename);
+            g3data_window_insert_image (instance->current_window, filename, -1);
         }
     } else {
         g3data_create_window (instance);

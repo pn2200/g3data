@@ -42,7 +42,7 @@ static GtkWidget *g3data_window_zoom_area_add (G3dataWindow *window);
 static GtkWidget *g3data_window_log_buttons_add (G3dataWindow *window);
 static GtkWidget *g3data_window_sort_buttons_add (void);
 static GtkWidget *g3data_window_error_buttons_add (void);
-static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, GtkWidget *drawing_area_alignment);
+static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, GtkWidget *drawing_area_alignment, gdouble scale);
 static void SetButtonSensitivity (G3dataWindow *window);
 
 /* Callbacks */
@@ -112,7 +112,7 @@ static const gchar error_tooltip[] = "Export errors of the x and y values";
 static gchar g3data_window_title[] = "%s - g3data";
 
 
-void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
+void g3data_window_insert_image (G3dataWindow *window, const gchar *filename, gdouble scale)
 {
     GtkWidget *tophbox, *bottomhbox, *bottomleftvbox, *bottomrightvbox,
               *scrolled_window, *viewport, *drawing_area_alignment;
@@ -163,7 +163,7 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename)
     gtk_container_add (GTK_CONTAINER (viewport), drawing_area_alignment);
     gtk_container_add (GTK_CONTAINER (scrolled_window), viewport);
 
-    g3data_image_insert (window, filename, drawing_area_alignment);
+    g3data_image_insert (window, filename, drawing_area_alignment, scale);
 
     /* Print current image name in title bar*/
     buffer = g_strdup_printf (g3data_window_title, g_path_get_basename (filename));
@@ -445,12 +445,11 @@ static GtkWidget *g3data_window_error_buttons_add (void) {
 
 
 /* Insert image into g3data_window */
-static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, GtkWidget *drawing_area_alignment) {
+static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, GtkWidget *drawing_area_alignment, gdouble scale) {
     gboolean has_alpha;
     gint w, h;
     gint width = -1;
     gint height = -1;
-    gdouble scale = -1;
     GdkPixbuf *temp_pixbuf;
     GtkWidget *dialog, *drawing_area;
 

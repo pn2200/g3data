@@ -21,5 +21,5 @@ Copyright (C) 2011 Paul Novak
 Authors email : pnovak@alumni.caltech.edu
 */
 
-void g3data_window_insert_image (G3dataWindow *window, const gchar *filename);
+void g3data_window_insert_image (G3dataWindow *window, const gchar *filename, gdouble scale);
 

@@ -118,6 +118,7 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename, gd
               *scrolled_window, *viewport, *drawing_area_alignment;
     GtkWidget *control_point_vbox, *status_area_vbox, *remove_buttons_vbox,
               *error_button_vbox;
+    GdkCursor *cursor;
     gint i;
     gchar *buffer;
 
@@ -163,7 +164,10 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename, gd
     gtk_container_add (GTK_CONTAINER (viewport), drawing_area_alignment);
     gtk_container_add (GTK_CONTAINER (scrolled_window), viewport);
 
-    g3data_image_insert (window, filename, drawing_area_alignment, scale);
+    if (g3data_image_insert (window, filename, drawing_area_alignment, scale) == 0) {
+        cursor = gdk_cursor_new (GDK_CROSSHAIR);
+        gdk_window_set_cursor (gtk_widget_get_window (GTK_WIDGET (viewport)), cursor);
+    }
 
     /* Print current image name in title bar*/
     buffer = g_strdup_printf (g3data_window_title, g_path_get_basename (filename));

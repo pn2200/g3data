@@ -100,7 +100,6 @@ static void UseErrCB(GtkWidget *widget, gpointer func_data);
 static void read_xy_entry(GtkWidget *entry, gpointer func_data);
 static void islogxy(GtkWidget *widget, gpointer func_data);
 static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer);
-static gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble maxY);
 static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboolean UsePreSetCoords);
 
 static const GOptionEntry goption_options[] =
@@ -229,75 +228,6 @@ static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer poin
     }
 
   return 0;
-}
-
-
-/****************************************************************/
-/* This function loads the image, and inserts it into the tab	*/
-/* and sets up all of the different signals associated with it.	*/
-/****************************************************************/
-static gint InsertImage(char *filename, gdouble Scale, gdouble maxX, gdouble maxY) {
-    gboolean has_alpha;
-    gint w, h;
-    GdkPixbuf *loadgpbimage;
-    GdkCursor *cursor;
-    GtkWidget *dialog;
-
-    loadgpbimage = gdk_pixbuf_new_from_file(filename,NULL);				/* Load image */
-    if (loadgpbimage==NULL) {								/* If unable to load image */
-	dialog = gtk_message_dialog_new (GTK_WINDOW(window),				/* Notify user of the error */
-                                  GTK_DIALOG_DESTROY_WITH_PARENT,			/* with a dialog */
-                                  GTK_MESSAGE_ERROR,
-                                  GTK_BUTTONS_CLOSE,
-                                  "Error loading file '%s'",
-                                  filename);
- 	gtk_dialog_run (GTK_DIALOG (dialog));
- 	gtk_widget_destroy (dialog);
-
-	return -1;									/* exit */
-    }
-
-    w = gdk_pixbuf_get_width(loadgpbimage);
-    h = gdk_pixbuf_get_height(loadgpbimage);
-    has_alpha = gdk_pixbuf_get_has_alpha(loadgpbimage);
-
-    if (width != -1 && height != -1 && scale == -1) {
-        if (w > width || h > height) {
-            scale = fmin((double) (width/w), (double) (height/h));
-        }
-    }
-
-    if (scale != -1) {
-        w = w * scale;
-        h = h * scale;
-        gpbimage = gdk_pixbuf_new (GDK_COLORSPACE_RGB, has_alpha, 8, w, h);
-        gdk_pixbuf_composite(loadgpbimage, gpbimage, 0, 0, w, h,
-    	         0, 0, scale, scale, GDK_INTERP_BILINEAR, 255);
-        g_object_unref(loadgpbimage);
-    } else {
-        gpbimage = loadgpbimage;
-    }
-
-    XSize = w;
-    YSize = h;
-
-    drawing_area = gtk_drawing_area_new ();					/* Create new drawing area */
-    gtk_widget_set_size_request (drawing_area, XSize, YSize);
-
-    gtk_widget_set_events (drawing_area, GDK_EXPOSURE_MASK |			/* Set the events active */
-			   GDK_BUTTON_PRESS_MASK | 
-			   GDK_BUTTON_RELEASE_MASK |
-			   GDK_POINTER_MOTION_MASK | 
-			   GDK_POINTER_MOTION_HINT_MASK);
-
-    gtk_container_add(GTK_CONTAINER(drawing_area_alignment), drawing_area);
-
-    gtk_widget_show(drawing_area);
-
-    cursor = gdk_cursor_new (GDK_CROSSHAIR);
-    gdk_window_set_cursor (gtk_widget_get_window(drawing_area), cursor);
- 
-    return 0;
 }
 
 
@@ -557,10 +487,6 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
     gtk_container_add (GTK_CONTAINER (ScrollWindow), ViewPort);
 
     gtk_widget_show_all(window);
-
-    if (InsertImage(filename, Scale, maxX, maxY) == -1) {
-	return -1;
-    }
 
     if (UsePreSetCoords) {
 	axiscoords[0][0] = 0;

@@ -29,17 +29,7 @@ Authors email : jonas.frantz@welho.com
 #include <gtk/gtk.h>
 #include <math.h>
 #include "main.h"
-#include "sort.h"
 #include "points.h"
-
-/* Extern variables */
-
-extern	gint		**points;
-extern	gint		numpoints;
-extern	gint		ordering;
-extern	gboolean	UseErrors;
-extern  gchar		*file_name;
-extern	gint		ViewedTabNum;
 
 /****************************************************************/
 /* This function sets the numpoints entry to numpoints variable	*/

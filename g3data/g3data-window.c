@@ -33,6 +33,8 @@ Authors email : pnovak@alumni.caltech.edu
 
 G_DEFINE_TYPE (G3dataWindow, g3data_window, GTK_TYPE_WINDOW);
 
+extern gboolean use_error;
+
 static void update_preview_cb (GtkFileChooser *chooser, gpointer data);
 static void file_open_dialog_response_cb (GtkWidget *chooser,
                                           gint response_id,
@@ -223,8 +225,12 @@ void g3data_window_print_results(FILE *fp, G3dataWindow *window)
     }
 
     for (i = 0; i < n; i++) {
-        fprintf (fp, "%.12g  %.12g\n", RealPos[i].Xv, RealPos[i].Yv);
+        fprintf (fp, "%.12g  %.12g", RealPos[i].Xv, RealPos[i].Yv);
+        if (use_error) {
+            fprintf (fp, "\t%.12g  %.12g\n", RealPos[i].Xerr, RealPos[i].Yerr);
+        } else fprintf(fp, "\n");
     }
+
     g_free (RealPos);
 
     fclose (fp);

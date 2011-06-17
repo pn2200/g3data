@@ -80,7 +80,7 @@ gint xpointer = -1;
 gint ypointer = -1;
 static gint width = -1;
 static gint height = -1;
-gboolean UseErrors = FALSE;
+gboolean use_error = FALSE;
 gboolean logxy[2] = {FALSE, FALSE};
 static gdouble scale = -1;
 gdouble		realcoords[4];						/* X,Y coords on graph */
@@ -94,7 +94,6 @@ FILE		*FP;									/* File pointer */
 
 GtkWidget 	*drawing_area_alignment;
 
-static void UseErrCB(GtkWidget *widget, gpointer func_data);
 static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer);
 static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboolean UsePreSetCoords);
 
@@ -103,7 +102,7 @@ static const GOptionEntry goption_options[] =
 	{ "height", 'h', 0, G_OPTION_ARG_INT, &height, "The maximum height of image. Larger images will be scaled to this height.", "H"},
 	{ "width", 'w', 0, G_OPTION_ARG_INT, &width, "The maximum width of image. Larger images will be scaled to this width.", "W"},
 	{ "scale", 's', 0, G_OPTION_ARG_DOUBLE, &scale, "Scale image by scale factor.", "S"},
-	{ "error", 'e', 0, G_OPTION_ARG_NONE, &UseErrors, "Output estimates of error", NULL },
+	{ "error", 'e', 0, G_OPTION_ARG_NONE, &use_error, "Output estimates of error", NULL },
 	{ "lnx", 0, 0, G_OPTION_ARG_NONE, &logxy[0], "Use logarithmic scale for x coordinates", NULL },
 	{ "lny", 0, 0, G_OPTION_ARG_NONE, &logxy[1], "Use logarithmic scale for y coordinates", NULL},
 	{ "x0", 0, 0, G_OPTION_ARG_DOUBLE, &realcoords[0], "Preset the x-coordinate for the lower left corner", "x0" },
@@ -113,15 +112,6 @@ static const GOptionEntry goption_options[] =
 	{ G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &filenames, NULL, "[FILE...]" },
 	{ NULL }
 };
-
-
-/****************************************************************/
-/* Set whether to use error evaluation and printing or not.	*/
-/****************************************************************/
-static void UseErrCB(GtkWidget *widget, gpointer func_data)
-{
-    UseErrors = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-}
 
 
 /****************************************************************/
@@ -185,8 +175,6 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
   GtkWidget	*APlabel, *PIlabel, *ZAlabel, *Llabel, *tab_label;
   GtkWidget 	*alignment;
   GtkWidget 	*x_label, *y_label, *tmplabel;
-  GtkWidget	*ordercheckb[3], *UseErrCheckB;
-  GtkWidget	*Olabel, *Elabel;
   GSList 	*group;
   GtkWidget	*dialog;
 
@@ -340,20 +328,6 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
     alignment = gtk_alignment_new (0, 1, 0, 0);
     gtk_container_add((GtkContainer *) alignment, ZAlabel);
     gtk_box_pack_start (GTK_BOX (subvbox), alignment, FALSE, FALSE, 0);
-
-    /* Create and pack value errors button */
-    UseErrCheckB = gtk_check_button_new_with_mnemonic(PrintErrCBLabel);
-    g_signal_connect (G_OBJECT (UseErrCheckB), "toggled",
-		      G_CALLBACK (UseErrCB), NULL);
-    gtk_widget_set_tooltip_text (UseErrCheckB,uetts);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(UseErrCheckB), UseErrors);
-
-    Elabel = gtk_label_new (NULL);
-    gtk_label_set_markup (GTK_LABEL (Elabel), Eheader);
-    alignment = gtk_alignment_new (0, 1, 0, 0);
-    gtk_container_add(GTK_CONTAINER(alignment), Elabel);
-    gtk_box_pack_start (GTK_BOX (subvbox), alignment, FALSE, FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (subvbox), UseErrCheckB, FALSE, FALSE, 0);
 
     /* Print current image name in title bar*/
     buffer = g_strdup_printf(Window_Title, filename);

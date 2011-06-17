@@ -33,6 +33,7 @@ Authors email : pnovak@alumni.caltech.edu
 #define ZOOMFACTOR 4
 #define MAXPOINTS 256
 
+extern gboolean use_error;
 static GdkColor *colors;
 
 static GtkWidget *g3data_window_control_points_add (G3dataWindow *window);
@@ -427,6 +428,12 @@ static GtkWidget *g3data_window_sort_buttons_add (G3dataWindow *window) {
 }
 
 
+static void error_button_callback (GtkWidget *widget)
+{
+    use_error = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+}
+
+
 /* Add check buttons for including errors in output. */
 static GtkWidget *g3data_window_error_buttons_add (void) {
     GtkWidget *vbox, *label, *alignment;
@@ -435,7 +442,8 @@ static GtkWidget *g3data_window_error_buttons_add (void) {
     /* Create and pack value errors button */
     error_button = gtk_check_button_new_with_mnemonic (error_button_text);
     gtk_widget_set_tooltip_text (error_button, error_tooltip);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (error_button), FALSE);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (error_button), use_error);
+    g_signal_connect (G_OBJECT (error_button), "toggled", G_CALLBACK (error_button_callback), NULL);
 
     vbox = gtk_vbox_new (FALSE, 0);
     label = gtk_label_new (NULL);

@@ -26,12 +26,8 @@ Authors email : jonas.frantz@welho.com
 
 #include <gtk/gtk.h>									/* Include gtk library */
 #include <stdio.h>									/* Include stdio library */
-#include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk/gdkkeysyms.h>
 #include <stdlib.h>									/* Include stdlib library */
-#include <string.h>									/* Include string library */
-#include <math.h>									/* Include math library */
-#include <libgen.h>
 #include "main.h"
 #include "g3data-application.h"
 #include "drawing.h"

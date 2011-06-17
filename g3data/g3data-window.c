@@ -28,6 +28,7 @@ Authors email : pnovak@alumni.caltech.edu
 #include "g3data-about.h"
 #include "main.h"
 #include "points.h"
+#include "sort.h"
 
 
 G_DEFINE_TYPE (G3dataWindow, g3data_window, GTK_TYPE_WINDOW);
@@ -193,6 +194,7 @@ void g3data_window_print_results(FILE *fp, G3dataWindow *window)
 {
     gboolean islogarithmic[2];
     gint i;
+    gint ordering = 0;
     gint n = window->numpoints;
     struct PointValue *RealPos;
 
@@ -201,6 +203,12 @@ void g3data_window_print_results(FILE *fp, G3dataWindow *window)
     islogarithmic[0] = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (window->x_log));
     islogarithmic[1] = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (window->y_log));
 
+    if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (window->sort_button[1]))) {
+        ordering = 1;
+    } else if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (window->sort_button[2]))) {
+        ordering = 2;
+    }
+
     /* Calculate the real positions of the points */
     for (i = 0; i < n; i++) {
         RealPos[i] = CalcPointValue (window->points[i][0],
@@ -208,6 +216,10 @@ void g3data_window_print_results(FILE *fp, G3dataWindow *window)
                                      window->control_point_image_coords,
                                      window->control_point_coords,
                                      islogarithmic);
+    }
+
+    if (ordering != 0) {
+        Order (RealPos, n, ordering);
     }
 
     for (i = 0; i < n; i++) {

@@ -40,7 +40,7 @@ static GtkWidget *g3data_window_status_area_add (G3dataWindow *window);
 static GtkWidget *g3data_window_remove_buttons_add (G3dataWindow *window);
 static GtkWidget *g3data_window_zoom_area_add (G3dataWindow *window);
 static GtkWidget *g3data_window_log_buttons_add (G3dataWindow *window);
-static GtkWidget *g3data_window_sort_buttons_add (void);
+static GtkWidget *g3data_window_sort_buttons_add (G3dataWindow *window);
 static GtkWidget *g3data_window_error_buttons_add (void);
 static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, GtkWidget *drawing_area_alignment, gdouble scale);
 static void SetButtonSensitivity (G3dataWindow *window);
@@ -150,7 +150,7 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename, gd
     window->log_buttons_vbox = g3data_window_log_buttons_add (window);
     gtk_box_pack_start (GTK_BOX (bottomleftvbox), window->log_buttons_vbox, FALSE, FALSE, 0);
 
-    window->sort_buttons_vbox = g3data_window_sort_buttons_add ();
+    window->sort_buttons_vbox = g3data_window_sort_buttons_add (window);
     gtk_box_pack_start (GTK_BOX (bottomleftvbox), window->sort_buttons_vbox, FALSE, FALSE, 0);
 
     error_button_vbox = g3data_window_error_buttons_add ();
@@ -401,18 +401,17 @@ static GtkWidget *g3data_window_log_buttons_add (G3dataWindow *window) {
 
 
 /* Add radio buttons for sorting output. */
-static GtkWidget *g3data_window_sort_buttons_add (void) {
+static GtkWidget *g3data_window_sort_buttons_add (G3dataWindow *window) {
     int i;
     GtkWidget *vbox, *label, *alignment;
-    GtkWidget *sort_button[3];
     GSList *group = NULL;
 
     for (i = 0; i < 3; i++) {
-        sort_button[i] = gtk_radio_button_new_with_label (group, sort_button_text[i]);
-        group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (sort_button[i]));
+        window->sort_button[i] = gtk_radio_button_new_with_label (group, sort_button_text[i]);
+        group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (window->sort_button[i]));
     }
     /* Set no ordering button active */
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (sort_button[0]), TRUE);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (window->sort_button[0]), TRUE);
 
     vbox = gtk_vbox_new (FALSE, 0);
     label = gtk_label_new (NULL);
@@ -421,7 +420,7 @@ static GtkWidget *g3data_window_sort_buttons_add (void) {
     gtk_container_add (GTK_CONTAINER(alignment), label);
     gtk_box_pack_start (GTK_BOX (vbox), alignment, FALSE, FALSE, 0);
     for (i = 0; i < 3; i++) {
-        gtk_box_pack_start (GTK_BOX (vbox), sort_button[i], FALSE, FALSE, 0);
+        gtk_box_pack_start (GTK_BOX (vbox), window->sort_button[i], FALSE, FALSE, 0);
     }
 
     return vbox;

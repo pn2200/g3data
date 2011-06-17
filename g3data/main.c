@@ -72,7 +72,6 @@ GtkWidget *mainvbox;
 gint		axiscoords[4][2];						/* X,Y coordinates of axispoints */
 gint		**points;							/* Indexes of graphpoints and their coordinates */
 gint		numpoints;
-gint		ordering;
 gint		XSize, YSize;
 gint		file_name_length;
 gint 		MaxPoints = {MAXPOINTS};
@@ -95,7 +94,6 @@ FILE		*FP;									/* File pointer */
 
 GtkWidget 	*drawing_area_alignment;
 
-static void SetOrdering(GtkWidget *widget, gpointer func_data);
 static void UseErrCB(GtkWidget *widget, gpointer func_data);
 static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer);
 static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboolean UsePreSetCoords);
@@ -115,15 +113,6 @@ static const GOptionEntry goption_options[] =
 	{ G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &filenames, NULL, "[FILE...]" },
 	{ NULL }
 };
-
-
-/****************************************************************/
-/* Set type of ordering at output of data.			*/
-/****************************************************************/
-static void SetOrdering(GtkWidget *widget, gpointer func_data)
-{
-    ordering = GPOINTER_TO_INT (func_data);				/* Set ordering control variable */
-}
 
 
 /****************************************************************/
@@ -222,7 +211,6 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
     }
 
     numpoints = 0;
-    ordering = 0;
 
     points = (void *) malloc(sizeof(gint *) * MaxPoints);
     if (points==NULL) {
@@ -352,28 +340,6 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
     alignment = gtk_alignment_new (0, 1, 0, 0);
     gtk_container_add((GtkContainer *) alignment, ZAlabel);
     gtk_box_pack_start (GTK_BOX (subvbox), alignment, FALSE, FALSE, 0);
-
-    /* Create and pack radio buttons for sorting */
-    group = NULL;
-    for (i=0;i<ORDERBNUM;i++) {
-	ordercheckb[i] = gtk_radio_button_new_with_label (group, orderlabel[i]);	/* Create radio button */
-	g_signal_connect (G_OBJECT (ordercheckb[i]), "toggled",				/* Connect button */
-			  G_CALLBACK (SetOrdering), GINT_TO_POINTER (i));
-	group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (ordercheckb[i]));		/* Get buttons group */
-    }
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (ordercheckb[0]), TRUE);		/* Set no ordering button active */
-
-    subvbox = gtk_vbox_new (FALSE, ELEM_SEP);
-    oppropbox = subvbox;
-    gtk_box_pack_start (GTK_BOX (blvbox), subvbox, FALSE, FALSE, 0);
-    Olabel = gtk_label_new (NULL);
-    gtk_label_set_markup (GTK_LABEL (Olabel), Oheader);
-    alignment = gtk_alignment_new (0, 1, 0, 0);
-    gtk_container_add((GtkContainer *) alignment, Olabel);
-    gtk_box_pack_start (GTK_BOX (subvbox), alignment, FALSE, FALSE, 0);
-    for (i=0;i<ORDERBNUM;i++) {
-	gtk_box_pack_start (GTK_BOX (subvbox), ordercheckb[i], FALSE, FALSE, 0);			/* Pack radiobutton in vert. box */
-    }
 
     /* Create and pack value errors button */
     UseErrCheckB = gtk_check_button_new_with_mnemonic(PrintErrCBLabel);

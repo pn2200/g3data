@@ -56,8 +56,10 @@ void Order(struct PointValue *RealPos, gint count, gint ordering)
     /* Sort by x-values */
     if (ordering == 1) {
         qsort(RealPos, count, sizeof (struct PointValue), compare_x);
-    } else {
+    } else if (ordering == 2) {
     /* Sort by y-values */
         qsort(RealPos, count, sizeof (struct PointValue), compare_y);
+    } else {
+        return;
     }
 }

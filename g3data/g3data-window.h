@@ -52,7 +52,7 @@ struct _G3dataWindow {
     GtkWidget *xc_entry, *yc_entry, *xerr_entry, *yerr_entry;
     GtkWidget *remove_last_button, *remove_all_button;
     GtkWidget *zoom_area, *zoom_area_vbox;
-    GtkWidget *log_buttons_vbox;
+    GtkWidget *log_buttons_vbox, *x_log, *y_log;
     GtkWidget *sort_buttons_vbox;
     GtkWidget *drawing_area;
     GtkActionGroup *action_group;

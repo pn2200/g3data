@@ -26,6 +26,7 @@ Authors email : pnovak@alumni.caltech.edu
 #include "g3data-window.h"
 #include "g3data-image.h"
 #include "g3data-about.h"
+#include "main.h"
 #include "points.h"
 
 
@@ -188,6 +189,36 @@ static void g3data_window_file_open (GtkAction *action, G3dataWindow *window)
 }
 
 
+void g3data_window_print_results(FILE *fp, G3dataWindow *window)
+{
+    gboolean islogarithmic[2];
+    gint i;
+    gint n = window->numpoints;
+    struct PointValue *RealPos;
+
+    RealPos = (struct PointValue *) g_malloc(sizeof(struct PointValue) * n);
+
+    islogarithmic[0] = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (window->x_log));
+    islogarithmic[1] = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (window->y_log));
+
+    /* Calculate the real positions of the points */
+    for (i = 0; i < n; i++) {
+        RealPos[i] = CalcPointValue (window->points[i][0],
+                                     window->points[i][1],
+                                     window->control_point_image_coords,
+                                     window->control_point_coords,
+                                     islogarithmic);
+    }
+
+    for (i = 0; i < n; i++) {
+        fprintf (fp, "%.12g  %.12g\n", RealPos[i].Xv, RealPos[i].Yv);
+    }
+    g_free (RealPos);
+
+    fclose (fp);
+}
+
+
 static void g3data_window_file_save_as (GtkAction *action, G3dataWindow *window)
 {
     GtkWidget *dialog;
@@ -208,7 +239,7 @@ static void g3data_window_file_save_as (GtkAction *action, G3dataWindow *window)
             g_free (filename);
             return;
         } else {
-            print_results (fp);
+            g3data_window_print_results (fp, window);
             g_free (filename);
         }
     }

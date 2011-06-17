@@ -38,7 +38,6 @@ extern	gint		**points;
 extern	gint		numpoints;
 extern	gint		ordering;
 extern	gboolean	UseErrors;
-extern	gboolean	logxy[2];
 extern  gchar		*file_name;
 extern	gint		ViewedTabNum;
 
@@ -62,7 +61,8 @@ void SetNumPointsEntry(GtkWidget *np_entry, gint np)
 struct PointValue CalcPointValue(gint Xpos,
                                  gint Ypos,
                                  gint control_point_image_coords[4][2],
-                                 gdouble control_point_coords[4])
+                                 gdouble control_point_coords[4],
+                                 gboolean logxy[2])
 {
     double alpha,beta,x21,x43,y21,y43,rlc[4];				/* Declare help variables */
     struct PointValue PV;
@@ -72,7 +72,7 @@ struct PointValue CalcPointValue(gint Xpos,
     x43=(double) control_point_image_coords[3][0]-control_point_image_coords[2][0];			/* Calculate deltax of y axis points */
     y43=(double) control_point_image_coords[3][1]-control_point_image_coords[2][1];			/* Calculate deltay of y axis points */
 
-    if (logxy[0]) {							/* If x axis is logarithmic, store	*/
+    if (logxy[0] == TRUE) {							/* If x axis is logarithmic, store	*/
         rlc[0]=log(control_point_coords[0]);					/* recalculated values in rlc.		*/ 
         rlc[1]=log(control_point_coords[1]);
     }
@@ -81,7 +81,7 @@ struct PointValue CalcPointValue(gint Xpos,
         rlc[1]=control_point_coords[1];
     }
 
-    if (logxy[1]) {
+    if (logxy[1] == TRUE) {
         rlc[2]=log(control_point_coords[2]);					/* If y axis is logarithmic, store      */
         rlc[3]=log(control_point_coords[3]);					/* recalculated values in rlc.          */
     }
@@ -95,10 +95,10 @@ struct PointValue CalcPointValue(gint Xpos,
     beta=((control_point_image_coords[2][1]-(double) Ypos)
          -(control_point_image_coords[2][0]-(double) Xpos)*(y21/x21))/(y43-((x43*y21)/x21));
 
-    if (logxy[0]) PV.Xv = exp(-alpha*(rlc[1]-rlc[0])+rlc[0]);
+    if (logxy[0] == TRUE) PV.Xv = exp(-alpha*(rlc[1]-rlc[0])+rlc[0]);
     else PV.Xv = -alpha*(rlc[1]-rlc[0])+rlc[0];
 
-    if (logxy[1]) PV.Yv = exp(-beta*(rlc[3]-rlc[2])+rlc[2]);
+    if (logxy[1] == TRUE) PV.Yv = exp(-beta*(rlc[3]-rlc[2])+rlc[2]);
     else PV.Yv = -beta*(rlc[3]-rlc[2])+rlc[2];
 
     alpha=((control_point_image_coords[0][0]-(double) (Xpos+1))
@@ -106,10 +106,10 @@ struct PointValue CalcPointValue(gint Xpos,
     beta=((control_point_image_coords[2][1]-(double) (Ypos+1))
          -(control_point_image_coords[2][0]-(double) (Xpos+1))*(y21/x21))/(y43-((x43*y21)/x21));
 
-    if (logxy[0]) PV.Xerr = exp(-alpha*(rlc[1]-rlc[0])+rlc[0]);
+    if (logxy[0] == TRUE) PV.Xerr = exp(-alpha*(rlc[1]-rlc[0])+rlc[0]);
     else PV.Xerr = -alpha*(rlc[1]-rlc[0])+rlc[0];
 
-    if (logxy[1]) PV.Yerr = exp(-beta*(rlc[3]-rlc[2])+rlc[2]);
+    if (logxy[1] == TRUE) PV.Yerr = exp(-beta*(rlc[3]-rlc[2])+rlc[2]);
     else PV.Yerr = -beta*(rlc[3]-rlc[2])+rlc[2];
 
     alpha=((control_point_image_coords[0][0]-(double) (Xpos-1))
@@ -117,52 +117,14 @@ struct PointValue CalcPointValue(gint Xpos,
     beta=((control_point_image_coords[2][1]-(double) (Ypos-1))
          -(control_point_image_coords[2][0]-(double) (Xpos-1))*(y21/x21))/(y43-((x43*y21)/x21));
 
-    if (logxy[0]) PV.Xerr -= exp(-alpha*(rlc[1]-rlc[0])+rlc[0]);
+    if (logxy[0] == TRUE) PV.Xerr -= exp(-alpha*(rlc[1]-rlc[0])+rlc[0]);
     else PV.Xerr -= -alpha*(rlc[1]-rlc[0])+rlc[0];
 
-    if (logxy[1]) PV.Yerr -= exp(-beta*(rlc[3]-rlc[2])+rlc[2]);
+    if (logxy[1] == TRUE) PV.Yerr -= exp(-beta*(rlc[3]-rlc[2])+rlc[2]);
     else PV.Yerr -= -beta*(rlc[3]-rlc[2])+rlc[2];
 
     PV.Xerr = fabs(PV.Xerr/4.0);
     PV.Yerr = fabs(PV.Yerr/4.0);
 
     return PV;
-}
-
-
-/****************************************************************/
-/* This function is called when the "Print results" button is	*/
-/* pressed, it calculate the values of the datapoints and 	*/
-/* prints them through stdout.					*/
-/****************************************************************/
-void print_results(FILE *fp) 
-{
-  gint i;
-  struct PointValue *RealPos, CalcVal;
-
-    RealPos = (struct PointValue *) malloc(sizeof(struct PointValue) * numpoints);
-
-/* Next up is recalculating the positions of the points by solving a 2*2 matrix */
-
-    for (i=0;i<numpoints;i++) {
-/*        CalcVal = CalcPointValue(points[i][0], points[i][1]);
-	RealPos[i].Xv = CalcVal.Xv;
-	RealPos[i].Yv = CalcVal.Yv;
-	RealPos[i].Xerr = CalcVal.Xerr;
-	RealPos[i].Yerr = CalcVal.Yerr;*/
-    }
-
-    if (ordering != 0) {
-	Order(RealPos, numpoints, ordering);
-    }
-
-    for (i=0;i<numpoints;i++) {
-	    fprintf(fp, "%.12g  %.12g", RealPos[i].Xv, RealPos[i].Yv);
-	    if (UseErrors) {
-		fprintf(fp, "\t%.12g  %.12g\n", RealPos[i].Xerr, RealPos[i].Yerr);
-	    } else fprintf(fp, "\n");
-    }
-    free(RealPos);
-
-    fclose(fp);
 }

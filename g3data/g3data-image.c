@@ -54,6 +54,7 @@ static void control_point_entry_read (GtkWidget *entry, gpointer func_data);
 static void button_press_event (GtkWidget *widget, GdkEventButton *event, gpointer data);
 static void remove_last (GtkWidget *widget, gpointer data);
 static void remove_all (GtkWidget *widget, gpointer data);
+static void log_button_callback (GtkWidget *widget, gpointer data);
 
 static const gchar control_point_header_text[] = "<b>Axis points</b>";
 static const gchar status_area_header[] = "<b>Processing information</b>";
@@ -373,16 +374,17 @@ static GtkWidget *g3data_window_zoom_area_add (G3dataWindow *window) {
 /* Add buttons to toggle if x or y axis is logarithmic. */
 static GtkWidget *g3data_window_log_buttons_add (G3dataWindow *window) {
     GtkWidget *vbox, *label, *alignment;
-    GtkWidget *x_log, *y_log;
 
     /* Logarithmic axes */
-    x_log = gtk_check_button_new_with_mnemonic(x_log_text);
-    gtk_widget_set_tooltip_text (x_log, x_log_tooltip);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (x_log), FALSE);
+    window->x_log = gtk_check_button_new_with_mnemonic(x_log_text);
+    gtk_widget_set_tooltip_text (window->x_log, x_log_tooltip);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (window->x_log), FALSE);
+    g_signal_connect (G_OBJECT (window->x_log), "toggled", G_CALLBACK (log_button_callback), (gpointer) window);
 
-    y_log = gtk_check_button_new_with_mnemonic(y_log_text);
-    gtk_widget_set_tooltip_text (y_log, y_log_tooltip);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (y_log), FALSE);
+    window->y_log = gtk_check_button_new_with_mnemonic(y_log_text);
+    gtk_widget_set_tooltip_text (window->y_log, y_log_tooltip);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (window->y_log), FALSE);
+    g_signal_connect (G_OBJECT (window->y_log), "toggled", G_CALLBACK (log_button_callback), (gpointer) window);
 
     /* Pack logarithmic axes */
     vbox = gtk_vbox_new (FALSE, 0);
@@ -391,8 +393,8 @@ static GtkWidget *g3data_window_log_buttons_add (G3dataWindow *window) {
     alignment = gtk_alignment_new (0, 1, 0, 0);
     gtk_container_add ( GTK_CONTAINER(alignment), label);
     gtk_box_pack_start (GTK_BOX (vbox), alignment, FALSE, FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox), x_log, FALSE, FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (vbox), y_log, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox), window->x_log, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (vbox), window->y_log, FALSE, FALSE, 0);
 
     return vbox;
 }
@@ -574,6 +576,7 @@ static gboolean expose_event_callback (GtkWidget *widget, GdkEventExpose *event,
 /* Motion notify callback, for motion over drawing_area */
 static gboolean motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data) {
     gboolean control_points_set = FALSE;
+    gboolean islogarithmic[2];
     gint x, y, width, height;
     gchar buf[G_ASCII_DTOSTR_BUF_SIZE];
     struct PointValue CalcVal;
@@ -599,8 +602,10 @@ static gboolean motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gp
 
     /* If pointer over image and control_point_set, then print the coordinates. */
     if (x >= 0 && y >= 0 && x < width && y < height && control_points_set == TRUE) {
+        islogarithmic[0] = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (window->x_log));
+        islogarithmic[1] = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (window->y_log));
         CalcVal = CalcPointValue (x, y, window->control_point_image_coords,
-                                 window->control_point_coords);
+                                 window->control_point_coords, islogarithmic);
         g_ascii_formatd (buf, G_ASCII_DTOSTR_BUF_SIZE, "%.5f", CalcVal.Xv);
         gtk_entry_set_text (GTK_ENTRY (window->xc_entry), buf);
         g_ascii_formatd (buf, G_ASCII_DTOSTR_BUF_SIZE, "%.5f", CalcVal.Yv);
@@ -806,3 +811,29 @@ static void remove_all (GtkWidget *widget, gpointer data)
 
     remove_last (widget, data);
 }
+
+
+static void log_button_callback (GtkWidget *widget, gpointer data)
+{
+    gboolean islogarithmic;
+    gint i;
+    G3dataWindow *window = G3DATA_WINDOW (data);
+
+    islogarithmic = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget));
+    if (widget == window->x_log)
+        i = 0;
+    else if (widget == window->y_log)
+        i = 2;
+    else
+        return;
+    
+    if (islogarithmic == TRUE) {
+        if (window->control_point_coords[i] <= 0.0) {
+            gtk_entry_set_text (GTK_ENTRY (window->control_point_entry[i]), "");
+        }
+        if (window->control_point_coords[i + 1] <= 0.0) {
+            gtk_entry_set_text (GTK_ENTRY (window->control_point_entry[i + 1]), "");
+        }
+    }
+}
+

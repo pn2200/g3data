@@ -98,7 +98,6 @@ GtkWidget 	*drawing_area_alignment;
 static void SetOrdering(GtkWidget *widget, gpointer func_data);
 static void UseErrCB(GtkWidget *widget, gpointer func_data);
 static void read_xy_entry(GtkWidget *entry, gpointer func_data);
-static void islogxy(GtkWidget *widget, gpointer func_data);
 static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer);
 static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboolean UsePreSetCoords);
 
@@ -159,32 +158,6 @@ static void read_xy_entry(GtkWidget *entry, gpointer func_data)
 
 
 /****************************************************************/
-/* If the "X/Y axis is logarithmic" check button is toggled	*/
-/* this function gets called. It sets the logx variable to its	*/
-/* correct value corresponding to the buttons state.		*/
-/****************************************************************/
-static void islogxy(GtkWidget *widget, gpointer func_data)
-{
-  gint i;
-
-    i = GPOINTER_TO_INT (func_data);
-
-    logxy[i] = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-											/* logxy = TRUE else FALSE. */
-    if (logxy[i]) {
-	if (realcoords[i*2] <= 0) {					/* If a negative value has been insert */
-	    valueset[i*2]=FALSE;
-	    gtk_entry_set_text(GTK_ENTRY(xyentry[i*2]),"");		/* Zero it */
-	}
-	if (realcoords[i*2+1] <= 0) {					/* If a negative value has been insert */
-	    valueset[i*2+1]=FALSE;
-	    gtk_entry_set_text(GTK_ENTRY(xyentry[i*2+1]),"");		/* Zero it */
-        }
-    }
-}
-
-
-/****************************************************************/
 /* This function handles all of the keypresses done within the	*/
 /* main window and handles the  appropriate measures.		*/
 /****************************************************************/
@@ -241,7 +214,6 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
   GtkWidget	*tophbox, *bottomhbox;
   GtkWidget	*trvbox, *tlvbox, *brvbox, *blvbox, *subvbox;
   GtkWidget 	*xy_label[4];								/* Labels for texts in window */
-  GtkWidget 	*logcheckb[2];								/* Logarithmic checkbuttons */
   GtkWidget 	*nump_label, *ScrollWindow;						/* Various widgets */
   GtkWidget	*APlabel, *PIlabel, *ZAlabel, *Llabel, *tab_label;
   GtkWidget 	*alignment;
@@ -338,15 +310,6 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
 
     setcolors(&colors);
 
-    /* Logarithmic axes */
-    for (i=0;i<2;i++) {
-	logcheckb[i] = gtk_check_button_new_with_mnemonic(loglabel[i]);			/* Create check button */
-	g_signal_connect (G_OBJECT (logcheckb[i]), "toggled",				/* Connect button */
-			  G_CALLBACK (islogxy), GINT_TO_POINTER (i));
-        gtk_widget_set_tooltip_text (logcheckb[i],logxytt[i]);
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(logcheckb[i]), logxy[i]);
-    }
-
     tophbox = gtk_hbox_new (FALSE, SECT_SEP);
     alignment = gtk_alignment_new (0,0,0,0);
     gtk_table_attach(GTK_TABLE(table), alignment, 0, 1, 0, 1, 5, 0, 0, 0);
@@ -420,19 +383,6 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
     alignment = gtk_alignment_new (0, 1, 0, 0);
     gtk_container_add((GtkContainer *) alignment, ZAlabel);
     gtk_box_pack_start (GTK_BOX (subvbox), alignment, FALSE, FALSE, 0);
-
-    /* Pack logarithmic axes */
-    subvbox = gtk_vbox_new (FALSE, ELEM_SEP);
-    logbox = subvbox;
-    gtk_box_pack_start (GTK_BOX (blvbox), subvbox, FALSE, FALSE, 0);
-    Llabel = gtk_label_new (NULL);
-    gtk_label_set_markup (GTK_LABEL (Llabel), Lheader);
-    alignment = gtk_alignment_new (0, 1, 0, 0);
-    gtk_container_add((GtkContainer *) alignment, Llabel);
-    gtk_box_pack_start (GTK_BOX (subvbox), alignment, FALSE, FALSE, 0);
-    for (i=0;i<2;i++) {
-	gtk_box_pack_start (GTK_BOX (subvbox), logcheckb[i], FALSE, FALSE, 0);			/* Pack checkbutton in vert. box */
-    }
 
     /* Create and pack radio buttons for sorting */
     group = NULL;

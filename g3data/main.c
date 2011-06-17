@@ -97,7 +97,6 @@ GtkWidget 	*drawing_area_alignment;
 
 static void SetOrdering(GtkWidget *widget, gpointer func_data);
 static void UseErrCB(GtkWidget *widget, gpointer func_data);
-static void read_xy_entry(GtkWidget *entry, gpointer func_data);
 static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer);
 static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboolean UsePreSetCoords);
 
@@ -133,27 +132,6 @@ static void SetOrdering(GtkWidget *widget, gpointer func_data)
 static void UseErrCB(GtkWidget *widget, gpointer func_data)
 {
     UseErrors = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
-}
-
-
-/****************************************************************/
-/* When the value of the entry of any axis point is changed, 	*/
-/* this function gets called.					*/
-/****************************************************************/
-static void read_xy_entry(GtkWidget *entry, gpointer func_data)
-{
-    const gchar *xy_text;
-    gint i;
-    
-    i = GPOINTER_TO_INT (func_data);
-
-    xy_text = gtk_entry_get_text(GTK_ENTRY (entry));
-    sscanf(xy_text,"%lf",&realcoords[i]);				/* Convert string to double value and */
-											/* store in realcoords[0]. */
-    if (logxy[i/2] && realcoords[i] > 0) valueset[i]=TRUE;
-    else if (logxy[i/2]) valueset[i]=FALSE;
-    else valueset[i] = TRUE;
-
 }
 
 
@@ -270,14 +248,6 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
     /* labels for axis points x_1, x_2, etc. */
 	xy_label[i] = gtk_label_new(NULL);
 	gtk_label_set_markup(GTK_LABEL(xy_label[i]), xy_label_text[i]);
-
-    /* text entries to enter axis points x_1, x_2, etc. */
-	xyentry[i] = gtk_entry_new();  						/* Create text entry */
-	gtk_entry_set_max_length (GTK_ENTRY (xyentry[i]), 20);
-	gtk_widget_set_sensitive(xyentry[i],FALSE);				/* Inactivate it */
-	g_signal_connect (G_OBJECT (xyentry[i]), "changed",			/* Init the entry to call */
-			  G_CALLBACK (read_xy_entry), GINT_TO_POINTER (i));		/* read_x1_entry whenever */
-        gtk_widget_set_tooltip_text (xyentry[i],entryxytt[i]);
     }
 
     /* Processing information labels and text entries */
@@ -335,7 +305,6 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
     for (i=0;i<4;i++) {
 	    gtk_table_attach_defaults(GTK_TABLE(table), setxybutton[i], 0, 1, i, i+1);
 	    gtk_table_attach_defaults(GTK_TABLE(table), xy_label[i], 1, 2, i, i+1);
-	    gtk_table_attach_defaults(GTK_TABLE(table), xyentry[i], 2, 3, i, i+1);
     }
 
     /* Packing the point information boxes */
@@ -448,10 +417,6 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
 	axiscoords[3][0] = 0;
 	axiscoords[3][1] = 0;
 	for (i=0;i<4;i++) {
-	    gtk_widget_set_sensitive(xyentry[i],TRUE);
-	    gtk_editable_set_editable(GTK_EDITABLE(xyentry[i]),TRUE);
-        g_ascii_formatd(buf, 20, "%lf", realcoords[i]);
-	    gtk_entry_set_text(GTK_ENTRY(xyentry[i]), buf);
 	    valueset[i] = TRUE;
 	    bpressed[i] = TRUE;
 	    setxypressed[i]=FALSE;

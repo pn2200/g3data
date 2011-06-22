@@ -67,8 +67,15 @@ struct _G3dataWindowClass {
     GtkWindowClass base_class;
 };
 
+struct g3data_options {
+    gboolean x_is_log, y_is_log;
+    gint height, width;
+    gdouble scale, control_point_coords[4];
+};
+
 GType g3data_window_get_type (void) G_GNUC_CONST;
 G3dataWindow *g3data_window_new (void);
+void g3data_set_default_options (struct g3data_options *options);
 
 G_END_DECLS
 

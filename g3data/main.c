@@ -33,30 +33,11 @@ Authors email : jonas.frantz@welho.com
 #include "drawing.h"
 #include "points.h"
 
+GtkWidget	*ViewPort = NULL;
 gboolean use_error = FALSE;
-gboolean logxy[2] = {FALSE, FALSE};
-static gdouble scale = -1;
-gdouble		realcoords[4];						/* X,Y coords on graph */
-static const gchar **filenames;
 
 
 static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer);
-
-static const GOptionEntry goption_options[] =
-{
-	{ "height", 'h', 0, G_OPTION_ARG_INT, &height, "The maximum height of image. Larger images will be scaled to this height.", "H"},
-	{ "width", 'w', 0, G_OPTION_ARG_INT, &width, "The maximum width of image. Larger images will be scaled to this width.", "W"},
-	{ "scale", 's', 0, G_OPTION_ARG_DOUBLE, &scale, "Scale image by scale factor.", "S"},
-	{ "error", 'e', 0, G_OPTION_ARG_NONE, &use_error, "Output estimates of error", NULL },
-	{ "lnx", 0, 0, G_OPTION_ARG_NONE, &logxy[0], "Use logarithmic scale for x coordinates", NULL },
-	{ "lny", 0, 0, G_OPTION_ARG_NONE, &logxy[1], "Use logarithmic scale for y coordinates", NULL},
-	{ "x0", 0, 0, G_OPTION_ARG_DOUBLE, &realcoords[0], "Preset the x-coordinate for the lower left corner", "x0" },
-	{ "x1", 0, 0, G_OPTION_ARG_DOUBLE, &realcoords[1], "Preset the x-coordinate for the upper right corner", "x1" },
-	{ "y0", 0, 0, G_OPTION_ARG_DOUBLE, &realcoords[2], "Preset the y-coordinate for the lower left corner", "y0" },
-	{ "y1", 0, 0, G_OPTION_ARG_DOUBLE, &realcoords[3], "Preset the y-coordinate for the upper right corner", "y1" },
-	{ G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &filenames, NULL, "[FILE...]" },
-	{ NULL }
-};
 
 
 /****************************************************************/
@@ -112,8 +93,32 @@ static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer poin
 /****************************************************************/
 int main (int argc, char **argv)
 {
+    const gchar **filenames;
+    gboolean x_is_log = FALSE;
+    gboolean y_is_log = FALSE;
+    gint height = -1;
+    gint width = -1;
+    gdouble scale = G_MAXDOUBLE;
+    gdouble coords[4] = {G_MAXDOUBLE, G_MAXDOUBLE, G_MAXDOUBLE, G_MAXDOUBLE};
+    struct g3data_options *options;
     GError *error = NULL;
     GOptionContext *context;
+
+    const GOptionEntry goption_options[] =
+    {
+        { "height", 'h', 0, G_OPTION_ARG_INT, &height, "The maximum height of image. Larger images will be scaled to this height.", "H"},
+        { "width", 'w', 0, G_OPTION_ARG_INT, &width, "The maximum width of image. Larger images will be scaled to this width.", "W"},
+        { "scale", 's', 0, G_OPTION_ARG_DOUBLE, &scale, "Scale image by scale factor.", "S"},
+        { "error", 'e', 0, G_OPTION_ARG_NONE, &use_error, "Output estimates of error", NULL },
+        { "lnx", 0, 0, G_OPTION_ARG_NONE, &x_is_log, "Use logarithmic scale for x coordinates", NULL },
+        { "lny", 0, 0, G_OPTION_ARG_NONE, &y_is_log, "Use logarithmic scale for y coordinates", NULL},
+        { "x0", 0, 0, G_OPTION_ARG_DOUBLE, &coords[0], "Preset the x-coordinate for the lower left corner", "x0" },
+        { "x1", 0, 0, G_OPTION_ARG_DOUBLE, &coords[1], "Preset the x-coordinate for the upper right corner", "x1" },
+        { "y0", 0, 0, G_OPTION_ARG_DOUBLE, &coords[2], "Preset the y-coordinate for the lower left corner", "y0" },
+        { "y1", 0, 0, G_OPTION_ARG_DOUBLE, &coords[3], "Preset the y-coordinate for the upper right corner", "y1" },
+        { G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &filenames, NULL, "[FILE...]" },
+        { NULL }
+    };
 
     gtk_init (&argc, &argv);
 
@@ -132,7 +137,18 @@ int main (int argc, char **argv)
     g_set_application_name ("Grab graph data");
     gtk_window_set_default_icon_name ("g3data-icon");
 
-    load_files (filenames);
+    options = (struct g3data_options *) g_malloc0 (sizeof (struct g3data_options));
+    options->height = height;
+    options->width = width;
+    options->scale = scale;
+    options->x_is_log = x_is_log;
+    options->y_is_log = y_is_log;
+    options->control_point_coords[0] = coords[0];
+    options->control_point_coords[1] = coords[1];
+    options->control_point_coords[2] = coords[2];
+    options->control_point_coords[3] = coords[3];
+
+    load_files (filenames, options);
 
     return (EXIT_SUCCESS);
 }

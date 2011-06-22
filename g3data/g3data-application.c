@@ -119,7 +119,10 @@ static void drag_data_received(GtkWidget *widget,
     gchar *filename;
     gchar **uri_list;
     gint i;
+    struct g3data_options *options = g_malloc0 (sizeof (struct g3data_options));
     GError *error;
+
+    g3data_set_default_options (options);
 
     if (info == URI_LIST) {
         uri_list = gtk_selection_data_get_uris (data);
@@ -134,7 +137,7 @@ static void drag_data_received(GtkWidget *widget,
                 if (instance->current_window == NULL || instance->current_window->image != NULL) {
                     g3data_create_window (instance);
                 }
-                g3data_window_insert_image (instance->current_window, filename, -1);
+                g3data_window_insert_image (instance->current_window, filename, options);
             }
             i++;
         }
@@ -163,7 +166,7 @@ void g3data_create_window (G3dataApplication *application)
 }
 
 
-void load_files (const char **files)
+void load_files (const char **files, struct g3data_options *options)
 {
     int i;
 
@@ -178,7 +181,7 @@ void load_files (const char **files)
             filename = files[i];
 
             g3data_create_window (instance);
-            g3data_window_insert_image (instance->current_window, filename, -1);
+            g3data_window_insert_image (instance->current_window, filename, options);
         }
     } else {
         g3data_create_window (instance);

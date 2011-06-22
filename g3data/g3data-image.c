@@ -36,14 +36,17 @@ Authors email : pnovak@alumni.caltech.edu
 extern gboolean use_error;
 static GdkColor *colors;
 
-static GtkWidget *g3data_window_control_points_add (G3dataWindow *window);
+static GtkWidget *g3data_window_control_points_add (G3dataWindow *window, struct g3data_options *options);
 static GtkWidget *g3data_window_status_area_add (G3dataWindow *window);
 static GtkWidget *g3data_window_remove_buttons_add (G3dataWindow *window);
 static GtkWidget *g3data_window_zoom_area_add (G3dataWindow *window);
-static GtkWidget *g3data_window_log_buttons_add (G3dataWindow *window);
+static GtkWidget *g3data_window_log_buttons_add (G3dataWindow *window, struct g3data_options *options);
 static GtkWidget *g3data_window_sort_buttons_add (G3dataWindow *window);
 static GtkWidget *g3data_window_error_buttons_add (void);
-static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, GtkWidget *drawing_area_alignment, gdouble scale);
+static gint g3data_image_insert (G3dataWindow *window,
+                                 const gchar *filename,
+                                 GtkWidget *drawing_area_alignment,
+                                 struct g3data_options *options);
 static void SetButtonSensitivity (G3dataWindow *window);
 
 /* Callbacks */
@@ -114,7 +117,9 @@ static const gchar error_tooltip[] = "Export errors of the x and y values";
 static gchar g3data_window_title[] = "%s - g3data";
 
 
-void g3data_window_insert_image (G3dataWindow *window, const gchar *filename, gdouble scale)
+void g3data_window_insert_image (G3dataWindow *window,
+                                 const gchar *filename,
+                                 struct g3data_options *options)
 {
     GtkWidget *tophbox, *bottomhbox, *bottomleftvbox, *bottomrightvbox,
               *scrolled_window, *viewport, *drawing_area_alignment;
@@ -136,7 +141,7 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename, gd
     bottomrightvbox = gtk_vbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (bottomhbox), bottomrightvbox, TRUE, TRUE, 0);
 
-    control_point_vbox = g3data_window_control_points_add (window);
+    control_point_vbox = g3data_window_control_points_add (window, options);
     gtk_box_pack_start (GTK_BOX (tophbox), control_point_vbox, FALSE, FALSE, 0);
 
     status_area_vbox = g3data_window_status_area_add (window);
@@ -148,7 +153,7 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename, gd
     window->zoom_area_vbox = g3data_window_zoom_area_add (window);
     gtk_box_pack_start (GTK_BOX (bottomleftvbox), window->zoom_area_vbox, FALSE, FALSE, 0);
 
-    window->log_buttons_vbox = g3data_window_log_buttons_add (window);
+    window->log_buttons_vbox = g3data_window_log_buttons_add (window, options);
     gtk_box_pack_start (GTK_BOX (bottomleftvbox), window->log_buttons_vbox, FALSE, FALSE, 0);
 
     window->sort_buttons_vbox = g3data_window_sort_buttons_add (window);
@@ -166,7 +171,7 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename, gd
     gtk_container_add (GTK_CONTAINER (viewport), drawing_area_alignment);
     gtk_container_add (GTK_CONTAINER (scrolled_window), viewport);
 
-    if (g3data_image_insert (window, filename, drawing_area_alignment, scale) == 0) {
+    if (g3data_image_insert (window, filename, drawing_area_alignment, options) == 0) {
         cursor = gdk_cursor_new (GDK_CROSSHAIR);
         gdk_window_set_cursor (gtk_widget_get_window (GTK_WIDGET (viewport)), cursor);
     }
@@ -192,10 +197,11 @@ void g3data_window_insert_image (G3dataWindow *window, const gchar *filename, gd
 
 
 /* Add control points area. */
-static GtkWidget *g3data_window_control_points_add (G3dataWindow *window) {
+static GtkWidget *g3data_window_control_points_add (G3dataWindow *window, struct g3data_options *options) {
     GtkWidget *control_point_header, *control_point_label;
     GtkWidget *vbox, *hbox, *alignment, *table, *label;
     int i;
+    gchar buf[G_ASCII_DTOSTR_BUF_SIZE];
 
     vbox = gtk_vbox_new (FALSE, 0);
 
@@ -234,6 +240,11 @@ static GtkWidget *g3data_window_control_points_add (G3dataWindow *window) {
         window->control_point_entry[i] = gtk_entry_new();
         gtk_entry_set_max_length (GTK_ENTRY (window->control_point_entry[i]), 20);
         gtk_widget_set_sensitive (window->control_point_entry[i], FALSE);
+        if (options->control_point_coords[i] != G_MAXDOUBLE) {
+            g_ascii_formatd (buf, G_ASCII_DTOSTR_BUF_SIZE, "%f", options->control_point_coords[i]);
+            gtk_entry_set_text (GTK_ENTRY (window->control_point_entry[i]), buf);
+            gtk_widget_set_sensitive (window->control_point_entry[i], TRUE);
+        }
     	g_signal_connect (G_OBJECT (window->control_point_entry[i]),
                           "changed",
                           G_CALLBACK (control_point_entry_read),
@@ -373,18 +384,18 @@ static GtkWidget *g3data_window_zoom_area_add (G3dataWindow *window) {
 
 
 /* Add buttons to toggle if x or y axis is logarithmic. */
-static GtkWidget *g3data_window_log_buttons_add (G3dataWindow *window) {
+static GtkWidget *g3data_window_log_buttons_add (G3dataWindow *window, struct g3data_options *options) {
     GtkWidget *vbox, *label, *alignment;
 
     /* Logarithmic axes */
     window->x_log = gtk_check_button_new_with_mnemonic(x_log_text);
     gtk_widget_set_tooltip_text (window->x_log, x_log_tooltip);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (window->x_log), FALSE);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (window->x_log), options->x_is_log);
     g_signal_connect (G_OBJECT (window->x_log), "toggled", G_CALLBACK (log_button_callback), (gpointer) window);
 
     window->y_log = gtk_check_button_new_with_mnemonic(y_log_text);
     gtk_widget_set_tooltip_text (window->y_log, y_log_tooltip);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (window->y_log), FALSE);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (window->y_log), options->y_is_log);
     g_signal_connect (G_OBJECT (window->y_log), "toggled", G_CALLBACK (log_button_callback), (gpointer) window);
 
     /* Pack logarithmic axes */
@@ -458,11 +469,15 @@ static GtkWidget *g3data_window_error_buttons_add (void) {
 
 
 /* Insert image into g3data_window */
-static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, GtkWidget *drawing_area_alignment, gdouble scale) {
+static gint g3data_image_insert (G3dataWindow *window,
+                                 const gchar *filename,
+                                 GtkWidget *drawing_area_alignment,
+                                 struct g3data_options *options) {
     gboolean has_alpha;
     gint w, h;
-    gint width = -1;
-    gint height = -1;
+    gint width = options->width;
+    gint height = options->height;
+    gdouble scale = options->scale;
     GdkPixbuf *temp_pixbuf;
     GtkWidget *dialog, *drawing_area;
 
@@ -484,13 +499,17 @@ static gint g3data_image_insert (G3dataWindow *window, const gchar *filename, Gt
     h = gdk_pixbuf_get_height (temp_pixbuf);
     has_alpha = gdk_pixbuf_get_has_alpha (temp_pixbuf);
 
-    if (width != -1 && height != -1 && scale == -1) {
-        if (w > width || h > height) {
-            scale = fmin((double) (width/w), (double) (height/h));
+    if (scale == G_MAXDOUBLE) {
+        if (width == -1 && height != -1) {
+            scale = (gdouble) height / (gdouble) h;
+        } else if (width != -1 && height == -1) {
+            scale = (gdouble) width / (gdouble) w;
+        } else if (width != -1 && height != -1) {
+            scale = MIN( (gdouble) width / (gdouble) w, (gdouble) height / (gdouble) h);
         }
     }
 
-    if (scale != -1) {
+    if (scale != G_MAXDOUBLE) {
         w = w * scale;
         h = h * scale;
         window->image = gdk_pixbuf_new (GDK_COLORSPACE_RGB, has_alpha, 8, w, h);

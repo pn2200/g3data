@@ -91,6 +91,23 @@ static const gchar *ui_description =
     "</ui>";
 
 
+void g3data_set_default_options (struct g3data_options *options) {
+    if (options == NULL) {
+        return;
+    }
+
+    options->height = -1;
+    options->width = -1;
+    options->scale = G_MAXDOUBLE;
+    options->x_is_log = FALSE;
+    options->y_is_log = FALSE;
+    options->control_point_coords[0] = G_MAXDOUBLE;
+    options->control_point_coords[1] = G_MAXDOUBLE;
+    options->control_point_coords[2] = G_MAXDOUBLE;
+    options->control_point_coords[3] = G_MAXDOUBLE;
+}
+
+
 static void update_preview_cb (GtkFileChooser *chooser, gpointer data) {
     GtkWidget *preview;
     GdkPixbuf *pixbuf;
@@ -122,15 +139,19 @@ static void file_open_dialog_response_cb (GtkWidget *chooser,
     if (response_id == GTK_RESPONSE_ACCEPT) {
         gchar *filename;
         gdouble scale;
+        struct g3data_options *options = g_malloc0 (sizeof (struct g3data_options));
         G3dataApplication *instance;
+
+        g3data_set_default_options (options);
+        scale = gtk_adjustment_get_value (scaleadj);
+        options->scale = scale;
 
         filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (chooser));
         instance = g3data_application_get_instance ();
         if (instance->current_window == NULL || instance->current_window->image != NULL) {
             g3data_create_window (instance);
         }
-        scale = gtk_adjustment_get_value (scaleadj);
-        g3data_window_insert_image (instance->current_window, filename, scale);
+        g3data_window_insert_image (instance->current_window, filename, options);
 
         g_free (filename);
     }

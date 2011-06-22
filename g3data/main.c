@@ -93,7 +93,7 @@ static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer poin
 /****************************************************************/
 int main (int argc, char **argv)
 {
-    const gchar **filenames;
+    const gchar **filenames = NULL;
     gboolean x_is_log = FALSE;
     gboolean y_is_log = FALSE;
     gint height = -1;

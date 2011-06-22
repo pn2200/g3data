@@ -166,7 +166,7 @@ void g3data_create_window (G3dataApplication *application)
 }
 
 
-void load_files (const char **files, struct g3data_options *options)
+void load_files (const gchar **files, struct g3data_options *options)
 {
     int i;
 

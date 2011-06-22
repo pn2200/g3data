@@ -55,7 +55,7 @@ struct _G3dataApplication {
 
 GType g3data_application_get_type (void) G_GNUC_CONST;
 G3dataApplication *g3data_application_get_instance (void);
-void load_files (const char **files, struct g3data_options *options);
+void load_files (const gchar **files, struct g3data_options *options);
 void g3data_create_window (G3dataApplication *application);
 
 G_END_DECLS

@@ -136,18 +136,19 @@ static void file_open_dialog_response_cb (GtkWidget *chooser,
                                           gint response_id,
                                           GtkAdjustment *scaleadj)
 {
+    G3dataApplication *instance;
+    instance = g3data_application_get_instance ();
+
     if (response_id == GTK_RESPONSE_ACCEPT) {
         gchar *filename;
         gdouble scale;
         struct g3data_options *options = g_malloc0 (sizeof (struct g3data_options));
-        G3dataApplication *instance;
 
         g3data_set_default_options (options);
         scale = gtk_adjustment_get_value (scaleadj);
         options->scale = scale;
 
         filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (chooser));
-        instance = g3data_application_get_instance ();
         if (instance->current_window == NULL || instance->current_window->image != NULL) {
             g3data_create_window (instance);
         }
@@ -157,6 +158,7 @@ static void file_open_dialog_response_cb (GtkWidget *chooser,
     }
 
     gtk_widget_destroy (chooser);
+    gtk_window_present (GTK_WINDOW (instance->current_window));
 }
 
 

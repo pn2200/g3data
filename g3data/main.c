@@ -26,64 +26,13 @@ Authors email : jonas.frantz@welho.com
 
 #include <gtk/gtk.h>									/* Include gtk library */
 #include <stdio.h>									/* Include stdio library */
-#include <gdk/gdkkeysyms.h>
 #include <stdlib.h>									/* Include stdlib library */
 #include "main.h"
 #include "g3data-application.h"
 #include "drawing.h"
 #include "points.h"
 
-GtkWidget	*ViewPort = NULL;
 gboolean use_error = FALSE;
-
-
-static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer);
-
-
-/****************************************************************/
-/* This function handles all of the keypresses done within the	*/
-/* main window and handles the  appropriate measures.		*/
-/****************************************************************/
-static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer)
-{
-  GtkAdjustment *adjustment;
-  gdouble adj_val;
-
-    if (ViewPort != NULL) {
-
-    if (event->keyval==GDK_Left) {
-	adjustment = gtk_viewport_get_hadjustment(GTK_VIEWPORT(ViewPort));
-	adj_val = gtk_adjustment_get_value(adjustment);
-	adj_val -= gtk_adjustment_get_page_size(adjustment)/10.0;
-	if (adj_val < gtk_adjustment_get_lower(adjustment)) adj_val = gtk_adjustment_get_lower(adjustment);
-	gtk_adjustment_set_value(adjustment, adj_val);
-	gtk_viewport_set_hadjustment(GTK_VIEWPORT(ViewPort), adjustment);
-    } else if (event->keyval==GDK_Right) {
-	adjustment = gtk_viewport_get_hadjustment(GTK_VIEWPORT(ViewPort));
-	adj_val = gtk_adjustment_get_value(adjustment);
-	adj_val += gtk_adjustment_get_page_size(adjustment)/10.0;
-	if (adj_val > (gtk_adjustment_get_upper(adjustment)-gtk_adjustment_get_page_size(adjustment))) adj_val = (gtk_adjustment_get_upper(adjustment)-gtk_adjustment_get_page_size(adjustment));
-	gtk_adjustment_set_value(adjustment, adj_val);
-	gtk_viewport_set_hadjustment(GTK_VIEWPORT(ViewPort), adjustment);
-    } else if (event->keyval==GDK_Up) {
-	adjustment = gtk_viewport_get_vadjustment(GTK_VIEWPORT(ViewPort));
-	adj_val = gtk_adjustment_get_value(adjustment);
-	adj_val -= gtk_adjustment_get_page_size(adjustment)/10.0;
-	if (adj_val < gtk_adjustment_get_lower(adjustment)) adj_val = gtk_adjustment_get_lower(adjustment);
-	gtk_adjustment_set_value(adjustment, adj_val);
-	gtk_viewport_set_vadjustment(GTK_VIEWPORT(ViewPort), adjustment);
-    } else if (event->keyval==GDK_Down) {
-	adjustment = gtk_viewport_get_vadjustment(GTK_VIEWPORT(ViewPort));
-	adj_val = gtk_adjustment_get_value(adjustment);
-	adj_val += gtk_adjustment_get_page_size(adjustment)/10.0;
-	if (adj_val > (gtk_adjustment_get_upper(adjustment)-gtk_adjustment_get_page_size(adjustment))) adj_val = (gtk_adjustment_get_upper(adjustment)-gtk_adjustment_get_page_size(adjustment));
-	gtk_adjustment_set_value(adjustment, adj_val);
-	gtk_viewport_set_vadjustment(GTK_VIEWPORT(ViewPort), adjustment);
-    }
-    }
-
-  return 0;
-}
 
 
 /****************************************************************/

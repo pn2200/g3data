@@ -22,6 +22,7 @@ Authors email : pnovak@alumni.caltech.edu
 */
 
 #include <glib.h>
+#include <gdk/gdkkeysyms.h>
 #include <math.h>
 #include "g3data-window.h"
 #include "g3data-image.h"
@@ -59,6 +60,7 @@ static void button_press_event (GtkWidget *widget, GdkEventButton *event, gpoint
 static void remove_last (GtkWidget *widget, gpointer data);
 static void remove_all (GtkWidget *widget, gpointer data);
 static void log_button_callback (GtkWidget *widget, gpointer data);
+static void key_press_event(GtkWidget *widget, GdkEventKey *event);
 
 static const gchar control_point_header_text[] = "<b>Axis points</b>";
 static const gchar status_area_header[] = "<b>Processing information</b>";
@@ -167,6 +169,7 @@ void g3data_window_insert_image (G3dataWindow *window,
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     viewport = gtk_viewport_new (NULL, NULL);
     gtk_box_pack_start (GTK_BOX (bottomrightvbox), scrolled_window, TRUE, TRUE, 0);
+
     drawing_area_alignment = gtk_alignment_new (0, 0, 0, 0);
     gtk_container_add (GTK_CONTAINER (viewport), drawing_area_alignment);
     gtk_container_add (GTK_CONTAINER (scrolled_window), viewport);
@@ -175,6 +178,11 @@ void g3data_window_insert_image (G3dataWindow *window,
         cursor = gdk_cursor_new (GDK_CROSSHAIR);
         gdk_window_set_cursor (gtk_widget_get_window (GTK_WIDGET (viewport)), cursor);
     }
+
+	g_signal_connect (G_OBJECT (scrolled_window),
+                      "key-press-event",
+                      G_CALLBACK (key_press_event),
+                      NULL);
 
     /* Print current image name in title bar*/
     buffer = g_strdup_printf (g3data_window_title, g_path_get_basename (filename));
@@ -863,3 +871,46 @@ static void log_button_callback (GtkWidget *widget, gpointer data)
     }
 }
 
+
+/* Callback for key press events in viewport showing image */
+static void key_press_event(GtkWidget *widget, GdkEventKey *event)
+{
+    GtkAdjustment *adjustment;
+    gdouble adj_val;
+
+    if (widget != NULL) {
+        if (event->keyval == GDK_Left) {
+            adjustment = gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW (widget));
+            adj_val = gtk_adjustment_get_value (adjustment);
+            adj_val -= gtk_adjustment_get_page_size (adjustment) / 10.0;
+            if (adj_val < gtk_adjustment_get_lower (adjustment))
+                adj_val = gtk_adjustment_get_lower (adjustment);
+            gtk_adjustment_set_value (adjustment, adj_val);
+            gtk_scrolled_window_set_hadjustment (GTK_SCROLLED_WINDOW (widget), adjustment);
+        } else if (event->keyval == GDK_Right) {
+            adjustment = gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW (widget));
+            adj_val = gtk_adjustment_get_value (adjustment);
+            adj_val += gtk_adjustment_get_page_size (adjustment) / 10.0;
+            if (adj_val > (gtk_adjustment_get_upper (adjustment) - gtk_adjustment_get_page_size (adjustment)))
+                adj_val = (gtk_adjustment_get_upper (adjustment) - gtk_adjustment_get_page_size (adjustment));
+            gtk_adjustment_set_value (adjustment, adj_val);
+            gtk_scrolled_window_set_hadjustment (GTK_SCROLLED_WINDOW (widget), adjustment);
+        } else if (event->keyval == GDK_Up) {
+            adjustment = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (widget));
+            adj_val = gtk_adjustment_get_value (adjustment);
+            adj_val -= gtk_adjustment_get_page_size (adjustment) / 10.0;
+            if (adj_val < gtk_adjustment_get_lower (adjustment))
+                adj_val = gtk_adjustment_get_lower (adjustment);
+            gtk_adjustment_set_value (adjustment, adj_val);
+            gtk_scrolled_window_set_vadjustment (GTK_SCROLLED_WINDOW (widget), adjustment);
+        } else if (event->keyval == GDK_Down) {
+            adjustment = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (widget));
+            adj_val = gtk_adjustment_get_value (adjustment);
+            adj_val += gtk_adjustment_get_page_size (adjustment) / 10.0;
+            if (adj_val > (gtk_adjustment_get_upper (adjustment) - gtk_adjustment_get_page_size (adjustment)))
+                adj_val = (gtk_adjustment_get_upper (adjustment) - gtk_adjustment_get_page_size (adjustment));
+            gtk_adjustment_set_value (adjustment, adj_val);
+            gtk_scrolled_window_set_vadjustment (GTK_SCROLLED_WINDOW (widget), adjustment);
+        }
+    }
+}

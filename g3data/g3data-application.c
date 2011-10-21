@@ -103,8 +103,10 @@ static void g3data_window_destroy_cb (GtkWidget *widget,
     if (window == application->current_window)
         application->current_window = application->windows ? application->windows->data : NULL;
 
-    if (application->windows == NULL)
-        gtk_main_quit ();  
+    if (application->windows == NULL) {
+        g_object_unref (application);
+        gtk_main_quit ();
+    }
 }
 
 

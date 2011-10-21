@@ -40,6 +40,7 @@ static void file_open_dialog_response_cb (GtkWidget *chooser,
                                           gint response_id,
                                           GtkAdjustment *scaleadj);
 static void g3data_window_file_open (GtkAction *action, G3dataWindow *window);
+static void g3data_window_print_results(FILE *fp, G3dataWindow *window);
 static void g3data_window_file_save_as (GtkAction *action, G3dataWindow *window);
 static void g3data_window_file_close (GtkAction *action, G3dataWindow *window);
 static void g3data_window_help_about (GtkAction *action, G3dataWindow *window);
@@ -47,6 +48,7 @@ static void full_screen_action_callback(GtkWidget *widget, gpointer func_data);
 static void hide_zoom_area_callback(GtkWidget *widget, gpointer func_data);
 static void hide_log_buttons_callback(GtkWidget *widget, gpointer func_data);
 static void hide_sort_buttons_callback(GtkWidget *widget, gpointer func_data);
+
 
 static const GtkActionEntry entries[] = {
     { "FileMenu", NULL, "_File", NULL, NULL, NULL },
@@ -215,7 +217,7 @@ static void g3data_window_file_open (GtkAction *action, G3dataWindow *window)
 }
 
 
-void g3data_window_print_results(FILE *fp, G3dataWindow *window)
+static void g3data_window_print_results(FILE *fp, G3dataWindow *window)
 {
     gboolean islogarithmic[2];
     gint i;

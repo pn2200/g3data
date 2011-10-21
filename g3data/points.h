@@ -27,4 +27,3 @@ struct PointValue CalcPointValue(gint Xpos,
                                  gint control_point_image_coords[4][2],
                                  gdouble control_point_coords[4],
                                  gboolean islogarithmic[2]);
-void print_results(FILE *fp);

@@ -487,7 +487,7 @@ static gint g3data_image_insert (G3dataWindow *window,
     gint height = options->height;
     gdouble scale = options->scale;
     GdkPixbuf *temp_pixbuf;
-    GtkWidget *dialog, *drawing_area;
+    GtkWidget *dialog;
 
     temp_pixbuf = gdk_pixbuf_new_from_file (filename, NULL);
     /* If unable to load image, notify user with dialog */
@@ -665,7 +665,7 @@ static gboolean motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gp
    and make sensitive the corresponding text entry. */
 static void control_point_button_toggled (GtkWidget *widget, gpointer data)
 {
-    gint i, j;
+    gint i;
     G3dataWindow *window = G3DATA_WINDOW (data);
 
     if (gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (widget))) {

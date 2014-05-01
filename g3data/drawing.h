@@ -22,4 +22,6 @@ Authors email : pnovak@alumni.caltech.edu
 */
 
 void DrawMarker(cairo_t *cr, gint x, gint y, gint type, GdkColor *color);
+void DrawErrorBar(cairo_t *cr, gint x1, gint y1, gint x2, gint y2, gint type, GdkColor *color);
 gboolean setcolors(GdkColor **color);
+

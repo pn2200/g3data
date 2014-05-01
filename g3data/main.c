@@ -73,6 +73,8 @@ GtkActionGroup	*tab_action_group;
 /* axiscoords[][][0] will be set to -1 when not used */
 gint		axiscoords[MAXNUMTABS][4][2];						/* X,Y coordinates of axispoints */
 gint		**points[MAXNUMTABS];							/* Indexes of graphpoints and their coordinates */
+gint		**ey_points[MAXNUMTABS];							/* Indexes of graphpoints and their coordinates */
+gint		**ex_points[MAXNUMTABS];							/* Indexes of graphpoints and their coordinates */
 gint		numpoints[MAXNUMTABS];
 gint		ordering[MAXNUMTABS];
 gint		XSize[MAXNUMTABS], YSize[MAXNUMTABS];
@@ -85,10 +87,14 @@ gint ypointer = -1;
 gdouble		realcoords[MAXNUMTABS][4];						/* X,Y coords on graph */
 gboolean	print2file[MAXNUMTABS];
 gboolean	UseErrors[MAXNUMTABS];
+gboolean	settingErrors[MAXNUMTABS];
+gboolean	settingXYErrors[MAXNUMTABS][2]= {{FALSE,FALSE}};
 gboolean	setxypressed[MAXNUMTABS][4];
 gboolean	bpressed[MAXNUMTABS][4];						/* What axispoints have been set out ? */
 gboolean	valueset[MAXNUMTABS][4];
 gboolean	logxy[MAXNUMTABS][2] = {{FALSE,FALSE}};
+gboolean	errxy[MAXNUMTABS][2] = {{FALSE,FALSE}};
+gboolean	symerrxy[MAXNUMTABS][2] = {{TRUE,TRUE}};
 gboolean        ShowLog = FALSE, ShowZoomArea = FALSE, ShowOpProp = FALSE;
 const gchar *file_name[MAXNUMTABS];
 gchar		*FileNames[MAXNUMTABS];
@@ -110,6 +116,7 @@ static void UseErrCB(GtkWidget *widget, gpointer func_data);
 static void read_xy_entry(GtkWidget *entry, gpointer func_data);
 static void read_file_entry(GtkWidget *entry, gpointer func_data);
 static void islogxy(GtkWidget *widget, gpointer func_data);
+static void iserrxy(GtkWidget *widget, gpointer func_data);
 static void remove_last(GtkWidget *widget, gpointer data);
 static void remove_all(GtkWidget *widget, gpointer data) ;
 static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer);
@@ -204,35 +211,100 @@ static void SetButtonSensitivity(int TabNum)
 /****************************************************************/
 static gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer data)
 {
-    gint x, y, i, j, TabNum;
+    gint x, y, i0, i, j, TabNum;
+    gint ex,ey;
 
     TabNum = GPOINTER_TO_INT(data);
+
+    //printf("TabNum = %d \n",TabNum);
+    //printf("settingErrors=%d \n",settingErrors[TabNum]);
 
     gdk_window_get_pointer (event->window, &x, &y, NULL);
 
     if (event->button == 1) {
+       //if(event->type == GDK_BUTTON_RELEASE){
+
         /* If none of the set axispoint buttons been pressed */
         if (!setxypressed[TabNum][0] && !setxypressed[TabNum][1] && !setxypressed[TabNum][2] && !setxypressed[TabNum][3]) {
-            if (numpoints[TabNum] > MaxPoints[TabNum]-1) {
-                i = MaxPoints[TabNum];
-                MaxPoints[TabNum] += MAXPOINTS;
-                points[TabNum] = realloc(points[TabNum],sizeof(gint *) * MaxPoints[TabNum]);
-                if (points[TabNum]==NULL) {
+
+           if(settingErrors[TabNum] == 0 /*&& settingXYErrors[TabNum][0] && settingXYErrors[TabNum][1]*/  ){
+
+              if (numpoints[TabNum] > MaxPoints[TabNum]-1) {
+                 //  allocate more memory for points
+                 i0 = MaxPoints[TabNum];
+                 i = MaxPoints[TabNum];
+                 MaxPoints[TabNum] += MAXPOINTS;
+
+                 points[TabNum] = realloc(points[TabNum],sizeof(gint *) * MaxPoints[TabNum]);
+                 if (points[TabNum]==NULL) {
                     printf("Error reallocating memory for points. Exiting.\n");
                     exit(-1);
-                }
-                for (;i<MaxPoints[TabNum];i++) {
+                 }
+                 for (i=i0;i<MaxPoints[TabNum];i++) {
                     points[TabNum][i] = malloc(sizeof(gint) * 2);
                     if (points[TabNum][i]==NULL) {
-                        printf("Error allocating memory for points[%d]. Exiting.\n",i);
-                        exit(-1);
+                       printf("Error allocating memory for points[%d]. Exiting.\n",i);
+                       exit(-1);
                     }
-                }
+                 }
+
+                 //ey_points 
+                 ey_points[TabNum] = realloc(ey_points[TabNum],sizeof(gint *) * MaxPoints[TabNum]);
+                 if (ey_points[TabNum]==NULL) {
+                    printf("Error reallocating memory for ey_points. Exiting.\n");
+                    exit(-1);
+                 }
+                 for (i=i0;i<MaxPoints[TabNum];i++) {
+                    ey_points[TabNum][i] = malloc(sizeof(gint) * 2);
+                    if (ey_points[TabNum][i]==NULL) {
+                       printf("Error allocating memory for ey_points[%d]. Exiting.\n",i);
+                       exit(-1);
+                    }
+                 }
+
+                 //ex_points 
+                 ex_points[TabNum] = realloc(ex_points[TabNum],sizeof(gint *) * MaxPoints[TabNum]);
+                 if (ex_points[TabNum]==NULL) {
+                    printf("Error reallocating memory for ex_points. Exiting.\n");
+                    exit(-1);
+                 }
+                 for (i=i0;i<MaxPoints[TabNum];i++) {
+                    ex_points[TabNum][i] = malloc(sizeof(gint) * 2);
+                    if (ex_points[TabNum][i]==NULL) {
+                       printf("Error allocating memory for ex_points[%d]. Exiting.\n",i);
+                       exit(-1);
+                    }
+                 }
+              }
+
+              //printf("numpoints = %d \n",numpoints[TabNum]);
+
+              points[TabNum][numpoints[TabNum]][0]=x;
+              points[TabNum][numpoints[TabNum]][1]=y;
+              ey_points[TabNum][numpoints[TabNum]][0]=0;
+              ey_points[TabNum][numpoints[TabNum]][1]=0;
+              ex_points[TabNum][numpoints[TabNum]][0]=0;
+              ex_points[TabNum][numpoints[TabNum]][1]=0;
+
+              if( errxy[TabNum][0] || errxy[TabNum][1] ){
+                 settingErrors[TabNum] = 1;
+              }
+
+              numpoints[TabNum]++;
+              SetNumPointsEntry(nump_entry[TabNum], numpoints[TabNum]);
+
+           } else {
+               // we are setting the error bar(s)
+               settingErrors[TabNum] = 0;
+               ex = abs(points[TabNum][numpoints[TabNum]-1][0]-x);
+               ey = abs(points[TabNum][numpoints[TabNum]-1][1]-y);
+               ey_points[TabNum][numpoints[TabNum]-1][0]=-ey;
+               ey_points[TabNum][numpoints[TabNum]-1][1]= ey;
+               ex_points[TabNum][numpoints[TabNum]-1][0]=-ex;
+               ex_points[TabNum][numpoints[TabNum]-1][1]= ex;
             }
-            points[TabNum][numpoints[TabNum]][0]=x;
-            points[TabNum][numpoints[TabNum]][1]=y;
-            numpoints[TabNum]++;
-            SetNumPointsEntry(nump_entry[TabNum], numpoints[TabNum]);
+
+
         } else {
             for (i=0;i<4;i++) {
                 /* If any of the set axispoint buttons are pressed */
@@ -252,7 +324,8 @@ static gint button_press_event(GtkWidget *widget, GdkEventButton *event, gpointe
                     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(setxybutton[TabNum][i]),FALSE);
                 }
             }
-        }
+        //}
+      }
     } else if (event->button == 2) {
         for (i=0;i<2;i++) {
             if (!bpressed[TabNum][i]) {
@@ -333,7 +406,10 @@ static gint motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpoint
         gtk_entry_set_text(GTK_ENTRY(xerr_entry[TabNum]),"");
         gtk_entry_set_text(GTK_ENTRY(yerr_entry[TabNum]),"");
     }
+
     gtk_widget_queue_draw(zoom_area[TabNum]);
+
+    if(settingErrors[TabNum]) gtk_widget_queue_draw(drawing_area[TabNum]);
 
     return TRUE;
 }
@@ -370,6 +446,7 @@ static gboolean expose_event_callback(GtkWidget *widget, GdkEventExpose *event, 
 static gint expose_event(GtkWidget *widget, GdkEventExpose *event, gpointer data)
 {
     gint i, TabNum;
+    gint ex, ey;
     cairo_t *cr = gdk_cairo_create (gtk_widget_get_window(widget));
 
     TabNum = GPOINTER_TO_INT(data);
@@ -378,7 +455,22 @@ static gint expose_event(GtkWidget *widget, GdkEventExpose *event, gpointer data
     cairo_paint (cr);
 
     for (i=0;i<4;i++) if (bpressed[TabNum][i]) DrawMarker(cr, axiscoords[TabNum][i][0], axiscoords[TabNum][i][1], i/2, colors);
-    for (i=0;i<numpoints[TabNum];i++) DrawMarker(cr, points[TabNum][i][0], points[TabNum][i][1], 2, colors);
+    for (i=0;i<numpoints[TabNum]-1;i++) {
+       // assuming symmetric errors
+       ex = abs(ex_points[TabNum][i][0]); 
+       ey = abs(ey_points[TabNum][i][0]); 
+       DrawMarker(cr, points[TabNum][i][0], points[TabNum][i][1], 2, colors);
+       if(errxy[TabNum][0])DrawErrorBar(cr,points[TabNum][i][0]-ex, points[TabNum][i][1]   ,points[TabNum][i][0]+ex, points[TabNum][i][1]   , 0, colors); 
+       if(errxy[TabNum][1])DrawErrorBar(cr,points[TabNum][i][0]   , points[TabNum][i][1]-ey,points[TabNum][i][0]   , points[TabNum][i][1]+ey, 0, colors); 
+    }
+    i = numpoints[TabNum]-1;
+    if(i>=0){
+       ex = abs(points[TabNum][i][0]-xpointer);
+       ey = abs(points[TabNum][i][1]-ypointer);
+       DrawMarker(cr, points[TabNum][i][0], points[TabNum][i][1], 2, colors);
+       if(errxy[TabNum][0])DrawErrorBar(cr,points[TabNum][i][0]-ex, points[TabNum][i][1]   ,points[TabNum][i][0]+ex, points[TabNum][i][1]   , 0, colors); 
+       if(errxy[TabNum][1])DrawErrorBar(cr,points[TabNum][i][0]   , points[TabNum][i][1]-ey,points[TabNum][i][0]   , points[TabNum][i][1]+ey, 0, colors); 
+    }
 
     cairo_destroy (cr);
     return FALSE;
@@ -525,6 +617,30 @@ static void islogxy(GtkWidget *widget, gpointer func_data)
     }
 }
 
+/****************************************************************/
+/* If the x or y error bars are to be recorded, and thus the box*/
+/* is toggled, this function gets called.                       */
+/****************************************************************/
+static void iserrxy(GtkWidget *widget, gpointer func_data)
+{
+  gint i;
+
+    i = GPOINTER_TO_INT (func_data);
+
+    errxy[ViewedTabNum][i] = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+											/* logxy = TRUE else FALSE. */
+    if (errxy[ViewedTabNum][i]) {
+	//if (realcoords[ViewedTabNum][i*2] <= 0) {					/* If a negative value has been insert */
+	//    valueset[ViewedTabNum][i*2]=FALSE;
+	//    gtk_entry_set_text(GTK_ENTRY(xyentry[ViewedTabNum][i*2]),"");		/* Zero it */
+	//}
+	//if (realcoords[ViewedTabNum][i*2+1] <= 0) {					/* If a negative value has been insert */
+	//    valueset[ViewedTabNum][i*2+1]=FALSE;
+	//    gtk_entry_set_text(GTK_ENTRY(xyentry[ViewedTabNum][i*2+1]),"");		/* Zero it */
+        //}
+    }
+    gtk_widget_queue_draw(drawing_area[ViewedTabNum]);
+}
 
 /* Removes the last data point inserted */
 static void remove_last(GtkWidget *widget, gpointer data)
@@ -539,6 +655,7 @@ static void remove_last(GtkWidget *widget, gpointer data)
         SetNumPointsEntry(nump_entry[TabNum], numpoints[TabNum]);
     }
 
+    settingErrors[TabNum] = 0;
     SetButtonSensitivity(TabNum);
     gtk_widget_queue_draw(drawing_area[ViewedTabNum]);
 }
@@ -566,6 +683,7 @@ static void remove_all(GtkWidget *widget, gpointer data)
     }
 
     numpoints[TabNum] = 0;
+    settingErrors[TabNum] = 0;
     SetNumPointsEntry(nump_entry[TabNum], numpoints[TabNum]);
 
     remove_last(widget, data);
@@ -732,10 +850,12 @@ static void update_preview_cb (GtkFileChooser *file_chooser, gpointer data) {
 static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble maxY, gboolean UsePreSetCoords)
 {
   GtkWidget 	*table;									/* GTK table/box variables for packing */
+  GtkWidget 	*table2;								/* GTK table/box variables for packing */
   GtkWidget	*tophbox, *bottomhbox;
   GtkWidget	*trvbox, *tlvbox, *brvbox, *blvbox, *subvbox;
   GtkWidget 	*xy_label[4];								/* Labels for texts in window */
   GtkWidget 	*logcheckb[2];								/* Logarithmic checkbuttons */
+  GtkWidget 	*errcheckb[2];								/* X and Y error bar checkbuttons */
   GtkWidget 	*nump_label, *ScrollWindow;						/* Various widgets */
   GtkWidget	*APlabel, *PIlabel, *ZAlabel, *Llabel, *tab_label;
   GtkWidget 	*alignment;
@@ -772,9 +892,12 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
     gtk_table_set_col_spacings(GTK_TABLE(table), 0);
     TabNum = gtk_notebook_append_page(GTK_NOTEBOOK(mainnotebook), 
 				      table, tab_label);
+
     if (TabNum == -1) {
 	return -1;
     }
+
+    settingErrors[TabNum] = 0;
 
 /* Init datastructures */
     FileNames[TabNum] = g_strdup_printf("%s", basename(filename));
@@ -797,6 +920,32 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
     for (i=0;i<MaxPoints[TabNum];i++) {
 	points[TabNum][i] = (gint *) malloc(sizeof(gint) * 2);
 	if (points[TabNum][i]==NULL) {
+	    printf("Error allocating memory for points[%d]. Exiting.\n",i);
+	    return -1;
+	}
+    }
+
+    ex_points[TabNum] = (void *) malloc(sizeof(gint *) * MaxPoints[TabNum]);
+    if (ex_points[TabNum]==NULL) {
+	printf("Error allocating memory for ex_points. Exiting.\n");
+	return -1;
+    }
+    for (i=0;i<MaxPoints[TabNum];i++) {
+	ex_points[TabNum][i] = (gint *) malloc(sizeof(gint) * 2);
+	if (ex_points[TabNum][i]==NULL) {
+	    printf("Error allocating memory for points[%d]. Exiting.\n",i);
+	    return -1;
+	}
+    }
+
+    ey_points[TabNum] = (void *) malloc(sizeof(gint *) * MaxPoints[TabNum]);
+    if (ey_points[TabNum]==NULL) {
+	printf("Error allocating memory for ey_points. Exiting.\n");
+	return -1;
+    }
+    for (i=0;i<MaxPoints[TabNum];i++) {
+	ey_points[TabNum][i] = (gint *) malloc(sizeof(gint) * 2);
+	if (ey_points[TabNum][i]==NULL) {
 	    printf("Error allocating memory for points[%d]. Exiting.\n",i);
 	    return -1;
 	}
@@ -883,6 +1032,15 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(logcheckb[i]), logxy[TabNum][i]);
     }
 
+    /* Error bar x and y */
+    for (i=0;i<2;i++) {
+	errcheckb[i] = gtk_check_button_new_with_mnemonic(errlabel[i]);			/* Create check button */
+	g_signal_connect (G_OBJECT (errcheckb[i]), "toggled",				/* Connect button */
+			  G_CALLBACK (iserrxy), GINT_TO_POINTER (i));
+        //gtk_widget_set_tooltip_text (errcheckb[i],logxytt[i]);
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(errcheckb[i]), errxy[TabNum][i]);
+    }
+
     tophbox = gtk_hbox_new (FALSE, SECT_SEP);
     alignment = gtk_alignment_new (0,0,0,0);
     gtk_table_attach(GTK_TABLE(table), alignment, 0, 1, 0, 1, 5, 0, 0, 0);
@@ -943,6 +1101,13 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
     gtk_container_add(GTK_CONTAINER(alignment), nump_label);
     gtk_table_attach(GTK_TABLE(table), alignment, 0, 1, 0, 1, 0, 0, 0, 0);
     gtk_table_attach(GTK_TABLE(table), nump_entry[TabNum], 1, 2, 0, 1, 0, 0, 0, 0);
+
+    table2 = gtk_table_new(1, 2 ,FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(table2), 6);
+    gtk_table_set_col_spacings(GTK_TABLE(table2), 6);
+    gtk_box_pack_start (GTK_BOX (trvbox), table2, FALSE, FALSE, 0);
+    gtk_table_attach_defaults(GTK_TABLE(table2), errcheckb[0], 0,1,0,1);   /* Pack checkbutton in vert. box */
+    gtk_table_attach_defaults(GTK_TABLE(table2), errcheckb[1], 1,2,0,1);   /* Pack checkbutton in vert. box */
 
     /* Pack remove points buttons */
     blvbox = gtk_vbox_new (FALSE, GROUP_SEP);

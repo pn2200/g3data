@@ -97,6 +97,9 @@ gchar actionlabel[ACTIONBNUM][32] = {"Export data to stdout",
 gchar loglabel[LOGBNUM][32] = {"_X axis is logarithmic",
                                "_Y axis is logarithmic"};
 
+gchar errlabel[LOGBNUM][32] = {"_X error bars",
+                               "_Y error bars"};
+
 gchar xy_label_text[4][32] = {"X<sub>1</sub> value : ",
                               "X<sub>2</sub> value : ",
                               "Y<sub>1</sub> value : ",

@@ -36,7 +36,8 @@ Authors email : jonas.frantz@welho.com
 #define URI_IDENTIFIER "file://"
 
 struct PointValue {
-  double 	Xv,Yv,Xerr,Yerr;
+  double Xv,Yv,Xerr,Yerr;
+  double eXplus,eXminus,eYplus,eYminus;
 };
 
 typedef enum {

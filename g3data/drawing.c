@@ -60,6 +60,32 @@ void DrawMarker(cairo_t *cr, gint x, gint y, gint type, GdkColor *color)
     }
 }
 
+/****************************************************************/
+/* This function draws the error bars                           */
+/****************************************************************/
+void DrawErrorBar(cairo_t *cr, gint x1, gint y1, gint x2, gint y2, gint type, GdkColor *color) 
+{
+    if (type == 0) {
+        gdk_cairo_set_source_color(cr, &color[0]);
+        cairo_set_line_width(cr,2);
+        cairo_move_to(cr, x1, y1);
+        cairo_rel_line_to(cr, (x2-x1), (y2-y1));
+        cairo_stroke(cr);
+    }
+    //else if (type == 1) {
+    //    gdk_cairo_set_source_color(cr, &color[1]);
+    //    cairo_move_to(cr, x, y - MARKERLENGTH);
+    //    cairo_rel_line_to(cr, 0, 2 * MARKERLENGTH);
+    //    cairo_move_to(cr, x, y);
+    //    cairo_rel_line_to(cr, MARKERLENGTH, 0);
+    //    cairo_stroke(cr);
+    //} else if (type == 2) {
+    //    gdk_cairo_set_source_color(cr, &color[2]);
+    //    cairo_rectangle(cr, x - MARKERLENGTH / 2, y - MARKERLENGTH / 2, MARKERLENGTH, MARKERLENGTH);
+    //    cairo_stroke(cr);
+    //}
+}
+
 
 /****************************************************************/
 /* This function initializes the colors which are used when 	*/
@@ -69,12 +95,13 @@ gboolean setcolors(GdkColor **color)
 {
   gboolean *success;
   gint i, ncolors;
-  gushort xcolor[19][4] = {{40000,20000,48000},				/* x axis marker color */
+  gushort xcolor[19][5] = {{40000,20000,48000},				/* x axis marker color */
 			   {40000,48000,20000},				/* y axis marker color */
 			   {65535,00000,00000},				/* outer square color */
-			   {65535,65535,65535}};			/* inner square color */
+			   {65535,65535,65535}, 			/* inner square color */
+			   {65535,65535,65535}};			/* Error bar */
 
-    ncolors=4;								/* Number of colors to be initialized */
+    ncolors=5;								/* Number of colors to be initialized */
     *color = (GdkColor *) calloc (ncolors, sizeof(GdkColor));		/* Allocate memory for the colors */
     success = (gboolean *) calloc (ncolors, sizeof(gboolean));
 

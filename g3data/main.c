@@ -447,6 +447,10 @@ static gint expose_event(GtkWidget *widget, GdkEventExpose *event, gpointer data
 {
     gint i, TabNum;
     gint ex, ey;
+    double fex, fey;
+    double lex, ley;
+    double deltay1,deltay2;
+    double deltax1,deltax2;
     cairo_t *cr = gdk_cairo_create (gtk_widget_get_window(widget));
 
     TabNum = GPOINTER_TO_INT(data);
@@ -457,19 +461,67 @@ static gint expose_event(GtkWidget *widget, GdkEventExpose *event, gpointer data
     for (i=0;i<4;i++) if (bpressed[TabNum][i]) DrawMarker(cr, axiscoords[TabNum][i][0], axiscoords[TabNum][i][1], i/2, colors);
     for (i=0;i<numpoints[TabNum]-1;i++) {
        // assuming symmetric errors
+       // Draw all the existing points with errors
        ex = abs(ex_points[TabNum][i][0]); 
        ey = abs(ey_points[TabNum][i][0]); 
        DrawMarker(cr, points[TabNum][i][0], points[TabNum][i][1], 2, colors);
-       if(errxy[TabNum][0])DrawErrorBar(cr,points[TabNum][i][0]-ex, points[TabNum][i][1]   ,points[TabNum][i][0]+ex, points[TabNum][i][1]   , 0, colors); 
-       if(errxy[TabNum][1])DrawErrorBar(cr,points[TabNum][i][0]   , points[TabNum][i][1]-ey,points[TabNum][i][0]   , points[TabNum][i][1]+ey, 0, colors); 
+       if(errxy[TabNum][0]) DrawErrorBar(cr,points[TabNum][i][0]-ex, points[TabNum][i][1]   ,points[TabNum][i][0]+ex, points[TabNum][i][1]   , 0, colors); 
+       if(errxy[TabNum][1]) DrawErrorBar(cr,points[TabNum][i][0]   , points[TabNum][i][1]-ey,points[TabNum][i][0]   , points[TabNum][i][1]+ey, 0, colors); 
     }
+
+    // Draw the error bar you are currently trying to define 
     i = numpoints[TabNum]-1;
     if(i>=0){
-       ex = abs(points[TabNum][i][0]-xpointer);
-       ey = abs(points[TabNum][i][1]-ypointer);
        DrawMarker(cr, points[TabNum][i][0], points[TabNum][i][1], 2, colors);
-       if(errxy[TabNum][0])DrawErrorBar(cr,points[TabNum][i][0]-ex, points[TabNum][i][1]   ,points[TabNum][i][0]+ex, points[TabNum][i][1]   , 0, colors); 
-       if(errxy[TabNum][1])DrawErrorBar(cr,points[TabNum][i][0]   , points[TabNum][i][1]-ey,points[TabNum][i][0]   , points[TabNum][i][1]+ey, 0, colors); 
+
+       // x error bar is log and symmetric so it has to be drawn asymmetrically
+       if(errxy[TabNum][0]) {
+          ex = abs(points[TabNum][i][0]-xpointer);
+          //fex = abs(points[TabNum][i][0]-xpointer);
+          //if(logxy[TabNum][0]) {
+          //   if(points[TabNum][i][0]-xpointer > 0 ) {
+          //      // cursor is below point defining the lower part of the error bar.
+          //      deltax1 = fex/points[TabNum][i][0];
+          //      deltax2 = deltax1*(1.0/(deltax1+1.0));
+          //      lex = points[TabNum][i][0]*deltax2;
+          //      DrawErrorBar(cr,points[TabNum][i][0]-ex, points[TabNum][i][1]   ,points[TabNum][i][0]+lex, points[TabNum][i][1]   , 0, colors); 
+          //   } else {
+          //      // cursor is above the data point
+          //      deltax2 = fex/points[TabNum][i][0];
+          //      deltax1 = deltax2*(1.0/(1.0 - deltax2));
+          //      lex = points[TabNum][i][0]*deltax1;
+          //      DrawErrorBar(cr,points[TabNum][i][0]-lex, points[TabNum][i][1]   ,points[TabNum][i][0]+ex, points[TabNum][i][1]   , 0, colors); 
+          //   }
+          //} else {
+             DrawErrorBar(cr,points[TabNum][i][0]-ex, points[TabNum][i][1]   ,points[TabNum][i][0]+ex, points[TabNum][i][1]   , 0, colors); 
+          //}
+       }
+
+       // y error bar is log and symmetric so it has to be drawn asymmetrically
+       if(errxy[TabNum][1]) {
+          ey = abs(points[TabNum][i][1]-ypointer);
+          //fey = abs(points[TabNum][i][1]-ypointer);
+          //if(logxy[TabNum][1]) {
+          //   if(points[TabNum][i][1]-ypointer > 0 ) {
+          //      // cursor is below point defining the lower part of the error bar.
+          //      deltay1 = fey/points[TabNum][i][1];
+          //      deltay2 = deltay1*(1.0/(deltay1+1.0));
+          //      ley = points[TabNum][i][1]*deltay2;
+          //      DrawErrorBar(cr,points[TabNum][i][0], points[TabNum][i][1] -ey  ,points[TabNum][i][0], points[TabNum][i][1] +ley  , 0, colors); 
+          //   } else {
+          //      // cursor is above the data point
+          //      deltay2 = fey/points[TabNum][i][1];
+          //      deltay1 = deltay2*(1.0/(1.0 - deltay2));
+          //      lex = points[TabNum][i][0]*deltax1;
+          //      DrawErrorBar(cr,points[TabNum][i][0], points[TabNum][i][1] -ley  ,points[TabNum][i][0], points[TabNum][i][1] +ey  , 0, colors); 
+          //   }
+          //} else {
+             DrawErrorBar(cr,points[TabNum][i][0], points[TabNum][i][1] -ey  ,points[TabNum][i][0], points[TabNum][i][1] +ey  , 0, colors); 
+          //}
+       }
+
+       //ey = abs(points[TabNum][i][1]-ypointer);
+       //if(errxy[TabNum][1]) DrawErrorBar(cr,points[TabNum][i][0]   , points[TabNum][i][1]-ey,points[TabNum][i][0]   , points[TabNum][i][1]+ey, 0, colors); 
     }
 
     cairo_destroy (cr);

@@ -87,6 +87,7 @@ gint ypointer = -1;
 gdouble		realcoords[MAXNUMTABS][4];						/* X,Y coords on graph */
 gboolean	print2file[MAXNUMTABS];
 gboolean	UseErrors[MAXNUMTABS];
+gboolean	UseAsymErrors[MAXNUMTABS][2] = {{FALSE,FALSE}};      //  Set by checkbox 
 gboolean	settingErrors[MAXNUMTABS];
 gboolean	settingXYErrors[MAXNUMTABS][2]= {{FALSE,FALSE}};
 gboolean	setxypressed[MAXNUMTABS][4];
@@ -116,7 +117,7 @@ static void UseErrCB(GtkWidget *widget, gpointer func_data);
 static void read_xy_entry(GtkWidget *entry, gpointer func_data);
 static void read_file_entry(GtkWidget *entry, gpointer func_data);
 static void islogxy(GtkWidget *widget, gpointer func_data);
-static void iserrxy(GtkWidget *widget, gpointer func_data);
+static void isAsymErrXY(GtkWidget *widget, gpointer func_data);
 static void remove_last(GtkWidget *widget, gpointer data);
 static void remove_all(GtkWidget *widget, gpointer data) ;
 static gint key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer pointer);
@@ -447,6 +448,8 @@ static gint expose_event(GtkWidget *widget, GdkEventExpose *event, gpointer data
 {
     gint i, TabNum;
     gint ex, ey;
+    gint ex1, ey1;
+    gint ex2, ey2;
     double fex, fey;
     double lex, ley;
     double deltay1,deltay2;
@@ -694,6 +697,28 @@ static void iserrxy(GtkWidget *widget, gpointer func_data)
     gtk_widget_queue_draw(drawing_area[ViewedTabNum]);
 }
 
+static void isAsymErrXY(GtkWidget *widget, gpointer func_data)
+{
+  gint i;
+
+    i = GPOINTER_TO_INT (func_data);
+
+    UseAsymErrors[ViewedTabNum][i] = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+											/* logxy = TRUE else FALSE. */
+    if (UseAsymErrors[ViewedTabNum][i]) {
+	//if (realcoords[ViewedTabNum][i*2] <= 0) {					/* If a negative value has been insert */
+	//    valueset[ViewedTabNum][i*2]=FALSE;
+	//    gtk_entry_set_text(GTK_ENTRY(xyentry[ViewedTabNum][i*2]),"");		/* Zero it */
+	//}
+	//if (realcoords[ViewedTabNum][i*2+1] <= 0) {					/* If a negative value has been insert */
+	//    valueset[ViewedTabNum][i*2+1]=FALSE;
+	//    gtk_entry_set_text(GTK_ENTRY(xyentry[ViewedTabNum][i*2+1]),"");		/* Zero it */
+        //}
+    }
+    gtk_widget_queue_draw(drawing_area[ViewedTabNum]);
+}
+//______________________________________________________________________________
+
 /* Removes the last data point inserted */
 static void remove_last(GtkWidget *widget, gpointer data)
 {
@@ -908,11 +933,12 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
   GtkWidget 	*xy_label[4];								/* Labels for texts in window */
   GtkWidget 	*logcheckb[2];								/* Logarithmic checkbuttons */
   GtkWidget 	*errcheckb[2];								/* X and Y error bar checkbuttons */
+  GtkWidget 	*asymerrcheckb[2];								/* X and Y error bar checkbuttons */
   GtkWidget 	*nump_label, *ScrollWindow;						/* Various widgets */
   GtkWidget	*APlabel, *PIlabel, *ZAlabel, *Llabel, *tab_label;
   GtkWidget 	*alignment;
   GtkWidget 	*x_label, *y_label, *tmplabel;
-  GtkWidget	*ordercheckb[3], *UseErrCheckB, *print_to_stdout_button, *print_to_file_button;
+  GtkWidget	*ordercheckb[3], *UseAsymErrCheckB, *UseErrCheckB, *print_to_stdout_button, *print_to_file_button;
   GtkWidget	*Olabel, *Elabel, *Alabel;
   GSList 	*group;
   GtkWidget	*dialog;
@@ -1092,6 +1118,15 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
         //gtk_widget_set_tooltip_text (errcheckb[i],logxytt[i]);
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(errcheckb[i]), errxy[TabNum][i]);
     }
+    /* Error bar x and y */
+    for (i=0;i<2;i++) {
+	asymerrcheckb[i] = gtk_check_button_new_with_mnemonic(errlabel[i]);			/* Create check button */
+	g_signal_connect (G_OBJECT (asymerrcheckb[i]), "toggled",				/* Connect button */
+			  G_CALLBACK (isAsymErrXY), GINT_TO_POINTER (i));
+        //gtk_widget_set_tooltip_text (asymerrcheckb[i],logxytt[i]);
+	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(asymerrcheckb[i]), UseAsymErrors[TabNum][i]);
+    }
+
 
     tophbox = gtk_hbox_new (FALSE, SECT_SEP);
     alignment = gtk_alignment_new (0,0,0,0);
@@ -1154,12 +1189,20 @@ static gint SetupNewTab(char *filename, gdouble Scale, gdouble maxX, gdouble max
     gtk_table_attach(GTK_TABLE(table), alignment, 0, 1, 0, 1, 0, 0, 0, 0);
     gtk_table_attach(GTK_TABLE(table), nump_entry[TabNum], 1, 2, 0, 1, 0, 0, 0, 0);
 
+    // Add x and y error check  boxes
     table2 = gtk_table_new(1, 2 ,FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(table2), 6);
     gtk_table_set_col_spacings(GTK_TABLE(table2), 6);
     gtk_box_pack_start (GTK_BOX (trvbox), table2, FALSE, FALSE, 0);
     gtk_table_attach_defaults(GTK_TABLE(table2), errcheckb[0], 0,1,0,1);   /* Pack checkbutton in vert. box */
     gtk_table_attach_defaults(GTK_TABLE(table2), errcheckb[1], 1,2,0,1);   /* Pack checkbutton in vert. box */
+
+    table2 = gtk_table_new(1, 2 ,FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(table2), 6);
+    gtk_table_set_col_spacings(GTK_TABLE(table2), 6);
+    gtk_box_pack_start (GTK_BOX (trvbox), table2, FALSE, FALSE, 0);
+    gtk_table_attach_defaults(GTK_TABLE(table2), asymerrcheckb[0], 0,1,0,1);   /* Pack checkbutton in vert. box */
+    gtk_table_attach_defaults(GTK_TABLE(table2), asymerrcheckb[1], 1,2,0,1);   /* Pack checkbutton in vert. box */
 
     /* Pack remove points buttons */
     blvbox = gtk_vbox_new (FALSE, GROUP_SEP);

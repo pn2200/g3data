@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-#AC_PREREQ([2.66])
+AC_PREREQ([2.66])
 AC_INIT([g3data], [1.5.4])
 
 # Put compiled object files into the same sub-directory as their sources

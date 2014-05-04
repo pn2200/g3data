@@ -1,0 +1,17 @@
+2014-05-04  Whitney Armstrong    <whit@temple.edu>
+
+    * g3data/main.c : Added error bar options to gui.
+    If x and/or y error bars are selected, the cursor draws symmetric errors
+    just after the data point is created. Thus, clicking again defines the errors.
+
+    * g3data/main.c : Added optional asymmetric error bars.
+    If the error bars are selected to be asymmetric, only the first half is defined
+    by the second click. A third click completely defines the error bars.
+    Note that with logarithmic axes and error bars, the error bars are automatically 
+    assumed to be asymmetric. 
+
+    * g3data/points.c : Added printing of errors depending on how many and the type 
+    of errors defined.
+
+    * g3data/drawing.c (DrawErrorBar) : Added function to draw error bar.
+

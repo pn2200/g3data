@@ -15,3 +15,8 @@
 
     * g3data/drawing.c (DrawErrorBar) : Added function to draw error bar.
 
+    * g3data/strings.h : Added some labels for errors and changed "Include errors" 
+    to "Include digitization errors" in order to distinguish them from error bars.
+
+    * AUTHORS : Added some authors
+

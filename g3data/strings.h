@@ -114,7 +114,7 @@ gchar RemLastBLabel[] = "_Remove last point";
 
 gchar RemAllBLabel[] = 	"Remove _all points";
 
-gchar PrintErrCBLabel[] = "Include _errors";
+gchar PrintErrCBLabel[] = "Include digitization _errors";
 
 gchar pm_string[] = 	" ± ";
 

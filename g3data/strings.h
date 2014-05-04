@@ -100,6 +100,9 @@ gchar loglabel[LOGBNUM][32] = {"_X axis is logarithmic",
 gchar errlabel[LOGBNUM][32] = {"_X error bars",
                                "_Y error bars"};
 
+gchar asymErrLabel[LOGBNUM][32] = {"Asymmetric X error",
+                                   "Asymmetric Y error"};
+
 gchar xy_label_text[4][32] = {"X<sub>1</sub> value : ",
                               "X<sub>2</sub> value : ",
                               "Y<sub>1</sub> value : ",

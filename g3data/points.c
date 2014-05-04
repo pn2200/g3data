@@ -44,6 +44,7 @@ extern	gdouble		realcoords[MAXNUMTABS][4];
 extern	gboolean	UseErrors[MAXNUMTABS];
 extern	gboolean	logxy[MAXNUMTABS][2];
 extern	gboolean	errxy[MAXNUMTABS][2];
+extern	gboolean	UseAsymErrors[MAXNUMTABS][2];
 extern	gint		print2file[MAXNUMTABS];
 extern  gchar		*file_name[MAXNUMTABS];
 extern	gint		ViewedTabNum;
@@ -143,7 +144,8 @@ void print_results(GtkWidget *widget, gpointer func_data)
   gint i;			/* Declare index variable */
   FILE *FP;
 
-  gint ex,ey;
+  gint ex1,ey1;
+  gint ex2,ey2;
 
   struct PointValue *RealPos, *ErrorSym, *ErrorX,*ErrorY, CalcErr1,CalcErr2,CalcVal;
 
@@ -172,18 +174,26 @@ void print_results(GtkWidget *widget, gpointer func_data)
 	RealPos[i].Yerr = CalcVal.Yerr;
 
         // Symetric errors does not work with log
-        ex = abs(ex_points[ViewedTabNum][i][0]); 
-        ey = abs(ey_points[ViewedTabNum][i][0]); 
+        ex1 = ex_points[ViewedTabNum][i][0]; 
+        ey1 = ey_points[ViewedTabNum][i][0]; 
+        ex2 = ex_points[ViewedTabNum][i][1]; 
+        ey2 = ey_points[ViewedTabNum][i][1]; 
 
-        CalcErr1 = CalcPointValue(points[ViewedTabNum][i][0]-ex, points[ViewedTabNum][i][1], ViewedTabNum);
-        CalcErr2 = CalcPointValue(points[ViewedTabNum][i][0]+ex, points[ViewedTabNum][i][1], ViewedTabNum);
-	RealPos[i].eXplus  =  fabs(CalcErr2.Xv - CalcErr1.Xv);
+        CalcErr1 = CalcPointValue(points[ViewedTabNum][i][0]+ex1, points[ViewedTabNum][i][1], ViewedTabNum);
+        CalcErr2 = CalcPointValue(points[ViewedTabNum][i][0], points[ViewedTabNum][i][1], ViewedTabNum);
 	RealPos[i].eXminus = -fabs(CalcErr2.Xv - CalcErr1.Xv);
 
-        CalcErr1 = CalcPointValue(points[ViewedTabNum][i][0], points[ViewedTabNum][i][1]-ey, ViewedTabNum);
-        CalcErr2 = CalcPointValue(points[ViewedTabNum][i][0], points[ViewedTabNum][i][1]+ey, ViewedTabNum);
-	RealPos[i].eYplus  =  fabs(CalcErr2.Yv - CalcErr1.Yv);
+        CalcErr1 = CalcPointValue(points[ViewedTabNum][i][0], points[ViewedTabNum][i][1], ViewedTabNum);
+        CalcErr2 = CalcPointValue(points[ViewedTabNum][i][0]+ex2, points[ViewedTabNum][i][1], ViewedTabNum);
+	RealPos[i].eXplus  =  fabs(CalcErr2.Xv - CalcErr1.Xv);
+
+        CalcErr1 = CalcPointValue(points[ViewedTabNum][i][0], points[ViewedTabNum][i][1]+ey1, ViewedTabNum);
+        CalcErr2 = CalcPointValue(points[ViewedTabNum][i][0], points[ViewedTabNum][i][1], ViewedTabNum);
 	RealPos[i].eYminus = -fabs(CalcErr2.Yv - CalcErr1.Yv);
+
+        CalcErr1 = CalcPointValue(points[ViewedTabNum][i][0], points[ViewedTabNum][i][1], ViewedTabNum);
+        CalcErr2 = CalcPointValue(points[ViewedTabNum][i][0], points[ViewedTabNum][i][1]+ey2, ViewedTabNum);
+	RealPos[i].eYplus  =  fabs(CalcErr2.Yv - CalcErr1.Yv);
 
 	//ErrorSym[i].Yv = fabs(CalcErr2.Yv - CalcErr1.Yv);
 	//ErrorSym[i].Xerr = CalcErr1.Xerr;
@@ -200,16 +210,30 @@ void print_results(GtkWidget *widget, gpointer func_data)
        // x
        fprintf(FP,"%.12g ", RealPos[i].Xv);
        // x error
-       if(errxy[ViewedTabNum][0]) fprintf(FP,"%.12g ", RealPos[i].eXplus);
+       if(errxy[ViewedTabNum][0]) 
+          if( UseAsymErrors[ViewedTabNum][0] ){
+             fprintf(FP,"%.12g ", RealPos[i].eXplus);
+             fprintf(FP,"%.12g ", RealPos[i].eXminus);
+          } else {
+             fprintf(FP,"%.12g ", RealPos[i].eXplus);
+          }
        // y
        fprintf(FP,"%.12g ", RealPos[i].Yv);
        // y error
-       if(errxy[ViewedTabNum][1]) fprintf(FP,"%.12g ", RealPos[i].eYplus);
+       if(errxy[ViewedTabNum][1]) 
+          if( UseAsymErrors[ViewedTabNum][1] ){
+             fprintf(FP,"%.12g ", RealPos[i].eYplus);
+             fprintf(FP,"%.12g ", RealPos[i].eYminus);
+          } else {
+             fprintf(FP,"%.12g ", RealPos[i].eYplus);
+          }
 
        //fprintf(FP,"%.12g  %.12g", RealPos[i].Xv, RealPos[i].Yv);
        if (UseErrors[ViewedTabNum]) {
           fprintf(FP,"\t%.12g  %.12g\n", RealPos[i].Xerr, RealPos[i].Yerr);
-       } else fprintf(FP,"\n");
+       } else {
+          fprintf(FP,"\n");
+       }
     }
     free(RealPos);
     //free(ErrorSym);

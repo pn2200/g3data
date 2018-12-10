@@ -135,7 +135,7 @@ void g3data_window_insert_image (G3dataWindow *window,
     gtk_box_pack_start (GTK_BOX (window->main_vbox), tophbox, FALSE, FALSE, 0);
 
     bottomhbox = gtk_hbox_new (FALSE, 0);
-    gtk_box_pack_start (GTK_BOX (window->main_vbox), bottomhbox, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (window->main_vbox), bottomhbox, TRUE, TRUE, 0);
 
     bottomleftvbox = gtk_vbox_new (FALSE, 0);
     gtk_box_pack_start (GTK_BOX (bottomhbox), bottomleftvbox, FALSE, FALSE, 0);

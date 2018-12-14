@@ -274,7 +274,7 @@ static void g3data_window_file_save_as (GtkAction *action, G3dataWindow *window)
                                           GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
                                           GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
                                           NULL);
-    gtk_file_chooser_set_current_name(dialog, "untitled.txt");
+    gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), "untitled.txt");
 
     if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
         filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));

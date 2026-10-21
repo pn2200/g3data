@@ -24,7 +24,6 @@ Authors email : jonas.frantz@welho.com
                                                                                                                                                                      
 */
 
-#include <stdlib.h>
 #include <gtk/gtk.h>
 #include "main.h"
 #include "drawing.h"
@@ -32,61 +31,38 @@ Authors email : jonas.frantz@welho.com
 #define MARKERLENGTH 6					/* Axis marker length */
 #define MARKERTHICKNESS 2				/* Axis marker thickness */
 
+/* Marker colors: X axis, Y axis, points (same values as the old
+ * 16-bit GdkColor table, divided by 65535) */
+static const GdkRGBA marker_colors[] = {
+    {40000/65535.0, 20000/65535.0, 48000/65535.0, 1.0},
+    {40000/65535.0, 48000/65535.0, 20000/65535.0, 1.0},
+    {1.0, 0.0, 0.0, 1.0}
+};
+
 /****************************************************************/
 /* This function draws the X-axis, Y-axis or point marker on	*/
 /* the drawing_area depending on the value of the type		*/
 /* parameter.							*/
 /****************************************************************/
-void DrawMarker(cairo_t *cr, gint x, gint y, gint type, GdkColor *color) 
+void DrawMarker(cairo_t *cr, gint x, gint y, gint type)
 {
+    if (type < 0 || type > 2)
+        return;
+    gdk_cairo_set_source_rgba(cr, &marker_colors[type]);
     if (type == 0) {
-        gdk_cairo_set_source_color(cr, &color[0]);
         cairo_move_to(cr, x - MARKERLENGTH, y);
         cairo_rel_line_to(cr, 2 * MARKERLENGTH, 0);
         cairo_move_to(cr, x, y);
         cairo_rel_line_to(cr, 0, -MARKERLENGTH);
         cairo_stroke(cr);
     } else if (type == 1) {
-        gdk_cairo_set_source_color(cr, &color[1]);
         cairo_move_to(cr, x, y - MARKERLENGTH);
         cairo_rel_line_to(cr, 0, 2 * MARKERLENGTH);
         cairo_move_to(cr, x, y);
         cairo_rel_line_to(cr, MARKERLENGTH, 0);
         cairo_stroke(cr);
-    } else if (type == 2) {
-        gdk_cairo_set_source_color(cr, &color[2]);
+    } else {
         cairo_rectangle(cr, x - MARKERLENGTH / 2, y - MARKERLENGTH / 2, MARKERLENGTH, MARKERLENGTH);
         cairo_stroke(cr);
     }
-}
-
-
-/****************************************************************/
-/* This function initializes the colors which are used when 	*/
-/* drawing the axispoints and the graph points			*/
-/****************************************************************/
-gboolean setcolors(GdkColor **color)
-{
-  gboolean *success;
-  gint i, ncolors;
-  gushort xcolor[19][4] = {{40000,20000,48000},				/* x axis marker color */
-			   {40000,48000,20000},				/* y axis marker color */
-			   {65535,00000,00000},				/* outer square color */
-			   {65535,65535,65535}};			/* inner square color */
-
-    ncolors=4;								/* Number of colors to be initialized */
-    *color = (GdkColor *) calloc (ncolors, sizeof(GdkColor));		/* Allocate memory for the colors */
-    success = (gboolean *) calloc (ncolors, sizeof(gboolean));
-
-    for(i=0;i<ncolors;i++) {						/* Transfer colorindexes into colors array */
-	(*color)[i].red = xcolor[i][0];
-        (*color)[i].green = xcolor[i][1];
-        (*color)[i].blue = xcolor[i][2];
-    }
-
-/* Allocate the colors */
-    gdk_colormap_alloc_colors(gdk_colormap_get_system(),*color, ncolors, FALSE, FALSE, success);
-    free(success);
-
-  return TRUE;
 }

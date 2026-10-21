@@ -55,7 +55,7 @@ struct _G3dataWindow {
     GtkWidget *log_buttons_vbox, *x_log, *y_log;
     GtkWidget *sort_buttons_vbox, *sort_button[3];
     GtkWidget *drawing_area;
-    GtkActionGroup *action_group;
+    GSimpleActionGroup *actions;
     GdkPixbuf *image;
     gint x, y, size, numpoints;
     gint **points;
@@ -76,6 +76,7 @@ struct g3data_options {
 GType g3data_window_get_type (void) G_GNUC_CONST;
 G3dataWindow *g3data_window_new (void);
 void g3data_set_default_options (struct g3data_options *options);
+void g3data_window_set_image_actions_enabled (G3dataWindow *window, gboolean enabled);
 
 G_END_DECLS
 

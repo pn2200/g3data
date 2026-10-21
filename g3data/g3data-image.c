@@ -35,7 +35,6 @@ Authors email : pnovak@alumni.caltech.edu
 #define MAXPOINTS 256
 
 extern gboolean use_error;
-static GdkColor *colors;
 
 static GtkWidget *g3data_window_control_points_add (G3dataWindow *window, struct g3data_options *options);
 static GtkWidget *g3data_window_status_area_add (G3dataWindow *window);
@@ -46,13 +45,13 @@ static GtkWidget *g3data_window_sort_buttons_add (G3dataWindow *window);
 static GtkWidget *g3data_window_error_buttons_add (void);
 static gint g3data_image_insert (G3dataWindow *window,
                                  const gchar *filename,
-                                 GtkWidget *drawing_area_alignment,
+                                 GtkWidget *container,
                                  struct g3data_options *options);
 static void SetButtonSensitivity (G3dataWindow *window);
 
 /* Callbacks */
-static gboolean image_area_expose_event (GtkWidget *widget, GdkEventExpose *event, gpointer data);
-static gboolean expose_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data);
+static gboolean image_area_draw (GtkWidget *widget, cairo_t *cr, gpointer data);
+static gboolean zoom_area_draw (GtkWidget *widget, cairo_t *cr, gpointer data);
 static gboolean motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data);
 static void control_point_button_toggled (GtkWidget *widget, gpointer data);
 static void control_point_entry_read (GtkWidget *entry, gpointer func_data);
@@ -124,23 +123,23 @@ void g3data_window_insert_image (G3dataWindow *window,
                                  struct g3data_options *options)
 {
     GtkWidget *tophbox, *bottomhbox, *bottomleftvbox, *bottomrightvbox,
-              *scrolled_window, *viewport, *drawing_area_alignment;
+              *scrolled_window, *viewport;
     GtkWidget *control_point_vbox, *status_area_vbox, *remove_buttons_vbox,
               *error_button_vbox;
     GdkCursor *cursor;
     gint i;
     gchar *buffer;
 
-    tophbox = gtk_hbox_new (FALSE, 0);
+    tophbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_box_pack_start (GTK_BOX (window->main_vbox), tophbox, FALSE, FALSE, 0);
 
-    bottomhbox = gtk_hbox_new (FALSE, 0);
+    bottomhbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_box_pack_start (GTK_BOX (window->main_vbox), bottomhbox, TRUE, TRUE, 0);
 
-    bottomleftvbox = gtk_vbox_new (FALSE, 0);
+    bottomleftvbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
     gtk_box_pack_start (GTK_BOX (bottomhbox), bottomleftvbox, FALSE, FALSE, 0);
 
-    bottomrightvbox = gtk_vbox_new (FALSE, 0);
+    bottomrightvbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
     gtk_box_pack_start (GTK_BOX (bottomhbox), bottomrightvbox, TRUE, TRUE, 0);
 
     control_point_vbox = g3data_window_control_points_add (window, options);
@@ -170,13 +169,17 @@ void g3data_window_insert_image (G3dataWindow *window,
     viewport = gtk_viewport_new (NULL, NULL);
     gtk_box_pack_start (GTK_BOX (bottomrightvbox), scrolled_window, TRUE, TRUE, 0);
 
-    drawing_area_alignment = gtk_alignment_new (0, 0, 0, 0);
-    gtk_container_add (GTK_CONTAINER (viewport), drawing_area_alignment);
     gtk_container_add (GTK_CONTAINER (scrolled_window), viewport);
 
-    if (g3data_image_insert (window, filename, drawing_area_alignment, options) == 0) {
-        cursor = gdk_cursor_new (GDK_CROSSHAIR);
+    /* No cursor position yet: the zoom area shows only its marker
+     * until the pointer moves over the image */
+    window->x = window->y = -1;
+
+    if (g3data_image_insert (window, filename, viewport, options) == 0) {
+        cursor = gdk_cursor_new_for_display (gtk_widget_get_display (viewport),
+                                             GDK_CROSSHAIR);
         gdk_window_set_cursor (gtk_widget_get_window (GTK_WIDGET (viewport)), cursor);
+        g_object_unref (cursor);
     }
 
 	g_signal_connect (G_OBJECT (scrolled_window),
@@ -189,8 +192,7 @@ void g3data_window_insert_image (G3dataWindow *window,
     gtk_window_set_title (GTK_WINDOW (window), buffer);
     g_free (buffer);
 
-    setcolors (&colors);
-    gtk_action_group_set_sensitive (window->action_group, TRUE);
+    g3data_window_set_image_actions_enabled (window, TRUE);
 
     /* Allocate memory to store the point coordinates */
     window->points = (gint **) g_malloc (sizeof (gint *) * MAXPOINTS);
@@ -207,25 +209,25 @@ void g3data_window_insert_image (G3dataWindow *window,
 /* Add control points area. */
 static GtkWidget *g3data_window_control_points_add (G3dataWindow *window, struct g3data_options *options) {
     GtkWidget *control_point_header, *control_point_label;
-    GtkWidget *vbox, *hbox, *alignment, *table, *label;
+    GtkWidget *vbox, *hbox, *table, *label;
     int i;
     gchar buf[G_ASCII_DTOSTR_BUF_SIZE];
 
-    vbox = gtk_vbox_new (FALSE, 0);
+    vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
 
     /* Create header for control points section */
     control_point_header = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (control_point_header), control_point_header_text);
-    alignment = gtk_alignment_new (0, 1, 0, 0);
-    gtk_container_add (GTK_CONTAINER (alignment), control_point_header);
-    gtk_box_pack_start (GTK_BOX (vbox), alignment, FALSE, FALSE, 0);
+    gtk_widget_set_halign (control_point_header, GTK_ALIGN_START);
+    gtk_widget_set_valign (control_point_header, GTK_ALIGN_END);
+    gtk_box_pack_start (GTK_BOX (vbox), control_point_header, FALSE, FALSE, 0);
 
-    hbox = gtk_hbox_new (FALSE, 0);
+    hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
 
-    table = gtk_table_new (3, 4 ,FALSE);
-    gtk_table_set_row_spacings (GTK_TABLE (table), 0);
-    gtk_table_set_col_spacings (GTK_TABLE (table), 0);
+    table = gtk_grid_new ();
+    gtk_grid_set_row_spacing (GTK_GRID (table), 0);
+    gtk_grid_set_column_spacing (GTK_GRID (table), 0);
     gtk_box_pack_start (GTK_BOX (hbox), table, FALSE, FALSE, 0);
 
     for (i = 0; i < 4; i++) {
@@ -260,9 +262,9 @@ static GtkWidget *g3data_window_control_points_add (G3dataWindow *window, struct
         gtk_widget_set_tooltip_text (window->control_point_entry[i], control_point_entry_tooltip[i]);
 
         /* Packing the control points labels and entries */
-	    gtk_table_attach_defaults (GTK_TABLE (table), window->control_point_button[i], 0, 1, i, i+1);
-	    gtk_table_attach_defaults (GTK_TABLE (table), control_point_label, 1, 2, i, i+1);
-	    gtk_table_attach_defaults (GTK_TABLE (table), window->control_point_entry[i], 2, 3, i, i+1);
+	    gtk_grid_attach (GTK_GRID (table), window->control_point_button[i], 0, i, 1, 1);
+	    gtk_grid_attach (GTK_GRID (table), control_point_label, 1, i, 1, 1);
+	    gtk_grid_attach (GTK_GRID (table), window->control_point_entry[i], 2, i, 1, 1);
     }
     return vbox;
 }
@@ -274,7 +276,7 @@ static GtkWidget *g3data_window_status_area_add (G3dataWindow *window) {
     GtkWidget *pm_label, *pm_label2;
     GtkWidget *nump_label;
     GtkWidget *status_area_label;
-    GtkWidget *vbox, *alignment, *table;
+    GtkWidget *vbox, *table;
 
     x_label = gtk_label_new (x_string);
     y_label = gtk_label_new (y_string);
@@ -304,36 +306,36 @@ static GtkWidget *g3data_window_status_area_add (G3dataWindow *window) {
     gtk_entry_set_text (GTK_ENTRY (window->nump_entry), "0");
 
     /* Packing the status area */
-    vbox = gtk_vbox_new (FALSE, 0);
+    vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
 
     status_area_label = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (status_area_label), status_area_header);
-    alignment = gtk_alignment_new (0, 1, 0, 0);
-    gtk_container_add (GTK_CONTAINER (alignment), status_area_label);
-    gtk_box_pack_start (GTK_BOX (vbox), alignment, FALSE, FALSE, 0);
+    gtk_widget_set_halign (status_area_label, GTK_ALIGN_START);
+    gtk_widget_set_valign (status_area_label, GTK_ALIGN_END);
+    gtk_box_pack_start (GTK_BOX (vbox), status_area_label, FALSE, FALSE, 0);
 
-    table = gtk_table_new (4, 2 ,FALSE);
-    gtk_table_set_row_spacings (GTK_TABLE (table), 0);
-    gtk_table_set_col_spacings (GTK_TABLE (table), 0);
+    table = gtk_grid_new ();
+    gtk_grid_set_row_spacing (GTK_GRID (table), 0);
+    gtk_grid_set_column_spacing (GTK_GRID (table), 0);
     gtk_box_pack_start (GTK_BOX (vbox), table, FALSE, FALSE, 0);
-    gtk_table_attach_defaults (GTK_TABLE (table), x_label, 0, 1, 0, 1);
-    gtk_table_attach_defaults (GTK_TABLE (table), window->xc_entry, 1, 2, 0, 1);
-    gtk_table_attach_defaults (GTK_TABLE (table), pm_label, 2, 3, 0, 1);
-    gtk_table_attach_defaults (GTK_TABLE (table), window->xerr_entry, 3, 4, 0, 1);
-    gtk_table_attach_defaults (GTK_TABLE (table), y_label, 0, 1, 1, 2);
-    gtk_table_attach_defaults (GTK_TABLE (table), window->yc_entry, 1, 2, 1, 2);
-    gtk_table_attach_defaults (GTK_TABLE (table), pm_label2, 2, 3, 1, 2);
-    gtk_table_attach_defaults (GTK_TABLE (table), window->yerr_entry, 3, 4, 1, 2);
+    gtk_grid_attach (GTK_GRID (table), x_label, 0, 0, 1, 1);
+    gtk_grid_attach (GTK_GRID (table), window->xc_entry, 1, 0, 1, 1);
+    gtk_grid_attach (GTK_GRID (table), pm_label, 2, 0, 1, 1);
+    gtk_grid_attach (GTK_GRID (table), window->xerr_entry, 3, 0, 1, 1);
+    gtk_grid_attach (GTK_GRID (table), y_label, 0, 1, 1, 1);
+    gtk_grid_attach (GTK_GRID (table), window->yc_entry, 1, 1, 1, 1);
+    gtk_grid_attach (GTK_GRID (table), pm_label2, 2, 1, 1, 1);
+    gtk_grid_attach (GTK_GRID (table), window->yerr_entry, 3, 1, 1, 1);
 
     /* Pack number of points boxes */
-    table = gtk_table_new (3, 1 ,FALSE);
-    gtk_table_set_row_spacings (GTK_TABLE (table), 6);
-    gtk_table_set_col_spacings (GTK_TABLE (table), 6);
+    table = gtk_grid_new ();
+    gtk_grid_set_row_spacing (GTK_GRID (table), 6);
+    gtk_grid_set_column_spacing (GTK_GRID (table), 6);
     gtk_box_pack_start (GTK_BOX (vbox), table, FALSE, FALSE, 0);
-    alignment = gtk_alignment_new (0, 1, 0, 0);
-    gtk_container_add (GTK_CONTAINER (alignment), nump_label);
-    gtk_table_attach (GTK_TABLE (table), alignment, 0, 1, 0, 1, 0, 0, 0, 0);
-    gtk_table_attach (GTK_TABLE (table), window->nump_entry, 1, 2, 0, 1, 0, 0, 0, 0);
+    gtk_widget_set_halign (nump_label, GTK_ALIGN_START);
+    gtk_widget_set_valign (nump_label, GTK_ALIGN_END);
+    gtk_grid_attach (GTK_GRID (table), nump_label, 0, 0, 1, 1);
+    gtk_grid_attach (GTK_GRID (table), window->nump_entry, 1, 0, 1, 1);
 
     return vbox;
 }
@@ -352,14 +354,14 @@ static GtkWidget *g3data_window_remove_buttons_add (G3dataWindow *window) {
 
     window->remove_all_button = gtk_button_new_with_mnemonic (remove_all_button_text);
     gtk_widget_set_sensitive (window->remove_all_button, FALSE);
-    gtk_widget_set_tooltip_text (window->remove_all_button, remove_last_tooltip);
+    gtk_widget_set_tooltip_text (window->remove_all_button, remove_all_tooltip);
     g_signal_connect (G_OBJECT (window->remove_all_button), "clicked",
                   G_CALLBACK (remove_all), (gpointer) window);
 
     /* Pack remove points buttons */
-    vbox = gtk_vbox_new (FALSE, 0);
+    vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
 
-    subvbox = gtk_vbox_new (FALSE, 0);
+    subvbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
     gtk_box_pack_start (GTK_BOX (vbox), subvbox, FALSE, FALSE, 0);
     gtk_box_pack_start (GTK_BOX (subvbox), window->remove_last_button, FALSE, FALSE, 0);
     gtk_box_pack_start (GTK_BOX (subvbox), window->remove_all_button, FALSE, FALSE, 0);
@@ -370,20 +372,20 @@ static GtkWidget *g3data_window_remove_buttons_add (G3dataWindow *window) {
 
 /* Add zoom area */
 static GtkWidget *g3data_window_zoom_area_add (G3dataWindow *window) {
-    GtkWidget *vbox, *label, *alignment;
+    GtkWidget *vbox, *label;
 
-    vbox = gtk_vbox_new (FALSE, 0);
+    vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
 
     label = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (label), zoom_area_header);
 
-    alignment = gtk_alignment_new (0, 1, 0, 0);
-    gtk_container_add (GTK_CONTAINER (alignment), label);
-    gtk_box_pack_start (GTK_BOX (vbox), alignment, FALSE, FALSE, 0);
+    gtk_widget_set_halign (label, GTK_ALIGN_START);
+    gtk_widget_set_valign (label, GTK_ALIGN_END);
+    gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
 
     window->zoom_area = gtk_drawing_area_new ();
     gtk_widget_set_size_request (window->zoom_area, ZOOMPIXSIZE, ZOOMPIXSIZE);
-    g_signal_connect (G_OBJECT (window->zoom_area), "expose_event", G_CALLBACK (expose_event_callback), (gpointer) window);
+    g_signal_connect (G_OBJECT (window->zoom_area), "draw", G_CALLBACK (zoom_area_draw), (gpointer) window);
 
     gtk_box_pack_start (GTK_BOX (vbox), window->zoom_area, FALSE, FALSE, 0);
 
@@ -393,7 +395,7 @@ static GtkWidget *g3data_window_zoom_area_add (G3dataWindow *window) {
 
 /* Add buttons to toggle if x or y axis is logarithmic. */
 static GtkWidget *g3data_window_log_buttons_add (G3dataWindow *window, struct g3data_options *options) {
-    GtkWidget *vbox, *label, *alignment;
+    GtkWidget *vbox, *label;
 
     /* Logarithmic axes */
     window->x_log = gtk_check_button_new_with_mnemonic(x_log_text);
@@ -407,12 +409,12 @@ static GtkWidget *g3data_window_log_buttons_add (G3dataWindow *window, struct g3
     g_signal_connect (G_OBJECT (window->y_log), "toggled", G_CALLBACK (log_button_callback), (gpointer) window);
 
     /* Pack logarithmic axes */
-    vbox = gtk_vbox_new (FALSE, 0);
+    vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
     label = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (label), log_header);
-    alignment = gtk_alignment_new (0, 1, 0, 0);
-    gtk_container_add ( GTK_CONTAINER(alignment), label);
-    gtk_box_pack_start (GTK_BOX (vbox), alignment, FALSE, FALSE, 0);
+    gtk_widget_set_halign (label, GTK_ALIGN_START);
+    gtk_widget_set_valign (label, GTK_ALIGN_END);
+    gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), window->x_log, FALSE, FALSE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), window->y_log, FALSE, FALSE, 0);
 
@@ -423,7 +425,7 @@ static GtkWidget *g3data_window_log_buttons_add (G3dataWindow *window, struct g3
 /* Add radio buttons for sorting output. */
 static GtkWidget *g3data_window_sort_buttons_add (G3dataWindow *window) {
     int i;
-    GtkWidget *vbox, *label, *alignment;
+    GtkWidget *vbox, *label;
     GSList *group = NULL;
 
     for (i = 0; i < 3; i++) {
@@ -433,12 +435,12 @@ static GtkWidget *g3data_window_sort_buttons_add (G3dataWindow *window) {
     /* Set no ordering button active */
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (window->sort_button[0]), TRUE);
 
-    vbox = gtk_vbox_new (FALSE, 0);
+    vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
     label = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (label), sort_header);
-    alignment = gtk_alignment_new (0, 1, 0, 0);
-    gtk_container_add (GTK_CONTAINER(alignment), label);
-    gtk_box_pack_start (GTK_BOX (vbox), alignment, FALSE, FALSE, 0);
+    gtk_widget_set_halign (label, GTK_ALIGN_START);
+    gtk_widget_set_valign (label, GTK_ALIGN_END);
+    gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
     for (i = 0; i < 3; i++) {
         gtk_box_pack_start (GTK_BOX (vbox), window->sort_button[i], FALSE, FALSE, 0);
     }
@@ -455,7 +457,7 @@ static void error_button_callback (GtkWidget *widget)
 
 /* Add check buttons for including errors in output. */
 static GtkWidget *g3data_window_error_buttons_add (void) {
-    GtkWidget *vbox, *label, *alignment;
+    GtkWidget *vbox, *label;
     GtkWidget *error_button;
 
     /* Create and pack value errors button */
@@ -464,12 +466,12 @@ static GtkWidget *g3data_window_error_buttons_add (void) {
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (error_button), use_error);
     g_signal_connect (G_OBJECT (error_button), "toggled", G_CALLBACK (error_button_callback), NULL);
 
-    vbox = gtk_vbox_new (FALSE, 0);
+    vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
     label = gtk_label_new (NULL);
     gtk_label_set_markup (GTK_LABEL (label), error_header);
-    alignment = gtk_alignment_new (0, 1, 0, 0);
-    gtk_container_add (GTK_CONTAINER (alignment), label);
-    gtk_box_pack_start (GTK_BOX (vbox), alignment, FALSE, FALSE, 0);
+    gtk_widget_set_halign (label, GTK_ALIGN_START);
+    gtk_widget_set_valign (label, GTK_ALIGN_END);
+    gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 0);
     gtk_box_pack_start (GTK_BOX (vbox), error_button, FALSE, FALSE, 0);
 
     return vbox;
@@ -479,7 +481,7 @@ static GtkWidget *g3data_window_error_buttons_add (void) {
 /* Insert image into g3data_window */
 static gint g3data_image_insert (G3dataWindow *window,
                                  const gchar *filename,
-                                 GtkWidget *drawing_area_alignment,
+                                 GtkWidget *container,
                                  struct g3data_options *options) {
     gboolean has_alpha;
     gint w, h;
@@ -534,8 +536,8 @@ static gint g3data_image_insert (G3dataWindow *window,
     g_signal_connect (G_OBJECT (window->drawing_area), "motion_notify_event",
                       G_CALLBACK (motion_notify_event), (gpointer) window);
 
-    g_signal_connect (G_OBJECT (window->drawing_area), "expose_event",
-                      G_CALLBACK (image_area_expose_event), (gpointer) window);
+    g_signal_connect (G_OBJECT (window->drawing_area), "draw",
+                      G_CALLBACK (image_area_draw), (gpointer) window);
 
     g_signal_connect (G_OBJECT (window->drawing_area), "button_press_event",
                       G_CALLBACK (button_press_event), (gpointer) window);
@@ -543,10 +545,13 @@ static gint g3data_image_insert (G3dataWindow *window,
     gtk_widget_set_events (window->drawing_area, GDK_EXPOSURE_MASK |
                                          GDK_BUTTON_PRESS_MASK | 
                                          GDK_BUTTON_RELEASE_MASK |
-                                         GDK_POINTER_MOTION_MASK | 
-                                         GDK_POINTER_MOTION_HINT_MASK);
+                                         GDK_POINTER_MOTION_MASK);
 
-    gtk_container_add (GTK_CONTAINER (drawing_area_alignment), window->drawing_area);
+    /* Keep the image size and top-left position: a stretched drawing
+     * area would accept clicks outside the image */
+    gtk_widget_set_halign (window->drawing_area, GTK_ALIGN_START);
+    gtk_widget_set_valign (window->drawing_area, GTK_ALIGN_START);
+    gtk_container_add (GTK_CONTAINER (container), window->drawing_area);
 
     gtk_widget_show (window->drawing_area);
 
@@ -554,11 +559,10 @@ static gint g3data_image_insert (G3dataWindow *window,
 }
 
 
-/* Expose event callback for image area. */
-static gboolean image_area_expose_event (GtkWidget *widget, GdkEventExpose *event, gpointer data) {
+/* Draw callback for image area. */
+static gboolean image_area_draw (GtkWidget *widget G_GNUC_UNUSED, cairo_t *cr, gpointer data) {
     gint i;
     G3dataWindow *window = G3DATA_WINDOW (data);
-    cairo_t *cr = gdk_cairo_create (gtk_widget_get_window (widget));
 
     gdk_cairo_set_source_pixbuf (cr, window->image, 0, 0);
     cairo_paint (cr);
@@ -566,30 +570,26 @@ static gboolean image_area_expose_event (GtkWidget *widget, GdkEventExpose *even
     for (i = 0; i < 4; i++) {
         if (window->control_point_image_coords[i][0] != -1 &&
             window->control_point_image_coords[i][1] != -1) {
-            DrawMarker (cr, window->control_point_image_coords[i][0], window->control_point_image_coords[i][1], i/2, colors);
+            DrawMarker (cr, window->control_point_image_coords[i][0], window->control_point_image_coords[i][1], i/2);
         }
     }
     for (i = 0; i < window->numpoints; i++) {
-        DrawMarker(cr, window->points[i][0], window->points[i][1], 2, colors);
+        DrawMarker(cr, window->points[i][0], window->points[i][1], 2);
     }
 
-    cairo_destroy (cr);
     return FALSE;
 }   
 
 
-/* Expose event callback for the zoom area. */
-static gboolean expose_event_callback (GtkWidget *widget, GdkEventExpose *event, gpointer data) {
+/* Draw callback for the zoom area. */
+static gboolean zoom_area_draw (GtkWidget *widget G_GNUC_UNUSED, cairo_t *cr, gpointer data) {
     gint x, y, width, height;
-    cairo_t *cr;
     G3dataWindow *window = G3DATA_WINDOW (data);
 
     x = window->x;
     y = window->y;
     width = gdk_pixbuf_get_width (window->image);
     height = gdk_pixbuf_get_height (window->image);
-
-    cr = gdk_cairo_create (gtk_widget_get_window (widget));
 
     if (x >= 0 && y >= 0 && x < width && y < height) {
         cairo_save(cr);
@@ -601,14 +601,13 @@ static gboolean expose_event_callback (GtkWidget *widget, GdkEventExpose *event,
     }
 
     /* Then draw the square in the middle of the zoom area */
-    DrawMarker (cr, ZOOMPIXSIZE/2, ZOOMPIXSIZE/2, 2, colors);
-    cairo_destroy (cr);
+    DrawMarker (cr, ZOOMPIXSIZE/2, ZOOMPIXSIZE/2, 2);
     return TRUE;
 }
 
 
 /* Motion notify callback, for motion over drawing_area */
-static gboolean motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gpointer data) {
+static gboolean motion_notify_event(GtkWidget *widget G_GNUC_UNUSED, GdkEventMotion *event, gpointer data) {
     gboolean control_points_set = FALSE;
     gboolean islogarithmic[2];
     gint x, y, width, height;
@@ -616,7 +615,9 @@ static gboolean motion_notify_event(GtkWidget *widget, GdkEventMotion *event, gp
     struct PointValue CalcVal;
     G3dataWindow *window = G3DATA_WINDOW (data);
 
-    gdk_window_get_pointer (event->window, &x, &y, NULL);
+    /* Rounded like the gdk_window_get_pointer() call used before */
+    x = round (event->x);
+    y = round (event->y);
     window->x = x;
     window->y = y;
 
@@ -695,12 +696,13 @@ static void control_point_entry_read (GtkWidget *entry, gpointer func_data)
 }
 
 
-static void button_press_event (GtkWidget *widget, GdkEventButton *event, gpointer data)
+static void button_press_event (GtkWidget *widget G_GNUC_UNUSED, GdkEventButton *event, gpointer data)
 {
     gint x, y, i, j;
     G3dataWindow *window = G3DATA_WINDOW (data);
 
-    gdk_window_get_pointer (event->window, &x, &y, NULL);
+    x = round (event->x);
+    y = round (event->y);
 
     if (event->button == 1) {
         /* If none of the control point buttons have been pressed */
@@ -808,7 +810,7 @@ static void SetButtonSensitivity (G3dataWindow *window)
 
 
 /* Removes the last data point inserted */
-static void remove_last (GtkWidget *widget, gpointer data)
+static void remove_last (GtkWidget *widget G_GNUC_UNUSED, gpointer data)
 {
     G3dataWindow *window = G3DATA_WINDOW (data);
 
@@ -879,7 +881,7 @@ static void key_press_event(GtkWidget *widget, GdkEventKey *event)
     gdouble adj_val;
 
     if (widget != NULL) {
-        if (event->keyval == GDK_Left) {
+        if (event->keyval == GDK_KEY_Left) {
             adjustment = gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW (widget));
             adj_val = gtk_adjustment_get_value (adjustment);
             adj_val -= gtk_adjustment_get_page_size (adjustment) / 10.0;
@@ -887,7 +889,7 @@ static void key_press_event(GtkWidget *widget, GdkEventKey *event)
                 adj_val = gtk_adjustment_get_lower (adjustment);
             gtk_adjustment_set_value (adjustment, adj_val);
             gtk_scrolled_window_set_hadjustment (GTK_SCROLLED_WINDOW (widget), adjustment);
-        } else if (event->keyval == GDK_Right) {
+        } else if (event->keyval == GDK_KEY_Right) {
             adjustment = gtk_scrolled_window_get_hadjustment (GTK_SCROLLED_WINDOW (widget));
             adj_val = gtk_adjustment_get_value (adjustment);
             adj_val += gtk_adjustment_get_page_size (adjustment) / 10.0;
@@ -895,7 +897,7 @@ static void key_press_event(GtkWidget *widget, GdkEventKey *event)
                 adj_val = (gtk_adjustment_get_upper (adjustment) - gtk_adjustment_get_page_size (adjustment));
             gtk_adjustment_set_value (adjustment, adj_val);
             gtk_scrolled_window_set_hadjustment (GTK_SCROLLED_WINDOW (widget), adjustment);
-        } else if (event->keyval == GDK_Up) {
+        } else if (event->keyval == GDK_KEY_Up) {
             adjustment = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (widget));
             adj_val = gtk_adjustment_get_value (adjustment);
             adj_val -= gtk_adjustment_get_page_size (adjustment) / 10.0;
@@ -903,7 +905,7 @@ static void key_press_event(GtkWidget *widget, GdkEventKey *event)
                 adj_val = gtk_adjustment_get_lower (adjustment);
             gtk_adjustment_set_value (adjustment, adj_val);
             gtk_scrolled_window_set_vadjustment (GTK_SCROLLED_WINDOW (widget), adjustment);
-        } else if (event->keyval == GDK_Down) {
+        } else if (event->keyval == GDK_KEY_Down) {
             adjustment = gtk_scrolled_window_get_vadjustment (GTK_SCROLLED_WINDOW (widget));
             adj_val = gtk_adjustment_get_value (adjustment);
             adj_val += gtk_adjustment_get_page_size (adjustment) / 10.0;

@@ -14,8 +14,8 @@ described in the 'COPYING' file.
 Building from source
 --------------------
 First, install the required prerequisite libraries, which are the
-development versions of gtk2 and glib2. On Fedora 25, these packages are
-gtk2-devel and glib2-devel.
+development versions of GTK 3 (3.12 or newer) and GLib 2. On Fedora, these
+packages are gtk3-devel and glib2-devel; on Debian and Ubuntu, libgtk-3-dev.
 
 Then use autoreconf to invoke the various parts of the GNU Build system:
      autoreconf -i

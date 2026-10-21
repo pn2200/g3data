@@ -21,5 +21,4 @@ Copyright (C) 2011 Paul Novak
 Authors email : pnovak@alumni.caltech.edu
 */
 
-void DrawMarker(cairo_t *cr, gint x, gint y, gint type, GdkColor *color);
-gboolean setcolors(GdkColor **color);
+void DrawMarker(cairo_t *cr, gint x, gint y, gint type);

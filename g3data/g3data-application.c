@@ -33,11 +33,18 @@ typedef enum {
     NUM_IMAGE_DATA,
 } UI_DROP_TARGET_INFO;
 
+/* GtkTargetEntry.target is a non-const gchar *, so the target names are
+ * kept in writable arrays instead of pointing at string literals */
+static gchar uri_list_target[] = "text/uri-list";
+static gchar png_target[] = "image/png";
+static gchar jpeg_target[] = "image/jpeg";
+static gchar color_target[] = "application/x-color";
+
 static const GtkTargetEntry ui_drop_target_entries[] = {
-  {"text/uri-list", 0, URI_LIST},
-  {"image/png",     0, PNG_DATA},
-  {"image/jpeg",    0, JPEG_DATA},
-  {"application/x-color",    0, APP_X_COLOR}
+  {uri_list_target, 0, URI_LIST},
+  {png_target,      0, PNG_DATA},
+  {jpeg_target,     0, JPEG_DATA},
+  {color_target,    0, APP_X_COLOR}
 };
 
 
@@ -60,6 +67,13 @@ G3dataApplication *g3data_application_get_instance (void)
 }
 
 
+/* GFunc wrapper, so gtk_widget_destroy() is not called through a cast */
+static void destroy_window (gpointer window, gpointer user_data G_GNUC_UNUSED)
+{
+    gtk_widget_destroy (GTK_WIDGET (window));
+}
+
+
 static void g3data_application_finalize (GObject *object)
 {
     G3dataApplication *application = G3DATA_APPLICATION (object);
@@ -67,7 +81,7 @@ static void g3data_application_finalize (GObject *object)
     application->current_window = NULL;
 
     g_slist_foreach (application->windows,
-                     (GFunc) gtk_widget_destroy,
+                     destroy_window,
                      NULL);
     g_slist_free (application->windows);
 
@@ -110,13 +124,13 @@ static void g3data_window_destroy_cb (GtkWidget *widget,
 }
 
 
-static void drag_data_received(GtkWidget *widget,
+static void drag_data_received(GtkWidget *widget G_GNUC_UNUSED,
                               GdkDragContext *drag_context,
-                              gint x, gint y,
+                              gint x G_GNUC_UNUSED, gint y G_GNUC_UNUSED,
                               GtkSelectionData *data,
                               guint info,
                               guint event_time,
-                              gpointer user_data)
+                              gpointer user_data G_GNUC_UNUSED)
 {
     gchar *filename;
     gchar **uri_list;

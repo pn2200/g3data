@@ -25,7 +25,7 @@ PKG_PROG_PKG_CONFIG
 # Checks for libraries.
 AC_CHECK_LIB([m], [log])
 PKG_CHECK_MODULES([GLIB], [glib-2.0])
-PKG_CHECK_MODULES([GTK], [gtk+-2.0])
+PKG_CHECK_MODULES([GTK], [gtk+-3.0 >= 3.12])
 
 # Checks for header files.
 AC_CHECK_HEADERS([stdlib.h string.h math.h])

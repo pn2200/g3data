@@ -21,6 +21,7 @@ Copyright (C) 2011 Paul Novak
 Authors email : pnovak@alumni.caltech.edu
 */
 
+#include <errno.h>
 #include <stdlib.h>
 #include "g3data-application.h"
 #include "g3data-window.h"
@@ -39,58 +40,65 @@ static void update_preview_cb (GtkFileChooser *chooser, gpointer data);
 static void file_open_dialog_response_cb (GtkWidget *chooser,
                                           gint response_id,
                                           GtkAdjustment *scaleadj);
-static void g3data_window_file_open (GtkAction *action, G3dataWindow *window);
+static void g3data_window_file_open (GSimpleAction *action, GVariant *parameter, gpointer data);
 static void g3data_window_print_results(FILE *fp, G3dataWindow *window);
-static void g3data_window_file_save_as (GtkAction *action, G3dataWindow *window);
-static void g3data_window_file_close (GtkAction *action, G3dataWindow *window);
-static void g3data_window_help_about (GtkAction *action, G3dataWindow *window);
-static void full_screen_action_callback(GtkWidget *widget, gpointer func_data);
-static void hide_zoom_area_callback(GtkWidget *widget, gpointer func_data);
-static void hide_log_buttons_callback(GtkWidget *widget, gpointer func_data);
-static void hide_sort_buttons_callback(GtkWidget *widget, gpointer func_data);
+static void g3data_window_file_save_as (GSimpleAction *action, GVariant *parameter, gpointer data);
+static void g3data_window_file_close (GSimpleAction *action, GVariant *parameter, gpointer data);
+static void g3data_window_help_about (GSimpleAction *action, GVariant *parameter, gpointer data);
+static void full_screen_change_state (GSimpleAction *action, GVariant *state, gpointer data);
+static void zoom_area_change_state (GSimpleAction *action, GVariant *state, gpointer data);
+static void log_buttons_change_state (GSimpleAction *action, GVariant *state, gpointer data);
+static void sort_buttons_change_state (GSimpleAction *action, GVariant *state, gpointer data);
 
 
-static const GtkActionEntry entries[] = {
-    { "FileMenu", NULL, "_File", NULL, NULL, NULL },
-    { "ViewMenu", NULL, "_View", NULL, NULL, NULL },
-    { "HelpMenu", NULL, "_Help", NULL, NULL, NULL },
-    { "Open", GTK_STOCK_OPEN, "_Open", "<control>O", "Open an image in a new tab", G_CALLBACK( g3data_window_file_open ) },
-    { "Save As", GTK_STOCK_SAVE_AS, "Save _As...", "<control><shift>S", "Save data", G_CALLBACK( g3data_window_file_save_as ) },
-    { "Close", GTK_STOCK_CLOSE, "_Close", "<control>W", "Close window", G_CALLBACK( g3data_window_file_close ) },
-    { "About", GTK_STOCK_HELP, "_About", "", "About g3data", G_CALLBACK( g3data_window_help_about ) }
+/* Window actions, used by the menu as "win.<name>" */
+static const GActionEntry win_entries[] = {
+    { "open", g3data_window_file_open, NULL, NULL, NULL, {0} },
+    { "save-as", g3data_window_file_save_as, NULL, NULL, NULL, {0} },
+    { "close", g3data_window_file_close, NULL, NULL, NULL, {0} },
+    { "about", g3data_window_help_about, NULL, NULL, NULL, {0} },
+    { "fullscreen", NULL, NULL, "false", full_screen_change_state, {0} },
+    { "zoom-area", NULL, NULL, "true", zoom_area_change_state, {0} },
+    { "axis-settings", NULL, NULL, "true", log_buttons_change_state, {0} },
+    { "output-properties", NULL, NULL, "true", sort_buttons_change_state, {0} }
 };
 
-static const GtkToggleActionEntry toggle_entries[] = {
-    { "Zoom area", NULL, "Zoom area", "F5", "Zoom area", G_CALLBACK( hide_zoom_area_callback ), TRUE },
-    { "Axis settings", NULL, "Axis settings", "F6", "Axis settings", G_CALLBACK( hide_log_buttons_callback ), TRUE },
-    { "Output properties", NULL, "Output properties", "F7", "Output properties", G_CALLBACK( hide_sort_buttons_callback ), TRUE }
+/* Actions that only make sense once an image is loaded */
+static const gchar *image_actions[] = {
+    "zoom-area", "axis-settings", "output-properties"
 };
 
-static const GtkToggleActionEntry full_screen[] = {
-    { "FullScreen", NULL, "_Full Screen", "F11", "Switch between full screen and windowed mode", G_CALLBACK( full_screen_action_callback ), FALSE }
+static const struct {
+    const gchar *action;
+    const gchar *accel;
+} win_accels[] = {
+    { "open", "<Primary>o" },
+    { "save-as", "<Primary><Shift>s" },
+    { "close", "<Primary>w" },
+    { "zoom-area", "F5" },
+    { "axis-settings", "F6" },
+    { "output-properties", "F7" },
+    { "fullscreen", "F11" }
 };
 
-static const gchar *ui_description =
-    "<ui>"
-    "  <menubar name='MainMenu'>"
-    "    <menu action='FileMenu'>"
-    "      <menuitem action='Open'/>"
-    "      <menuitem action='Save As'/>"
-    "      <separator />"
-    "      <menuitem action='Close'/>"
-    "    </menu>"
-    "    <menu action='ViewMenu'>"
-    "      <menuitem action='Zoom area'/>"
-    "      <menuitem action='Axis settings'/>"
-    "      <menuitem action='Output properties'/>"
-    "      <separator />"
-    "      <menuitem action='FullScreen'/>"
-    "    </menu>"
-    "    <menu action='HelpMenu'>"
-    "      <menuitem action='About'/>"
-    "    </menu>"
-    "  </menubar>"
-    "</ui>";
+
+/* Append a menu item that shows its keyboard shortcut. */
+static void g3data_menu_append (GMenu *menu, const gchar *label,
+                                const gchar *action, const gchar *accel)
+{
+    GMenuItem *item = g_menu_item_new (label, action);
+
+    g_menu_item_set_attribute (item, "accel", "s", accel);
+    g_menu_append_item (menu, item);
+    g_object_unref (item);
+}
+
+
+static gboolean g3data_action_enabled (GActionGroup *group, const gchar *name)
+{
+    return g_action_group_has_action (group, name) &&
+           g_action_group_get_action_enabled (group, name);
+}
 
 
 void g3data_set_default_options (struct g3data_options *options) {
@@ -164,8 +172,9 @@ static void file_open_dialog_response_cb (GtkWidget *chooser,
 }
 
 
-static void g3data_window_file_open (GtkAction *action, G3dataWindow *window)
+static void g3data_window_file_open (GSimpleAction *action G_GNUC_UNUSED, GVariant *parameter G_GNUC_UNUSED, gpointer data)
 {
+    G3dataWindow *window = G3DATA_WINDOW (data);
     GtkWidget *dialog, *scalespinbutton, *hboxextra, *scalelabel;
     GtkImage *preview;
     GtkAdjustment *scaleadj;
@@ -175,8 +184,8 @@ static void g3data_window_file_open (GtkAction *action, G3dataWindow *window)
     dialog = gtk_file_chooser_dialog_new ("Open Image",
                                           GTK_WINDOW (window),
                                           GTK_FILE_CHOOSER_ACTION_OPEN,
-                                          GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-                                          GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+                                          "_Cancel", GTK_RESPONSE_CANCEL,
+                                          "_Open", GTK_RESPONSE_ACCEPT,
                                           NULL);
 
     /* Set filtering of files to open to filetypes gdk_pixbuf can handle */
@@ -185,7 +194,7 @@ static void g3data_window_file_open (GtkAction *action, G3dataWindow *window)
     gtk_file_chooser_set_filter (GTK_FILE_CHOOSER (dialog),
                                  GTK_FILE_FILTER (filefilter));
 
-    hboxextra = gtk_hbox_new (FALSE, 0);
+    hboxextra = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
 
     scalelabel = gtk_label_new (scale_string);
 
@@ -262,8 +271,9 @@ static void g3data_window_print_results(FILE *fp, G3dataWindow *window)
 }
 
 
-static void g3data_window_file_save_as (GtkAction *action, G3dataWindow *window)
+static void g3data_window_file_save_as (GSimpleAction *action G_GNUC_UNUSED, GVariant *parameter G_GNUC_UNUSED, gpointer data)
 {
+    G3dataWindow *window = G3DATA_WINDOW (data);
     GtkWidget *dialog;
     gchar *filename;
     FILE *fp;
@@ -271,8 +281,8 @@ static void g3data_window_file_save_as (GtkAction *action, G3dataWindow *window)
     dialog = gtk_file_chooser_dialog_new ("Save As...",
                                           GTK_WINDOW (window),
                                           GTK_FILE_CHOOSER_ACTION_SAVE,
-                                          GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-                                          GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+                                          "_Cancel", GTK_RESPONSE_CANCEL,
+                                          "_Save", GTK_RESPONSE_ACCEPT,
                                           NULL);
     gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), "untitled.txt");
 
@@ -280,6 +290,18 @@ static void g3data_window_file_save_as (GtkAction *action, G3dataWindow *window)
         filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
         fp = fopen (filename, "w");
         if (fp == NULL) {
+            gint saved_errno = errno;
+
+            /* Close the file chooser, then tell the user why nothing was saved */
+            gtk_widget_destroy (dialog);
+            dialog = gtk_message_dialog_new (GTK_WINDOW (window),
+                            GTK_DIALOG_DESTROY_WITH_PARENT,
+                            GTK_MESSAGE_ERROR,
+                            GTK_BUTTONS_CLOSE,
+                            "Error saving file '%s': %s",
+                            filename, g_strerror (saved_errno));
+            gtk_dialog_run (GTK_DIALOG (dialog));
+            gtk_widget_destroy (dialog);
             g_free (filename);
             return;
         } else {
@@ -294,21 +316,24 @@ static void g3data_window_file_save_as (GtkAction *action, G3dataWindow *window)
 }
 
 
-static void g3data_window_file_close (GtkAction *action, G3dataWindow *window)
+static void g3data_window_file_close (GSimpleAction *action G_GNUC_UNUSED, GVariant *parameter G_GNUC_UNUSED, gpointer data)
 {
-    /* if this was called from the uimanager, destroy the widget;
-    * otherwise, if it was called from the delete_event, the widget
-    * will destroy itself.
-    */
-    if (action != NULL)
-        gtk_widget_destroy (GTK_WIDGET (window));
+    gtk_widget_destroy (GTK_WIDGET (data));
 }
 
 
-static void full_screen_action_callback(GtkWidget *widget, gpointer func_data) {
-    G3dataWindow *window = G3DATA_WINDOW (func_data);
+/* Store the new state of a toggle action and return it. */
+static gboolean toggle_set_state (GSimpleAction *action, GVariant *state)
+{
+    g_simple_action_set_state (action, state);
+    return g_variant_get_boolean (state);
+}
 
-    if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (widget))) {
+
+static void full_screen_change_state (GSimpleAction *action, GVariant *state, gpointer data) {
+    G3dataWindow *window = G3DATA_WINDOW (data);
+
+    if (toggle_set_state (action, state)) {
         gtk_window_fullscreen (GTK_WINDOW (window));
     } else {
         gtk_window_unfullscreen (GTK_WINDOW (window));
@@ -317,44 +342,103 @@ static void full_screen_action_callback(GtkWidget *widget, gpointer func_data) {
 
 
 /* Hide or show zoom area. */
-static void hide_zoom_area_callback(GtkWidget *widget, gpointer func_data) {
-    G3dataWindow *window = G3DATA_WINDOW (func_data);
+static void zoom_area_change_state (GSimpleAction *action, GVariant *state, gpointer data) {
+    G3dataWindow *window = G3DATA_WINDOW (data);
 
-    if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (widget))) {
-        gtk_widget_show (window->zoom_area_vbox);
-    } else {
-        gtk_widget_hide (window->zoom_area_vbox);
-    }
+    gtk_widget_set_visible (window->zoom_area_vbox, toggle_set_state (action, state));
 }
 
 
 /* Hide or show logarithmic axes buttons. */
-static void hide_log_buttons_callback(GtkWidget *widget, gpointer func_data) {
-    G3dataWindow *window = G3DATA_WINDOW (func_data);
+static void log_buttons_change_state (GSimpleAction *action, GVariant *state, gpointer data) {
+    G3dataWindow *window = G3DATA_WINDOW (data);
 
-    if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (widget))) {
-        gtk_widget_show (window->log_buttons_vbox);
-    } else {
-        gtk_widget_hide (window->log_buttons_vbox);
-    }
+    gtk_widget_set_visible (window->log_buttons_vbox, toggle_set_state (action, state));
 }
 
 
 /* Hide or show output sorting buttons. */
-static void hide_sort_buttons_callback(GtkWidget *widget, gpointer func_data) {
-    G3dataWindow *window = G3DATA_WINDOW (func_data);
+static void sort_buttons_change_state (GSimpleAction *action, GVariant *state, gpointer data) {
+    G3dataWindow *window = G3DATA_WINDOW (data);
 
-    if (gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (widget))) {
-        gtk_widget_show (window->sort_buttons_vbox);
-    } else {
-        gtk_widget_hide (window->sort_buttons_vbox);
+    gtk_widget_set_visible (window->sort_buttons_vbox, toggle_set_state (action, state));
+}
+
+
+static void g3data_window_help_about (GSimpleAction *action G_GNUC_UNUSED, GVariant *parameter G_GNUC_UNUSED, gpointer data)
+{
+    g3data_about (GTK_WIDGET (data));
+}
+
+
+/* Enable or disable the actions that need a loaded image. */
+void g3data_window_set_image_actions_enabled (G3dataWindow *window, gboolean enabled)
+{
+    guint i;
+
+    for (i = 0; i < G_N_ELEMENTS (image_actions); i++) {
+        GAction *action = g_action_map_lookup_action (G_ACTION_MAP (window->actions),
+                                                      image_actions[i]);
+        g_simple_action_set_enabled (G_SIMPLE_ACTION (action), enabled);
     }
 }
 
 
-static void g3data_window_help_about (GtkAction *action, G3dataWindow *window)
+/* Keyboard shortcut handler: activate the window action of entry
+ * number data in win_accels, if it is currently enabled. */
+static gboolean accel_activate (GtkAccelGroup *accel_group G_GNUC_UNUSED, GObject *acceleratable,
+                                guint keyval G_GNUC_UNUSED, GdkModifierType modifier G_GNUC_UNUSED, gpointer data)
 {
-    g3data_about (GTK_WIDGET (window));
+    G3dataWindow *window = G3DATA_WINDOW (acceleratable);
+    GActionGroup *group = G_ACTION_GROUP (window->actions);
+    const gchar *name = win_accels[GPOINTER_TO_INT (data)].action;
+
+    if (!g3data_action_enabled (group, name))
+        return FALSE;
+    g_action_group_activate_action (group, name, NULL);
+    return TRUE;
+}
+
+
+static GMenuModel *g3data_window_menu_model (void)
+{
+    GMenu *menubar, *menu, *section;
+
+    menubar = g_menu_new ();
+
+    menu = g_menu_new ();
+    section = g_menu_new ();
+    g3data_menu_append (section, "_Open", "win.open", "<Primary>o");
+    g3data_menu_append (section, "Save _As...", "win.save-as", "<Primary><Shift>s");
+    g_menu_append_section (menu, NULL, G_MENU_MODEL (section));
+    g_object_unref (section);
+    section = g_menu_new ();
+    g3data_menu_append (section, "_Close", "win.close", "<Primary>w");
+    g_menu_append_section (menu, NULL, G_MENU_MODEL (section));
+    g_object_unref (section);
+    g_menu_append_submenu (menubar, "_File", G_MENU_MODEL (menu));
+    g_object_unref (menu);
+
+    menu = g_menu_new ();
+    section = g_menu_new ();
+    g3data_menu_append (section, "Zoom area", "win.zoom-area", "F5");
+    g3data_menu_append (section, "Axis settings", "win.axis-settings", "F6");
+    g3data_menu_append (section, "Output properties", "win.output-properties", "F7");
+    g_menu_append_section (menu, NULL, G_MENU_MODEL (section));
+    g_object_unref (section);
+    section = g_menu_new ();
+    g3data_menu_append (section, "_Full Screen", "win.fullscreen", "F11");
+    g_menu_append_section (menu, NULL, G_MENU_MODEL (section));
+    g_object_unref (section);
+    g_menu_append_submenu (menubar, "_View", G_MENU_MODEL (menu));
+    g_object_unref (menu);
+
+    menu = g_menu_new ();
+    g_menu_append (menu, "_About", "win.about");
+    g_menu_append_submenu (menubar, "_Help", G_MENU_MODEL (menu));
+    g_object_unref (menu);
+
+    return G_MENU_MODEL (menubar);
 }
 
 
@@ -362,46 +446,42 @@ static void g3data_window_init (G3dataWindow *g3data_window)
 {
     int i;
     GtkWidget *menubar;
-    GtkActionGroup *action_group;
-    GtkUIManager *ui_manager;
+    GMenuModel *menu_model;
     GtkAccelGroup *accel_group;
-    GError *error = NULL;
 
     gtk_window_set_default_size (GTK_WINDOW (g3data_window), 640, 480);
     gtk_window_set_title (GTK_WINDOW (g3data_window), "g3data - no file");
     gtk_window_set_resizable (GTK_WINDOW (g3data_window), TRUE);
     gtk_container_set_border_width (GTK_CONTAINER (g3data_window), 0);
 
-    g3data_window->main_vbox = gtk_vbox_new (FALSE, 0);
+    g3data_window->main_vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
     gtk_container_add (GTK_CONTAINER (g3data_window), g3data_window->main_vbox);
 
     /* Create menu */
-    action_group = gtk_action_group_new ("MenuActions");
-    gtk_action_group_add_actions (action_group, entries, G_N_ELEMENTS (entries), g3data_window);
-    gtk_action_group_add_toggle_actions (action_group, full_screen, G_N_ELEMENTS (full_screen), g3data_window);
+    g3data_window->actions = g_simple_action_group_new ();
+    g_action_map_add_action_entries (G_ACTION_MAP (g3data_window->actions),
+                                     win_entries, G_N_ELEMENTS (win_entries),
+                                     g3data_window);
+    gtk_widget_insert_action_group (GTK_WIDGET (g3data_window), "win",
+                                    G_ACTION_GROUP (g3data_window->actions));
+    g3data_window_set_image_actions_enabled (g3data_window, FALSE);
 
-    g3data_window->action_group = gtk_action_group_new ("WindowActions");
-    gtk_action_group_add_toggle_actions (g3data_window->action_group,
-                                         toggle_entries,
-                                         G_N_ELEMENTS (toggle_entries),
-                                         g3data_window);
-    gtk_action_group_set_sensitive (g3data_window->action_group, FALSE);
+    accel_group = gtk_accel_group_new ();
+    for (i = 0; i < (int) G_N_ELEMENTS (win_accels); i++) {
+        guint key;
+        GdkModifierType mods;
 
-    ui_manager = gtk_ui_manager_new ();
-    gtk_ui_manager_insert_action_group (ui_manager, action_group, 0);
-    gtk_ui_manager_insert_action_group (ui_manager, g3data_window->action_group, 0);
-
-    accel_group = gtk_ui_manager_get_accel_group (ui_manager);
+        gtk_accelerator_parse (win_accels[i].accel, &key, &mods);
+        gtk_accel_group_connect (accel_group, key, mods, 0,
+                                 g_cclosure_new (G_CALLBACK (accel_activate),
+                                                 GINT_TO_POINTER (i), NULL));
+    }
     gtk_window_add_accel_group (GTK_WINDOW (g3data_window), accel_group);
- 
-    error = NULL;
-    if (!gtk_ui_manager_add_ui_from_string (ui_manager, ui_description, -1, &error)) {
-        g_message("building menus failed: %s", error->message);
-        g_error_free(error);
-        exit(EXIT_FAILURE);
-     }
- 
-    menubar = gtk_ui_manager_get_widget (ui_manager, "/MainMenu");
+    g_object_unref (accel_group);
+
+    menu_model = g3data_window_menu_model ();
+    menubar = gtk_menu_bar_new_from_model (menu_model);
+    g_object_unref (menu_model);
     gtk_box_pack_start (GTK_BOX (g3data_window->main_vbox), menubar, FALSE, FALSE, 0);
 
     g3data_window->image = NULL;
@@ -412,7 +492,7 @@ static void g3data_window_init (G3dataWindow *g3data_window)
 }
 
 
-static void g3data_window_class_init (G3dataWindowClass *g3data_window_class)
+static void g3data_window_class_init (G3dataWindowClass *g3data_window_class G_GNUC_UNUSED)
 {
 }
 
